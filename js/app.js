@@ -2650,7 +2650,7 @@ FLStudioApp.prototype._initAudioEditor = function() {
 
   // Parametric EQ 2 launcher
   document.getElementById('tb-btn-param-eq')?.addEventListener('click', () => {
-    if (window.flParametricEQ) window.flParametricEQ.openFloating();
+    if (window.flParametricEQ) window.flParametricEQ.toggleFloating();
   });
 };
 

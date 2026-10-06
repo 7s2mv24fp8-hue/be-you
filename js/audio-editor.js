@@ -39,12 +39,8 @@ class AudioEditor {
     this.dragAnchor = 0;
 
     // Canvases
-    this._modal     = null;
-    this._modalCanvas = null;
     this._tabCanvas = null;
-    this._activeCanvas = null;
 
-    this._buildModal();
     this._bindTabElements();
 
     // Auto-load demo 808 sound so editor is instantly active and alive on open
@@ -97,90 +93,28 @@ class AudioEditor {
         }
       });
     }
-  }
-
-  _buildModal() {
-    let overlay = document.getElementById('ae-modal');
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.id = 'ae-modal';
-      overlay.className = 'ae-modal-overlay ae-hidden';
-      overlay.innerHTML = `
-        <div class="ae-modal-window">
-          <div class="ae-modal-header">
-            <div class="ae-modal-title">
-              <span class="ae-led"></span>
-              <span>EDISON AUDIO WAVEFORM EDITOR — PRO STUDIO</span>
-            </div>
-            <button id="ae-close-btn" class="ae-modal-close">✕</button>
-          </div>
-          <div class="ae-modal-body">
-            <div id="ae-canvas-wrap" class="ae-canvas-wrap">
-              <canvas id="ae-canvas" class="ae-canvas"></canvas>
-            </div>
-          </div>
-        </div>
-      `;
-      document.body.appendChild(overlay);
-    }
-
-    this._modal = overlay;
-    this._modalCanvas = overlay.querySelector('#ae-canvas');
-    if (this._modalCanvas) {
-      this._attachCanvasInteractions(this._modalCanvas);
-    }
-
-    const modalWrap = overlay.querySelector('#ae-canvas-wrap');
-    if (modalWrap) {
-      modalWrap.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        modalWrap.classList.add('ae-drag-over');
-      });
-      modalWrap.addEventListener('dragleave', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        modalWrap.classList.remove('ae-drag-over');
-      });
-      modalWrap.addEventListener('drop', async (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        modalWrap.classList.remove('ae-drag-over');
-        const file = e.dataTransfer?.files?.[0];
-        if (file) {
-          if (window.app && typeof window.app._importFileToApp === 'function') {
-            await window.app._importFileToApp(file);
-          } else {
-            await this.importAudioFile(file);
-          }
-        }
-      });
-    }
-
-    overlay.querySelector('#ae-close-btn')?.addEventListener('click', () => this.close());
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) this.close();
+    window.addEventListener('resize', () => {
+      this._resize();
+      this._draw();
     });
 
-    window.addEventListener('resize', () => {
+    // Remove any leftover duplicate floating modal from DOM
+    const oldModal = document.getElementById('ae-modal');
+    if (oldModal) oldModal.remove();
+  }
+
+  open(layer) {
+    if (window.app && typeof window.app._switchTab === 'function') {
+      window.app._switchTab('audio-editor');
+    }
+    if (layer) this.selectLayer(layer.id || layer);
+    requestAnimationFrame(() => {
       this._resize();
       this._draw();
     });
   }
 
-  open(layer) {
-    if (this._modal) {
-      this._modal.classList.remove('ae-hidden');
-      if (layer) this.selectLayer(layer.id);
-      requestAnimationFrame(() => {
-        this._resize();
-        this._draw();
-      });
-    }
-  }
-
   close() {
-    if (this._modal) this._modal.classList.add('ae-hidden');
     this.pause();
   }
 

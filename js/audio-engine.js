@@ -11,6 +11,7 @@ class AudioEngine {
     this.channelGains = {};
     this.initialized = false;
     window.audioEngine = this;
+    this.tracks = {};
   }
 
   get ctx() {
@@ -269,6 +270,222 @@ class AudioEngine {
     gain.connect(this.masterCompressor);
     return gain;
   }
+
+  // ── Track Management ────────────────────────────────────────
+  /**
+   * Creates or returns an existing track object.
+   * Each track has its own gain and optional pan node that feeds the master bus.
+   */
+  addTrack(id) {
+    if (this.tracks[id]) return this.tracks[id];
+    const gain = this.ctx.createGain();
+    gain.gain.value = 1.0;
+    let pan = null;
+    if (this.ctx.createStereoPanner) {
+      pan = this.ctx.createStereoPanner();
+      pan.pan.value = 0;
+    }
+    // Connect gain -> pan (if any) -> masterCompressor
+    const afterGain = pan ? gain.connect(pan) : gain;
+    (pan || gain).connect(this.masterCompressor);
+    const track = {
+      id,
+      gain,
+      pan,
+      solo: false,
+      mute: false,
+      setVolume: (vol) => {
+        gain.gain.setTargetAtTime(vol, this.ctx.currentTime, 0.01);
+      },
+      setPan: (value) => {
+        if (pan) pan.pan.setTargetAtTime(value, this.ctx.currentTime, 0.01);
+      },
+      setSolo: (state) => {
+        track.solo = state;
+        this._updateSoloMute();
+      },
+      setMute: (state) => {
+        track.mute = state;
+        this._updateSoloMute();
+      },
+      connect: (node) => {
+        node.connect(gain);
+      },
+    };
+    this.tracks[id] = track;
+    this._updateSoloMute();
+    return track;
+  }
+
+  /**
+   * Internal helper to enforce solo/mute logic across all tracks.
+   */
+  _updateSoloMute() {
+    const anySolo = Object.values(this.tracks).some(t => t.solo);
+    Object.values(this.tracks).forEach(t => {
+      const effectiveGain = anySolo ? (t.solo ? 1 : 0) : (t.mute ? 0 : 1);
+      t.gain.gain.setTargetAtTime(effectiveGain, this.ctx.currentTime, 0.01);
+    });
+  }
+
+  /**
+   * Connect a source node to a named track, creating the track if needed.
+   */
+  connectTrack(sourceNode, trackId = 'main') {
+    const track = this.addTrack(trackId);
+    sourceNode.connect(track.gain);
+    return track;
+  }
+
+  /**
+   * Render the current audio graph to an OfflineAudioContext.
+   * This implementation recreates the master chain (compressor → eq → soundgoodizer → gain → analyser)
+   * inside an offline context and connects any existing tracks (gain + optional pan) to it.
+   * Since live source nodes cannot be moved to the offline context, callers can provide an
+   * optional `setupCallback` that receives the offline context and a map of offline track nodes
+   * to manually connect their own sources.
+   * Returns a Promise resolving with an AudioBuffer.
+   */
+  async renderToBuffer(duration = 5, sampleRate = 44100, setupCallback = null) {
+    // Create an offline context with the desired duration.
+    const offline = new OfflineAudioContext(2, sampleRate * duration, sampleRate);
+
+    // Re‑create master chain inside the offline context.
+    const masterCompressor = offline.createDynamicsCompressor();
+    masterCompressor.threshold.value = -6;
+    masterCompressor.knee.value = 6;
+    masterCompressor.ratio.value = 3;
+    masterCompressor.attack.value = 0.003;
+    masterCompressor.release.value = 0.25;
+
+    const masterGain = offline.createGain();
+    masterGain.gain.value = 0.85;
+
+    // Connect master chain: compressor → gain → destination.
+    masterCompressor.connect(masterGain);
+    masterGain.connect(offline.destination);
+
+    // Re‑create tracks in the offline context.
+    const offlineTracks = {};
+    for (const [id, track] of Object.entries(this.tracks)) {
+      const gain = offline.createGain();
+      gain.gain.value = track.gain.gain.value; // copy current gain level
+      let pan = null;
+      if (offline.createStereoPanner) {
+        pan = offline.createStereoPanner();
+        if (track.pan) {
+          pan.pan.value = track.pan.pan.value;
+        } else {
+          pan.pan.value = 0;
+        }
+        gain.connect(pan);
+        pan.connect(masterCompressor);
+      } else {
+        gain.connect(masterCompressor);
+      }
+      offlineTracks[id] = { gain, pan, solo: track.solo, mute: track.mute };
+    }
+
+    // Apply solo/mute logic in the offline context.
+    const anySolo = Object.values(offlineTracks).some(t => t.solo);
+    for (const t of Object.values(offlineTracks)) {
+      const effectiveGain = anySolo ? (t.solo ? 1 : 0) : (t.mute ? 0 : 1);
+      t.gain.gain.setValueAtTime(effectiveGain, 0);
+    }
+
+    // If a setup callback is provided, give the caller a chance to connect sources.
+    if (typeof setupCallback === 'function') {
+      try {
+        await setupCallback(offline, offlineTracks);
+      } catch (e) {
+        console.warn('[AudioEngine] setupCallback threw an error:', e);
+      }
+    }
+
+    // Start rendering.
+    return offline.startRendering();
+  }
+
+  /**
+   * Convert an AudioBuffer to a WAV Blob and trigger a download.
+   * @param {AudioBuffer} buffer - The rendered audio data.
+   * @param {string} filename - Desired name of the downloaded file.
+   */
+  exportWav(buffer, filename = 'output.wav') {
+    const numChannels = buffer.numberOfChannels;
+    const sampleRate = buffer.sampleRate;
+    const length = buffer.length * numChannels * 2 + 44;
+    const wav = new Uint8Array(length);
+    const view = new DataView(wav.buffer);
+
+    function writeString(offset, str) {
+      for (let i = 0; i < str.length; i++) {
+        view.setUint8(offset + i, str.charCodeAt(i));
+      }
+    }
+
+    // RIFF header
+    writeString(0, 'RIFF');
+    view.setUint32(4, length - 8, true);
+    writeString(8, 'WAVE');
+    // fmt subchunk
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true); // PCM chunk size
+    view.setUint16(20, 1, true); // audio format = PCM
+    view.setUint16(22, numChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * numChannels * 2, true); // byte rate
+    view.setUint16(32, numChannels * 2, true); // block align
+    view.setUint16(34, 16, true); // bits per sample
+    // data subchunk
+    writeString(36, 'data');
+    view.setUint32(40, length - 44, true);
+
+    // Interleave channel data
+    let offset = 44;
+    const channels = [];
+    for (let i = 0; i < numChannels; i++) {
+      channels.push(buffer.getChannelData(i));
+    }
+    for (let i = 0; i < buffer.length; i++) {
+      for (let ch = 0; ch < numChannels; ch++) {
+        let sample = Math.max(-1, Math.min(1, channels[ch][i]));
+        // 16‑bit PCM conversion
+        sample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+        view.setInt16(offset, sample, true);
+        offset += 2;
+      }
+    }
+
+    const wavBlob = new Blob([wav], { type: 'audio/wav' });
+    const url = URL.createObjectURL(wavBlob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+  }
+
+  /**
+   * Convenience method: render to buffer then immediately export as WAV.
+   * @param {number} duration - Length in seconds.
+   * @param {string} filename - Desired download name.
+   * @param {function} [setupCallback] - Optional callback for connecting sources to the offline context.
+   */
+  async renderAndExport(duration = 5, filename = 'output.wav', setupCallback = null) {
+    try {
+      const buffer = await this.renderToBuffer(duration, 44100, setupCallback);
+      this.exportWav(buffer, filename);
+    } catch (e) {
+      console.error('[AudioEngine] renderAndExport failed:', e);
+    }
+  }
+
 
   // ── 808 Kick ─────────────────────────────────────────────────
   playKick(time, options = {}) {

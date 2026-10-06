@@ -125,6 +125,15 @@ class FLParametricEQ {
     this.floatingModal = modal;
   }
 
+  toggleFloating() {
+    if (!this.floatingModal) return;
+    if (this.floatingModal.classList.contains('hidden')) {
+      this.openFloating();
+    } else {
+      this.closeFloating();
+    }
+  }
+
   openFloating() {
     if (!this.floatingModal) return;
     this.floatingModal.classList.remove('hidden');

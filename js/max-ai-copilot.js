@@ -37,13 +37,7 @@ class MaxStudioBuddy {
   }
 
   _disableOldAIOptions() {
-    const oldAiBtn = document.getElementById('btn-ai-toggle');
-    if (oldAiBtn) oldAiBtn.style.display = 'none';
-
-    const aiTab1 = document.querySelector('[data-tab="ai-music"]');
-    const aiTab2 = document.querySelector('[data-tab="ai-producer"]');
-    if (aiTab1) aiTab1.style.display = 'none';
-    if (aiTab2) aiTab2.style.display = 'none';
+    // Preserve all studio tabs and controls
   }
 
   _initBuddy() {
