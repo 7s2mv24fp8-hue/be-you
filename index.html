@@ -136,34 +136,25 @@
 
     <div class="toolbar-separator"></div>
 
-    <!-- Cloud Projects & Database Controls -->
+    <!-- Main Actions Group -->
     <div class="cloud-group">
-      <button id="btn-cloud-save" class="tb-cloud-btn" title="Save Project to Database">
+      <button id="plat-cloud-save-btn" class="tb-cloud-btn" title="Save Project to Cloud">
         <span>💾</span> Save
-      </button>
-      <button id="plat-cloud-save-btn" class="tb-cloud-btn" title="Save to Cloud">
-        <span>☁️</span> Cloud Save
       </button>
       <button id="btn-cloud-open" class="tb-cloud-btn" title="Open Cloud Projects">
         <span>📂</span> Projects
       </button>
-      <button id="btn-import-sound" class="tb-cloud-btn" title="Import a sound file into the channel rack" style="border-color:rgba(34,211,238,0.35);color:#67e8f9;">
-        <span>🎵</span> Import
-      </button>
-      <button id="btn-preset-library" class="tb-cloud-btn" title="Browse pre-recorded sample library">
-        <span>🎶</span> Library
+      <button id="btn-import-sound" class="tb-cloud-btn" title="Import audio files or browse instrument presets" style="border-color:rgba(34,211,238,0.4);color:#67e8f9;font-weight:700;">
+        <span>🎵</span> Import Sounds
       </button>
       <button id="plat-explore-tab" title="Explore Community Beats">
         🌐 Explore
       </button>
-      <button id="plat-train-btn" title="Train Max with your beats" style="display:none">
+      <button id="plat-train-btn" title="Train Max with song audio & beats">
         🧠 Train Max
       </button>
-      <button id="plat-publish-btn" class="tb-cloud-btn" title="Publish beat to Explore" style="display:none">
-        <span>📡</span> Publish
-      </button>
       <button id="btn-admin-dash" class="tb-cloud-btn admin-btn" title="Super Admin Dashboard">
-        <span>⚡</span> Admin Panel
+        <span>⚡</span> Admin
       </button>
     </div>
 
@@ -286,6 +277,9 @@
         <button class="right-tab ai-producer-tab" data-tab="ai-producer">
           <span class="tab-icon">🤖</span> AI Producer
           <span class="ai-producer-dot"></span>
+        </button>
+        <button class="right-tab" data-tab="audio-editor">
+          <span class="tab-icon">🎛</span> Editor
         </button>
       </div>
 
@@ -843,6 +837,67 @@
         </div><!-- #ai-producer-view -->
       </div><!-- #tab-ai-producer -->
 
+        <!-- Audio Editor tab -->
+        <div id="tab-audio-editor" class="tab-content">
+          <div style="display:flex;flex-direction:column;height:100%;">
+            <!-- Top action bar -->
+            <div class="ae-inline-topbar">
+              <span class="ae-inline-title">🎛 Audio Editor &amp; Layer Mixer</span>
+              <button class="ae-inline-open-btn" id="ae-open-fullscreen" title="Open fullscreen editor">
+                ⛶ Fullscreen
+              </button>
+              <button class="ae-inline-add" id="ae-main-add-layer" title="Import sound into editor">
+                + Import Sound
+              </button>
+              <button class="ae-inline-export" id="ae-main-export" title="Export mix as WAV">
+                💾 Export Mix
+              </button>
+            </div>
+            <!-- Layer list inline -->
+            <div id="ae-inline-layers" style="padding:8px 12px;flex:1;overflow-y:auto;">
+              <div class="ae-empty-msg" id="ae-inline-empty">
+                <div style="font-size:32px;margin-bottom:8px;">🎵</div>
+                <div>Drag &amp; drop audio files here or click + Import Sound</div>
+                <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">WAV · MP3 · OGG · FLAC — Supports layering, fade, normalize, reverse, export</div>
+              </div>
+            </div>
+            <!-- Mini timeline -->
+            <div style="padding:8px 12px;">
+              <canvas id="ae-mini-canvas" style="width:100%;height:80px;border-radius:6px;background:#0a0c10;display:block;"></canvas>
+            </div>
+            <div class="ae-inline-controls">
+              <button class="ae-ctrl-btn" id="ae-inline-play">▶ Play Mix</button>
+              <button class="ae-ctrl-btn" id="ae-inline-pause">⏸</button>
+              <button class="ae-ctrl-btn" id="ae-inline-norm">📊 Normalize</button>
+              <button class="ae-ctrl-btn" id="ae-inline-fadein">↗️ Fade In</button>
+              <button class="ae-ctrl-btn" id="ae-inline-fadeout">↘️ Fade Out</button>
+              <button class="ae-ctrl-btn" id="ae-inline-reverse">🔄 Reverse</button>
+            </div>
+          </div>
+        </div>
+
+    </div>
+  </div>
+
+  <!-- ── Global Sound Drop Zone (always visible) ────────── -->
+  <div id="global-drop-zone" class="gdz-hidden">
+    <div class="gdz-inner">
+      <div class="gdz-icon">🎵</div>
+      <div class="gdz-title">Drop Audio Here</div>
+      <div class="gdz-sub">WAV · MP3 · OGG · FLAC · AIFF</div>
+    </div>
+  </div>
+
+  <!-- ── Quick Import Bar (visible at bottom of main screen) --> 
+  <div id="quick-import-bar">
+    <div class="qib-left">
+      <span class="qib-icon">🎵</span>
+      <span class="qib-label">Drop audio anywhere to import</span>
+    </div>
+    <div class="qib-actions">
+      <button class="qib-btn" id="qib-import-btn">📂 Import File</button>
+      <button class="qib-btn qib-editor-btn" id="qib-editor-btn">🎛 Audio Editor</button>
+      <button class="qib-btn qib-drum-btn" id="qib-drum-btn">🥁 Drum Machine</button>
     </div>
   </div>
 
@@ -1227,6 +1282,13 @@
 <script src="js/music-ai.js"></script>
 <script src="js/ai-producer.js"></script>
 <script src="js/backend-api.js"></script>
+<script src="js/sound-importer.js"></script>
+<script src="js/preset-samples.js"></script>
+<script src="js/song-trainer.js"></script>
+<script src="js/platform.js"></script>
+<script src="js/fl-features.js"></script>
+<script src="js/drum-machine.js"></script>
+<script src="js/audio-editor.js"></script>
 <script src="js/app.js"></script>
 
 <!-- Global utility functions (called from inline HTML) -->
@@ -1344,47 +1406,133 @@
   </div>
 
   <!-- TRAIN MAX MODAL -->
-  <div id="train-modal" class="plat-modal hidden">
+  <div id="train-modal" class="plat-modal hidden" style="width: 860px; max-width: 95vw;">
     <div class="plat-modal-header">
       <div class="plat-modal-title">
         <span class="plat-modal-icon">🧠</span>
-        <span>Train Max</span>
-        <span class="plat-modal-sub">Crowdsource the AI producer</span>
+        <span>Train Max AI Producer</span>
+        <span class="plat-modal-sub">Teach Max real songs, audio files & custom grooves</span>
       </div>
       <button class="plat-modal-close" onclick="window.platform.closeAll()">✕</button>
     </div>
+
+    <!-- Train Max Navigation Tabs -->
+    <div class="train-tabs-bar" id="train-tabs-bar">
+      <button class="train-tab-btn active" data-tab="song">🎵 Train from Song Audio</button>
+      <button class="train-tab-btn" data-tab="daw">🎹 Train from DAW Beat</button>
+      <button class="train-tab-btn" data-tab="brain">🧠 Max's Brain & Dataset</button>
+    </div>
+
     <div class="plat-modal-body-scroll">
       <div id="train-stats-panel" class="train-stats-panel">
         <div class="plat-loading"><div class="plat-spinner"></div><span>Loading stats...</span></div>
       </div>
 
-      <div class="train-submit-section">
-        <div class="train-section-title">📤 Submit your current beat to train Max</div>
-        <p class="train-hint">Max learns from real beats made by the community. The more diverse beats submitted, the smarter he gets. Your current DAW pattern will be captured automatically.</p>
-
-        <div class="train-form">
-          <label class="plat-label">Genre</label>
-          <input class="plat-input" id="train-genre-input" placeholder="trap, lofi, drill, afrobeats, house..." maxlength="50">
-
-          <label class="plat-label">Describe what makes this beat unique</label>
-          <textarea class="plat-input plat-textarea" id="train-prompt-input" placeholder="e.g. Dark 808 trap with hi-hat rolls and heavy sub bass, perfect for drill" maxlength="500"></textarea>
-
-          <button class="plat-btn-primary" id="train-submit-btn">
-            🚀 Submit Pattern to Train Max
-          </button>
-          <div id="train-submit-status" class="plat-status hidden"></div>
+      <!-- TAB 1: SONG AUDIO TRAINER -->
+      <div id="train-tab-song" class="train-tab-pane">
+        <div class="train-dropzone" id="train-song-dropzone">
+          <div class="td-icon">🎵</div>
+          <div class="td-title">Drop any Song Audio File here (MP3, WAV, OGG, FLAC)</div>
+          <div class="td-sub">or click to browse your songs — Max will extract the rhythm & tempo automatically</div>
+          <input type="file" id="train-song-file-input" accept="audio/*" style="display:none;">
         </div>
 
-        <div class="train-how-it-works">
-          <div class="train-section-title">How it works</div>
-          <div class="train-steps">
-            <div class="train-step"><span class="ts-num">1</span><span>You make a beat in the DAW and submit it here</span></div>
-            <div class="train-step"><span class="ts-num">2</span><span>The admin reviews it for quality</span></div>
-            <div class="train-step"><span class="ts-num">3</span><span>Once approved, Max immediately learns from it</span></div>
-            <div class="train-step"><span class="ts-num">4</span><span>Max's suggestions improve for everyone on the platform</span></div>
+        <div id="train-song-analysis-container" class="hidden" style="margin-top: 18px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,106,0,0.25); border-radius: 12px; padding: 18px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <h4 id="ts-song-name" style="margin: 0; color: #fff; font-size: 16px; font-weight: 700;">Song Name</h4>
+              <span id="ts-song-meta" style="font-size: 12px; color: #a1a1aa;">Extracted 120 BPM · Hip-Hop</span>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <label style="font-size: 11px; color: #a1a1aa;">Genre:</label>
+              <select id="ts-genre-select" class="plat-input" style="width: 130px; padding: 5px 8px; font-size: 12px;">
+                <option value="hip-hop">Hip-Hop</option>
+                <option value="trap">Trap</option>
+                <option value="drill">Drill</option>
+                <option value="lo-fi">Lo-Fi</option>
+                <option value="house">House</option>
+                <option value="techno">Techno</option>
+                <option value="afrobeats">Afrobeats</option>
+                <option value="reggaeton">Reggaeton</option>
+                <option value="r&b">R&B</option>
+                <option value="pop">Pop</option>
+                <option value="rock">Rock</option>
+              </select>
+              <label style="font-size: 11px; color: #a1a1aa;">BPM:</label>
+              <input type="number" id="ts-bpm-input" class="plat-input" value="120" min="40" max="220" style="width: 65px; padding: 5px 8px; font-size: 12px;">
+            </div>
+          </div>
+
+          <!-- Waveform Canvas -->
+          <canvas id="ts-waveform-canvas" width="780" height="42" style="width: 100%; height: 42px; background: rgba(0,0,0,0.6); border-radius: 6px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.05);"></canvas>
+
+          <!-- Extracted 16-Step Pattern Grid Preview -->
+          <div style="font-size: 11px; font-weight: 700; color: #ff9d00; letter-spacing: 0.5px; margin-bottom: 8px; display: flex; justify-content: space-between;">
+            <span>EXTRACTED 16-STEP DRUM MATRIX</span>
+            <span style="color: #a1a1aa;">Web Audio AI Rhythm Detection</span>
+          </div>
+          <div id="ts-matrix-grid" style="display: grid; gap: 4px; background: rgba(0,0,0,0.4); padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.06);"></div>
+
+          <div style="display: flex; gap: 12px;">
+            <button id="ts-teach-btn" class="plat-btn-primary" style="flex: 2; background: linear-gradient(135deg, #ff6a00, #ee0979); border: none; font-size: 14px; font-weight: 700; height: 38px; cursor: pointer;">
+              🧠 Teach Max this Song's Beat
+            </button>
+            <button id="ts-load-daw-btn" class="plat-btn-secondary" style="flex: 1; border: 1px solid rgba(255,255,255,0.2); font-size: 13px; height: 38px; cursor: pointer; color: #fff;">
+              📥 Load into DAW
+            </button>
+          </div>
+          <div id="ts-status-msg" class="plat-status hidden" style="margin-top: 10px;"></div>
+        </div>
+      </div>
+
+      <!-- TAB 2: DAW BEAT TRAINER -->
+      <div id="train-tab-daw" class="train-tab-pane hidden">
+        <div class="train-submit-section">
+          <div class="train-section-title">📤 Submit your current DAW beat to train Max</div>
+          <p class="train-hint">Max learns from real beats made by the community. Your current active DAW step sequencer pattern will be saved and injected into Max's brain.</p>
+
+          <div class="train-form">
+            <label class="plat-label">Genre</label>
+            <input class="plat-input" id="train-genre-input" placeholder="trap, lofi, drill, afrobeats, house..." maxlength="50">
+
+            <label class="plat-label">Describe what makes this beat unique</label>
+            <textarea class="plat-input plat-textarea" id="train-prompt-input" placeholder="e.g. Dark 808 trap with hi-hat rolls and heavy sub bass, perfect for drill" maxlength="500"></textarea>
+
+            <button class="plat-btn-primary" id="train-submit-btn">
+              🚀 Submit Pattern to Train Max
+            </button>
+            <div id="train-submit-status" class="plat-status hidden"></div>
           </div>
         </div>
       </div>
+
+      <!-- TAB 3: MAX'S BRAIN & DATASET -->
+      <div id="train-tab-brain" class="train-tab-pane hidden">
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+          <h4 style="margin: 0 0 8px 0; color: #ff9d00; font-size: 15px; font-weight: 700;">🧠 Max's Learned Knowledge Base</h4>
+          <p style="font-size: 12px; color: #a1a1aa; line-height: 1.5; margin: 0 0 14px 0;">
+            Max uses dynamic pattern blending. Song uploads and submitted beats are analyzed and blended with dataset patterns to give you instant studio-grade beat generation.
+          </p>
+
+          <div id="brain-genres-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px;">
+            <div class="plat-loading"><div class="plat-spinner"></div><span>Loading learned genres...</span></div>
+          </div>
+        </div>
+
+        <div style="background: rgba(255,106,0,0.08); border: 1px solid rgba(255,106,0,0.25); border-radius: 12px; padding: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h5 style="margin: 0; color: #fff; font-size: 14px; font-weight: 700;">Google Magenta Groove MIDI Dataset</h5>
+            <p style="margin: 3px 0 0 0; font-size: 12px; color: #a1a1aa;">
+              Train Max on 1,000+ authentic real drummer performances across 20 genres.
+            </p>
+          </div>
+          <button id="btn-run-groove-training" class="plat-btn-primary" style="background: #ff6a00; border: none; white-space: nowrap; font-weight: 700;">
+            ⚡ Auto-Train Dataset
+          </button>
+        </div>
+        <div id="groove-train-status" class="plat-status hidden" style="margin-top: 10px;"></div>
+      </div>
+
     </div>
   </div>
 

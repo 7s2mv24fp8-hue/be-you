@@ -15,6 +15,8 @@ class FLStudioApp {
     this.recorder    = null;
     this.musicAI     = null;
     this.aiProducer  = null;
+    this.drumMachine = null;
+    this.audioEditor = null;
 
     // UI state
     this.activeTab    = 'piano-roll';
@@ -46,6 +48,9 @@ class FLStudioApp {
     this._initAIMusic();
     this._initAIProducer();
     this._initBackendIntegration();
+    this._initDrumMachine();
+    this._initAudioEditor();
+    this._initGlobalDropZone();
 
     // Sequencer callbacks
     this.sequencer.onStep = step => this._onStep(step);
@@ -462,9 +467,14 @@ class FLStudioApp {
     const display = document.getElementById('bpm-display');
     display.value = this.sequencer.bpm;
 
+    const syncDrumBPM = (bpm) => {
+      if (this.drumMachine) this.drumMachine.syncBPM(bpm);
+    };
+
     makeBPMDrag(display, bpm => {
       this.sequencer.setBPM(bpm);
       display.value = bpm;
+      syncDrumBPM(bpm);
     });
 
     display.addEventListener('change', e => {
@@ -472,16 +482,19 @@ class FLStudioApp {
       if (!isNaN(bpm)) {
         this.sequencer.setBPM(bpm);
         display.value = this.sequencer.bpm;
+        syncDrumBPM(this.sequencer.bpm);
       }
     });
 
     document.getElementById('bpm-up').addEventListener('click', () => {
       this.sequencer.setBPM(this.sequencer.bpm + 1);
       display.value = this.sequencer.bpm;
+      syncDrumBPM(this.sequencer.bpm);
     });
     document.getElementById('bpm-down').addEventListener('click', () => {
       this.sequencer.setBPM(this.sequencer.bpm - 1);
       display.value = this.sequencer.bpm;
+      syncDrumBPM(this.sequencer.bpm);
     });
   }
 
@@ -2499,4 +2512,257 @@ class FLStudioApp {
 window.addEventListener('DOMContentLoaded', () => {
   window.app = new FLStudioApp();
 });
+
+// ── Drum Machine Initializer (added to FLStudioApp prototype) ──
+FLStudioApp.prototype._initDrumMachine = function() {
+  if (typeof DrumMachine === 'undefined') return;
+  this.drumMachine = new DrumMachine(this.audioEngine);
+
+  // QIB button
+  document.getElementById('qib-drum-btn')?.addEventListener('click', () => {
+    this._switchTab('drum-machine');
+  });
+};
+
+// ── Audio Editor Initializer ────────────────────────────────────
+FLStudioApp.prototype._initAudioEditor = function() {
+  if (typeof AudioEditor === 'undefined') return;
+  this.audioEditor = new AudioEditor(this.audioEngine);
+
+  // QIB editor button
+  document.getElementById('qib-editor-btn')?.addEventListener('click', () => {
+    this._switchTab('audio-editor');
+  });
+
+  // Inline editor buttons
+  document.getElementById('ae-open-fullscreen')?.addEventListener('click', () => {
+    this.audioEditor.open();
+  });
+
+  document.getElementById('ae-main-add-layer')?.addEventListener('click', () => {
+    const fi = document.createElement('input');
+    fi.type = 'file'; fi.accept = 'audio/*';
+    fi.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        const ab = await file.arrayBuffer();
+        if (this.audioEngine.ctx.state === 'suspended') await this.audioEngine.ctx.resume();
+        const buf = await this.audioEngine.ctx.decodeAudioData(ab);
+        this.audioEditor.addLayer(buf, file.name.replace(/\.[^.]+$/, ''));
+        this._updateInlineLayerList();
+        showToast(`🎵 Imported: ${file.name}`, 2000);
+        const emptyEl = document.getElementById('ae-inline-empty');
+        if (emptyEl) emptyEl.style.display = 'none';
+      } catch(err) {
+        showToast('❌ Could not decode audio file', 2000);
+      }
+    });
+    fi.click();
+  });
+
+  document.getElementById('ae-main-export')?.addEventListener('click', () => {
+    this.audioEditor.exportMix();
+  });
+
+  // Inline controls
+  document.getElementById('ae-inline-play')?.addEventListener('click',    () => this.audioEditor.play());
+  document.getElementById('ae-inline-pause')?.addEventListener('click',   () => this.audioEditor.pause());
+  document.getElementById('ae-inline-norm')?.addEventListener('click',    () => { this.audioEditor.normalize(); this._updateInlineLayerList(); });
+  document.getElementById('ae-inline-fadein')?.addEventListener('click',  () => this.audioEditor.fadeIn(0.5));
+  document.getElementById('ae-inline-fadeout')?.addEventListener('click', () => this.audioEditor.fadeOut(0.5));
+  document.getElementById('ae-inline-reverse')?.addEventListener('click', () => { this.audioEditor.reverse(); this._updateInlineLayerList(); });
+
+  // Mini canvas redraw
+  this._redrawMiniCanvas();
+};
+
+FLStudioApp.prototype._updateInlineLayerList = function() {
+  if (!this.audioEditor) return;
+  const container = document.getElementById('ae-inline-layers');
+  if (!container) return;
+  const emptyEl = document.getElementById('ae-inline-empty');
+  if (!this.audioEditor.layers.length) {
+    if (emptyEl) emptyEl.style.display = '';
+    return;
+  }
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  // Remove old inline layer cards (not the empty msg)
+  container.querySelectorAll('.ae-inline-layer-card').forEach(el => el.remove());
+
+  this.audioEditor.layers.forEach(layer => {
+    const card = document.createElement('div');
+    card.className = 'ae-inline-layer-card';
+    card.style.cssText = `
+      display:flex;align-items:center;gap:8px;padding:8px 10px;
+      background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);
+      border-radius:7px;margin-bottom:4px;cursor:pointer;
+      border-left: 3px solid ${layer.color};
+    `;
+    const dur = layer.buffer ? layer.buffer.duration.toFixed(2) : '0.00';
+    card.innerHTML = `
+      <div style="font-size:11px;font-weight:700;color:#fff;flex:1;">${layer.name}</div>
+      <div style="font-size:9px;color:rgba(255,255,255,0.35);font-family:monospace;">${dur}s</div>
+      <button style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);border-radius:4px;
+                     color:#f87171;font-size:9px;padding:2px 6px;cursor:pointer;font-family:inherit;"
+              data-id="${layer.id}">✕</button>
+    `;
+    card.querySelector('button').addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.audioEditor.layers = this.audioEditor.layers.filter(l => l.id !== layer.id);
+      this._updateInlineLayerList();
+    });
+    card.addEventListener('click', () => this.audioEditor.selectLayer(layer.id));
+    container.appendChild(card);
+  });
+
+  this._redrawMiniCanvas();
+};
+
+FLStudioApp.prototype._redrawMiniCanvas = function() {
+  if (!this.audioEditor) return;
+  const canvas = document.getElementById('ae-mini-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width  = canvas.offsetWidth  || 400;
+  canvas.height = canvas.offsetHeight || 80;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#0a0c10';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const W = canvas.width; const H = canvas.height;
+  const dur = Math.max(this.audioEditor.duration, 10);
+  this.audioEditor.layers.forEach(layer => {
+    if (!layer.buffer) return;
+    const x = (layer.startSec / dur) * W;
+    const w = Math.max(2, ((layer.trimEnd - layer.trimStart) / dur) * W);
+    ctx.fillStyle = layer.color + '44';
+    ctx.strokeStyle = layer.color;
+    ctx.lineWidth = 1;
+    const r = 3;
+    ctx.beginPath();
+    ctx.moveTo(x+r,4); ctx.lineTo(x+w-r,4); ctx.arcTo(x+w,4,x+w,4+r,r);
+    ctx.lineTo(x+w,H-4-r); ctx.arcTo(x+w,H-4,x+w-r,H-4,r);
+    ctx.lineTo(x+r,H-4); ctx.arcTo(x,H-4,x,H-4-r,r);
+    ctx.lineTo(x,4+r); ctx.arcTo(x,4,x+r,4,r);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+  });
+};
+
+// ── Global Drop Zone ────────────────────────────────────────────
+FLStudioApp.prototype._initGlobalDropZone = function() {
+  const dropZone = document.getElementById('global-drop-zone');
+  const qib      = document.getElementById('quick-import-bar');
+  const qibLabel = qib?.querySelector('.qib-label');
+  let _dragCounter = 0;
+
+  // QIB import file button
+  document.getElementById('qib-import-btn')?.addEventListener('click', () => {
+    const fi = document.createElement('input');
+    fi.type = 'file'; fi.accept = 'audio/*';
+    fi.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (file) await this._importFileToApp(file);
+    });
+    fi.click();
+  });
+
+  // Global drag-over → show fullscreen drop zone
+  document.addEventListener('dragenter', (e) => {
+    if (!e.dataTransfer?.types?.includes('Files')) return;
+    _dragCounter++;
+    if (_dragCounter === 1) {
+      dropZone?.classList.remove('gdz-hidden');
+      dropZone?.classList.add('gdz-active');
+      qib?.classList.add('qib-dragging');
+      if (qibLabel) qibLabel.textContent = '🎵 Drop to import...';
+    }
+  });
+
+  document.addEventListener('dragleave', (e) => {
+    _dragCounter = Math.max(0, _dragCounter - 1);
+    if (_dragCounter === 0) {
+      dropZone?.classList.remove('gdz-active');
+      dropZone?.classList.add('gdz-hidden');
+      qib?.classList.remove('qib-dragging');
+      if (qibLabel) qibLabel.textContent = 'Drop audio anywhere to import';
+    }
+  });
+
+  document.addEventListener('dragover', (e) => e.preventDefault());
+
+  document.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    _dragCounter = 0;
+    dropZone?.classList.remove('gdz-active');
+    dropZone?.classList.add('gdz-hidden');
+    qib?.classList.remove('qib-dragging');
+    // Check if dragging an internal preset sample (e.g. Flute, Guitar, Piano, Drums, Bass)
+    try {
+      const rawText = e.dataTransfer?.getData('text/plain');
+      if (rawText) {
+        const data = JSON.parse(rawText);
+        if (data.type === 'beyou-preset-sample' && window.presetLibrary) {
+          const sample = { name: data.name, color: data.color, cat: data.cat };
+          const catList = window.presetLibrary._categories[data.cat] || [];
+          const found = catList.find(s => s.name === data.name);
+          if (found) sample.fn = found.fn;
+          await window.presetLibrary._addToRack(sample);
+          return;
+        }
+      }
+    } catch (_) {}
+
+    const files = Array.from(e.dataTransfer?.files || []);
+    const audioFiles = files.filter(f => f.type.startsWith('audio/') || /\.(wav|mp3|ogg|flac|aiff|aif|m4a)$/i.test(f.name));
+    if (!audioFiles.length) {
+      showToast('⚠️ No supported audio files dropped', 2000);
+      return;
+    }
+    for (const file of audioFiles) {
+      await this._importFileToApp(file);
+    }
+  });
+};
+
+FLStudioApp.prototype._importFileToApp = async function(file) {
+  try {
+    if (this.audioEngine.ctx.state === 'suspended') await this.audioEngine.ctx.resume();
+    const ab  = await file.arrayBuffer();
+    const buf = await this.audioEngine.ctx.decodeAudioData(ab);
+    const name = file.name.replace(/\.[^.]+$/, '');
+
+    // Add to Audio Editor layers
+    if (this.audioEditor) {
+      this.audioEditor.addLayer(buf, name);
+      this._updateInlineLayerList();
+    }
+
+    // Also add to sequencer as audio channel (existing behavior)
+    const colors = ['#22d3ee','#a855f7','#84cc16','#f59e0b','#ec4899','#6366f1'];
+    const color  = colors[this.sequencer.channels.length % colors.length];
+    this.sequencer.addChannel({
+      type: 'audio',
+      name,
+      color,
+      audioBuffer: buf,
+      sampleFileName: file.name,
+      steps: new Array(16).fill(false),
+      velocity: new Array(16).fill(1.0),
+      volume: 0.8,
+      pan: 0,
+      muted: false,
+    });
+    this._refreshChannelRack();
+    showToast(`🎵 Imported: ${file.name}`, 2500);
+
+    // Switch to audio editor to show the imported file
+    this._switchTab('audio-editor');
+    this._redrawMiniCanvas();
+  } catch(err) {
+    console.error('Import error:', err);
+    showToast(`❌ Could not import: ${file.name}`, 2500);
+  }
+};
 

@@ -253,6 +253,33 @@ class Sequencer {
     }));
     if (this.onPatternChange) this.onPatternChange();
   }
+
+  // ── Add a new channel (e.g. imported audio) ────────────────────
+  addChannel(channelData) {
+    const defaults = {
+      name: 'New Track',
+      color: '#22d3ee',
+      type: 'audio',
+      steps: new Array(this.steps).fill(false),
+      velocity: new Array(this.steps).fill(1.0),
+      volume: 0.9,
+      pan: 0,
+      muted: false,
+      solo: false,
+      notes: [],
+      filterFreq: 2000,
+      filterRes: 1,
+      audioBuffer: null,
+      sampleFileName: null,
+    };
+    const ch = { ...defaults, ...channelData };
+    // Normalize steps array length
+    while (ch.steps.length < this.steps)    ch.steps.push(false);
+    while (ch.velocity.length < this.steps) ch.velocity.push(1.0);
+    this.channels.push(ch);
+    if (this.onPatternChange) this.onPatternChange();
+    return this.channels.length - 1;
+  }
 }
 
 window.Sequencer = Sequencer;

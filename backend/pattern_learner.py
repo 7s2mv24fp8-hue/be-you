@@ -25,9 +25,13 @@ _LEARNED_PATTERNS: Optional[Dict[str, List[Dict]]] = None
 _TRAINED = False
 
 
+_LAST_MTIME = 0
+
 def _load_patterns() -> Dict[str, List[Dict]]:
-    global _LEARNED_PATTERNS, _TRAINED
-    if _LEARNED_PATTERNS is not None:
+    global _LEARNED_PATTERNS, _TRAINED, _LAST_MTIME
+    current_mtime = _PATTERNS_JSON.stat().st_mtime if _PATTERNS_JSON.exists() else 0
+
+    if _LEARNED_PATTERNS is not None and current_mtime == _LAST_MTIME:
         return _LEARNED_PATTERNS
 
     if not _PATTERNS_JSON.exists():
@@ -40,6 +44,7 @@ def _load_patterns() -> Dict[str, List[Dict]]:
             data = json.load(f)
         _LEARNED_PATTERNS = data
         _TRAINED = True
+        _LAST_MTIME = current_mtime
         total = sum(len(v) for v in data.values())
         print(f"[PatternLearner] Loaded {total} real patterns across "
               f"{len(data)} genres from Groove MIDI Dataset")
@@ -155,9 +160,9 @@ def inject_pattern(submission: dict) -> bool:
 
     # Persist
     try:
-        PATTERNS_FILE.parent.mkdir(parents=True, exist_ok=True)
-        with open(PATTERNS_FILE, "w") as f:
-            _json.dump(patterns, f)
+        _PATTERNS_JSON.parent.mkdir(parents=True, exist_ok=True)
+        with open(_PATTERNS_JSON, "w") as f:
+            _json.dump(patterns, f, indent=2)
         global _TRAINED
         _TRAINED = True
         return True

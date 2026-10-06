@@ -43,6 +43,22 @@ class PresetSampleLibrary {
   /* ── Catalog ────────────────────────────────────────────────── */
   _buildCatalog() {
     return {
+      'Flutes & Winds': [
+        { name: 'Acoustic Flute', color: '#38bdf8', fn: (ctx) => this._synthAcousticFlute(ctx) },
+        { name: 'Jazz Flute',     color: '#0284c7', fn: (ctx) => this._synthJazzFlute(ctx) },
+        { name: 'Pan Flute',      color: '#0369a1', fn: (ctx) => this._synthPanFlute(ctx) },
+        { name: 'Piccolo',        color: '#075985', fn: (ctx) => this._synthPiccolo(ctx) },
+      ],
+      'Guitars & Strings': [
+        { name: 'Acoustic Guitar', color: '#eab308', fn: (ctx) => this._synthAcousticGuitar(ctx) },
+        { name: 'Electric Guitar', color: '#ca8a04', fn: (ctx) => this._synthElectricGuitar(ctx) },
+        { name: 'Spanish Guitar',  color: '#a16207', fn: (ctx) => this._synthSpanishGuitar(ctx) },
+        { name: 'Violin / Strings',color: '#854d0e', fn: (ctx) => this._synthStrings(ctx) },
+      ],
+      'Pianos & Keys': [
+        { name: 'Grand Piano',    color: '#a855f7', fn: (ctx) => this._synthGrandPiano(ctx) },
+        { name: 'Rhodes EP',      color: '#7e22ce', fn: (ctx) => this._synthRhodesEP(ctx) },
+      ],
       'Kicks': [
         { name: '808 Kick',       color: '#ff6a00', fn: (ctx) => this._synth808Kick(ctx) },
         { name: 'Acoustic Kick',  color: '#fb923c', fn: (ctx) => this._synthAcousticKick(ctx) },
@@ -113,26 +129,33 @@ class PresetSampleLibrary {
     ).join('');
 
     overlay.innerHTML = `
-      <div class="psl-modal">
+      <div class="psl-modal" style="width: 780px; max-width: 95vw;">
         <div class="psl-header">
           <div class="psl-title">
-            <span class="psl-icon">🎧</span>
+            <span class="psl-icon">🎵</span>
             <div>
-              <div class="psl-title-text">Sample Library</div>
-              <div class="psl-subtitle">Pre-recorded sounds · Click to preview · Double-click to add</div>
+              <div class="psl-title-text">Import Sounds & Instrument Library</div>
+              <div class="psl-subtitle">Import local audio files or drag instrument presets (Flutes, Guitars, Pianos, Drums, Bass) into DAW</div>
             </div>
           </div>
           <button class="psl-close-btn" id="psl-close">✕</button>
         </div>
 
         <div class="psl-body">
-          <!-- Sidebar: categories -->
+          <!-- Sidebar: File import + categories -->
           <div class="psl-sidebar">
+            <div class="psl-file-dropzone" id="psl-file-dropzone" style="margin: 10px 8px 4px 8px; padding: 10px 6px; border: 1px dashed rgba(34,211,238,0.4); background: rgba(34,211,238,0.06); border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.2s;">
+              <div style="font-size: 18px;">📁</div>
+              <div style="font-size: 11px; font-weight: 700; color: #67e8f9; margin-top: 2px;">Import Audio File</div>
+              <div style="font-size: 9px; color: #a1a1aa;">(MP3, WAV, FLAC, OGG)</div>
+              <input type="file" id="psl-file-input" accept="audio/*" style="display:none;">
+            </div>
+
             <div class="psl-search-wrap">
               <input class="psl-search" id="psl-search" placeholder="🔍 Search samples…" autocomplete="off">
             </div>
             <div class="psl-cat-list">
-              <button class="psl-cat-btn active" data-cat="all">All</button>
+              <button class="psl-cat-btn active" data-cat="all">All Presets</button>
               ${catBtns}
             </div>
           </div>
@@ -166,6 +189,19 @@ class PresetSampleLibrary {
     // Close
     overlay.querySelector('#psl-close').addEventListener('click', () => this.close());
     overlay.addEventListener('click', e => { if (e.target === overlay) this.close(); });
+
+    // File import trigger
+    const dropzone = overlay.querySelector('#psl-file-dropzone');
+    const fileInput = overlay.querySelector('#psl-file-input');
+    if (dropzone && fileInput) {
+      dropzone.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', async (e) => {
+        if (e.target.files?.[0] && window.app?._importFileToApp) {
+          await window.app._importFileToApp(e.target.files[0]);
+          this.close();
+        }
+      });
+    }
 
     // Category filter
     overlay.querySelector('.psl-cat-list').addEventListener('click', e => {
@@ -225,6 +261,18 @@ class PresetSampleLibrary {
           </div>
           <div class="psl-card-name">${sample.name}</div>
           <div class="psl-card-cat">${cat}</div>`;
+        card.setAttribute('draggable', 'true');
+        card.title = `Drag and drop "${sample.name}" onto Channel Rack or Drum Machine!`;
+        card.addEventListener('dragstart', (e) => {
+          this._selectedSample = { ...sample, cat };
+          e.dataTransfer.setData('text/plain', JSON.stringify({
+            type: 'beyou-preset-sample',
+            name: sample.name,
+            cat: cat,
+            color: sample.color,
+          }));
+          e.dataTransfer.effectAllowed = 'copy';
+        });
 
         // Single click → select + preview
         card.addEventListener('click', () => {
@@ -824,6 +872,136 @@ class PresetSampleLibrary {
         const freq = 3000 * Math.exp(-t * 15);
         const env  = Math.exp(-t * 8);
         ch[i] = Math.sin(2*Math.PI*freq*t) * env * 0.85;
+      }
+  // ── FLUTES & WINDS ───────────────────────────────────────────
+  _synthAcousticFlute(ctx, freq = 440.0) {
+    return this._makeBuffer(ctx, 1.2, (ch, sr, len) => {
+      for (let i = 0; i < len; i++) {
+        const t = i / sr;
+        const env = Math.sin(Math.min(Math.PI, t * Math.PI / 1.0)) * Math.exp(-t * 0.8);
+        const vibrato = Math.sin(2 * Math.PI * 5.5 * t) * 6;
+        const tone = Math.sin(2 * Math.PI * (freq + vibrato) * t);
+        const harmonic = Math.sin(2 * Math.PI * (freq * 2 + vibrato) * t) * 0.25;
+        const breath = (Math.random() * 2 - 1) * 0.08 * Math.exp(-t * 2.0);
+        ch[i] = (tone + harmonic + breath) * env * 0.75;
+      }
+    });
+  }
+
+  _synthJazzFlute(ctx, freq = 523.25) {
+    return this._makeBuffer(ctx, 1.0, (ch, sr, len) => {
+      for (let i = 0; i < len; i++) {
+        const t = i / sr;
+        const env = Math.exp(-t * 1.5) * (1 - Math.exp(-t * 40));
+        const vibrato = Math.sin(2 * Math.PI * 6 * t) * 8;
+        const tone = Math.sin(2 * Math.PI * (freq + vibrato) * t);
+        const chiff = (Math.random() * 2 - 1) * Math.exp(-t * 60) * 0.3;
+        ch[i] = (tone + chiff) * env * 0.75;
+      }
+    });
+  }
+
+  _synthPanFlute(ctx, freq = 392.0) {
+    return this._makeBuffer(ctx, 1.4, (ch, sr, len) => {
+      for (let i = 0; i < len; i++) {
+        const t = i / sr;
+        const env = Math.exp(-t * 1.0) * (1 - Math.exp(-t * 30));
+        const tone = Math.sin(2 * Math.PI * freq * t);
+        const sub = Math.sin(2 * Math.PI * (freq * 0.5) * t) * 0.15;
+        const breath = (Math.random() * 2 - 1) * 0.12 * Math.exp(-t * 3.0);
+        ch[i] = (tone + sub + breath) * env * 0.7;
+      }
+    });
+  }
+
+  _synthPiccolo(ctx, freq = 880.0) {
+    return this._makeBuffer(ctx, 0.8, (ch, sr, len) => {
+      for (let i = 0; i < len; i++) {
+        const t = i / sr;
+        const env = Math.exp(-t * 2.5);
+        const tone = Math.sin(2 * Math.PI * freq * t);
+        ch[i] = tone * env * 0.6;
+      }
+    });
+  }
+
+  // ── GUITARS & STRINGS ───────────────────────────────────────
+  _synthAcousticGuitar(ctx, freq = 220.0) {
+    return this._makeBuffer(ctx, 1.5, (ch, sr, len) => {
+      for (let i = 0; i < len; i++) {
+        const t = i / sr;
+        const env = Math.exp(-t * 3.5);
+        const pluck = Math.sin(2 * Math.PI * freq * t) * 0.6 +
+                      Math.sin(2 * Math.PI * freq * 2 * t) * 0.25 +
+                      Math.sin(2 * Math.PI * freq * 3 * t) * 0.1;
+        const bodyRes = Math.sin(2 * Math.PI * 110 * t) * Math.exp(-t * 12) * 0.15;
+        ch[i] = (pluck + bodyRes) * env * 0.8;
+      }
+    });
+  }
+
+  _synthElectricGuitar(ctx, freq = 329.63) {
+    return this._makeBuffer(ctx, 1.2, (ch, sr, len) => {
+      for (let i = 0; i < len; i++) {
+        const t = i / sr;
+        const env = Math.exp(-t * 2.0);
+        let s = Math.sin(2 * Math.PI * freq * t) + Math.sin(2 * Math.PI * freq * 2 * t) * 0.4;
+        s = Math.tanh(s * 3) * 0.75; // overdrive
+        ch[i] = s * env;
+      }
+    });
+  }
+
+  _synthSpanishGuitar(ctx, freq = 293.66) {
+    return this._makeBuffer(ctx, 1.4, (ch, sr, len) => {
+      for (let i = 0; i < len; i++) {
+        const t = i / sr;
+        const env = Math.exp(-t * 3.0);
+        const tone = Math.sin(2 * Math.PI * freq * t) * 0.7 + Math.sin(2 * Math.PI * freq * 2 * t) * 0.2;
+        ch[i] = tone * env * 0.8;
+      }
+    });
+  }
+
+  _synthStrings(ctx, freq = 329.63) {
+    return this._makeBuffer(ctx, 2.0, (ch, sr, len) => {
+      for (let i = 0; i < len; i++) {
+        const t = i / sr;
+        const env = Math.sin(Math.min(Math.PI, t * Math.PI / 1.8));
+        const vib = Math.sin(2 * Math.PI * 5 * t) * 4;
+        const f = freq + vib;
+        let saw = 0;
+        for (let h = 1; h <= 6; h++) {
+          saw += (Math.sin(2 * Math.PI * f * h * t) / h);
+        }
+        ch[i] = saw * env * 0.35;
+      }
+    });
+  }
+
+  // ── PIANOS & KEYS ─────────────────────────────────────────────
+  _synthGrandPiano(ctx, freq = 261.63) {
+    return this._makeBuffer(ctx, 1.8, (ch, sr, len) => {
+      for (let i = 0; i < len; i++) {
+        const t = i / sr;
+        const env = Math.exp(-t * 2.2);
+        const hammer = (Math.random() * 2 - 1) * Math.exp(-t * 120) * 0.2;
+        const tone = Math.sin(2 * Math.PI * freq * t) * 0.6 +
+                     Math.sin(2 * Math.PI * freq * 2 * t) * 0.25 +
+                     Math.sin(2 * Math.PI * freq * 3 * t) * 0.1;
+        ch[i] = (tone + hammer) * env * 0.85;
+      }
+    });
+  }
+
+  _synthRhodesEP(ctx, freq = 261.63) {
+    return this._makeBuffer(ctx, 1.6, (ch, sr, len) => {
+      for (let i = 0; i < len; i++) {
+        const t = i / sr;
+        const env = Math.exp(-t * 2.0);
+        const tremolo = 1 + Math.sin(2 * Math.PI * 4 * t) * 0.15;
+        const tone = Math.sin(2 * Math.PI * freq * t) + Math.sin(2 * Math.PI * freq * 4 * t) * 0.15;
+        ch[i] = tone * env * tremolo * 0.7;
       }
     });
   }

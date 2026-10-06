@@ -699,6 +699,15 @@ class TrainSubmitRequest(BaseModel):
     mix_json:     Optional[str] = Field(None, max_length=100_000)
 
 
+class SongTrainRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    song_name:    str  = Field(..., min_length=1, max_length=150)
+    genre:        str  = Field("hip-hop", min_length=1, max_length=50)
+    bpm:          int  = Field(120, ge=40, le=300)
+    pattern_json: str  = Field(..., min_length=2, max_length=500_000)
+    auto_approve: bool = Field(True)
+
+
 class ProfileUpdateRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     full_name:  Optional[str] = Field(None, min_length=1, max_length=100)
@@ -1009,6 +1018,79 @@ def train_status_user(user: dict = Depends(get_current_user)):
         "global_approved_patterns": global_approved,
         "max_trained": global_approved > 0,
     }
+
+
+@app.post("/api/train/song")
+def train_song(req: SongTrainRequest, req_obj: Request):
+    """
+    Train Max directly from an analyzed song audio file or song pattern.
+    Immediately injects the extracted pattern into pattern_learner so Max learns it.
+    """
+    conn = get_db_connection()
+
+    # Retrieve authenticated user or fallback to system user in DB
+    user_id = None
+    auth = req_obj.headers.get("authorization", "")
+    if auth.startswith("Bearer "):
+        try:
+            token = auth.split(" ")[1]
+            u = get_current_user(token)
+            if u:
+                user_id = u["id"]
+        except Exception:
+            pass
+
+    if not user_id:
+        row = conn.execute("SELECT id FROM users ORDER BY created_at ASC LIMIT 1").fetchone()
+        user_id = row[0] if row else "system"
+
+    sid = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    prompt = f"Learned from song: {req.song_name}"
+
+    rating = 1 if req.auto_approve else 0
+    conn.execute("""
+        INSERT INTO train_submissions (id, user_id, prompt, genre, bpm, pattern_json, rating, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (sid, user_id, prompt, req.genre, req.bpm, req.pattern_json, rating, now))
+
+    try:
+        conn.execute("UPDATE users SET beats_submitted = beats_submitted + 1 WHERE id = ?", (user_id,))
+    except Exception:
+        pass
+    conn.commit()
+    conn.close()
+
+    # Inject pattern directly into pattern_learner memory & disk store
+    injected = False
+    try:
+        from backend.pattern_learner import inject_pattern
+        injected = inject_pattern({
+            "genre": req.genre,
+            "bpm": req.bpm,
+            "pattern_json": req.pattern_json,
+            "prompt": prompt
+        })
+    except Exception as e:
+        print(f"[SongTrain] Error injecting pattern: {e}")
+
+    log_action(user_id, "SONG_TRAIN_SUBMIT", f"Song={req.song_name}, Genre={req.genre}, BPM={req.bpm}")
+    return {
+        "ok": True,
+        "submission_id": sid,
+        "injected": injected,
+        "message": f"🧠 Max successfully trained on '{req.song_name}' ({req.genre} @ {req.bpm} BPM)!"
+    }
+
+
+@app.get("/api/train/learned-patterns")
+def get_learned_patterns_info():
+    """Returns learned patterns breakdown and stats for Max's AI brain."""
+    try:
+        from backend.pattern_learner import get_status
+        return get_status()
+    except Exception as e:
+        return {"trained": False, "error": str(e)}
 
 
 @app.get("/api/admin/train/queue")
