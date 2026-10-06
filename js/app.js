@@ -2587,22 +2587,15 @@ FLStudioApp.prototype._initAudioEditor = function() {
   document.getElementById('ae-demo-vocal-btn')?.addEventListener('click', () => this.audioEditor.loadDemoVocal());
   document.getElementById('ae-load-project-channels')?.addEventListener('click', () => this.audioEditor.loadProjectTracks());
 
-  // Import custom sound file
+  // Import custom sound file (MP3, WAV, FLAC, OGG, M4A)
   document.getElementById('ae-main-add-layer')?.addEventListener('click', () => {
     const fi = document.createElement('input');
-    fi.type = 'file'; fi.accept = 'audio/*';
+    fi.type = 'file';
+    fi.accept = 'audio/*,audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/ogg,audio/flac,audio/aac,audio/m4a,.mp3,.wav,.ogg,.flac,.m4a,.aif,.aiff';
     fi.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      try {
-        const ab = await file.arrayBuffer();
-        if (this.audioEngine.ctx.state === 'suspended') await this.audioEngine.ctx.resume();
-        const buf = await this.audioEngine.ctx.decodeAudioData(ab);
-        this.audioEditor.addLayer(buf, file.name.replace(/\.[^.]+$/, ''));
-        showToast(` Imported: ${file.name}`, 2000);
-      } catch(err) {
-        showToast('Could not decode audio file', 2000);
-      }
+      await this._importFileToApp(file);
     });
     fi.click();
   });
@@ -2744,7 +2737,8 @@ FLStudioApp.prototype._initGlobalDropZone = function() {
   // QIB import file button
   document.getElementById('qib-import-btn')?.addEventListener('click', () => {
     const fi = document.createElement('input');
-    fi.type = 'file'; fi.accept = 'audio/*';
+    fi.type = 'file';
+    fi.accept = 'audio/*,audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/ogg,audio/flac,audio/aac,audio/m4a,.mp3,.wav,.ogg,.flac,.m4a,.aif,.aiff';
     fi.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (file) await this._importFileToApp(file);
@@ -2812,9 +2806,7 @@ FLStudioApp.prototype._initGlobalDropZone = function() {
 
 FLStudioApp.prototype._importFileToApp = async function(file) {
   try {
-    if (this.audioEngine.ctx.state === 'suspended') await this.audioEngine.ctx.resume();
-    const ab  = await file.arrayBuffer();
-    const buf = await this.audioEngine.ctx.decodeAudioData(ab);
+    const buf = await this.audioEngine.decodeAudio(file);
     const name = file.name.replace(/\.[^.]+$/, '');
 
     // Add to Audio Editor layers
@@ -2845,8 +2837,8 @@ FLStudioApp.prototype._importFileToApp = async function(file) {
     this._switchTab('audio-editor');
     this._redrawMiniCanvas();
   } catch(err) {
-    console.error('Import error:', err);
-    showToast(` Could not import: ${file.name}`, 2500);
+    console.error('Failed to import audio:', err);
+    showToast(`Could not decode ${file.name || 'audio'}: ${err.message || 'unsupported format'}`, 3500);
   }
 };
 

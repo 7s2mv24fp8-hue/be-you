@@ -143,10 +143,9 @@ class RecorderEngine {
     const duration = (Date.now() - this._recordStart) / 1000;
 
     // Decode to AudioBuffer
-    const arrayBuf = await blob.arrayBuffer();
     let audioBuffer;
     try {
-      audioBuffer = await this.engine.ctx.decodeAudioData(arrayBuf);
+      audioBuffer = await this.engine.decodeAudio(blob);
     } catch (e) {
       console.error('Could not decode recording:', e);
       return;

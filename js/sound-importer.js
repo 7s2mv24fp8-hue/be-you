@@ -201,10 +201,8 @@ class SoundImporter {
 
     try {
       await this._resumeAudio();
-      const arrayBuffer = await this._readFileAsArrayBuffer(file, pct => this._showProgress(pct * 0.6));
-      this._showProgress(70);
-
-      const audioBuffer = await this.audioEngine.ctx.decodeAudioData(arrayBuffer.slice(0));
+      this._showProgress(40);
+      const audioBuffer = await this.audioEngine.decodeAudio(file);
       this._showProgress(100);
 
       this._loadedBuffer = audioBuffer;
@@ -408,6 +406,7 @@ class SoundImporter {
   }
 
   async _resumeAudio() {
+    if (!this.audioEngine.initialized) this.audioEngine.init();
     if (this.audioEngine.ctx && this.audioEngine.ctx.state === 'suspended') {
       await this.audioEngine.ctx.resume();
     }

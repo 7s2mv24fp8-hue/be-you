@@ -148,7 +148,7 @@ class PresetSampleLibrary {
               <div style="font-size: 18px;"></div>
               <div style="font-size: 11px; font-weight: 700; color: #e4e4e7; margin-top: 2px;">Import Audio File</div>
               <div style="font-size: 9px; color: #a1a1aa;">(MP3, WAV, FLAC, OGG)</div>
-              <input type="file" id="psl-file-input" accept="audio/*" style="display:none;">
+              <input type="file" id="psl-file-input" accept="audio/*,audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/ogg,audio/flac,audio/aac,audio/m4a,.mp3,.wav,.ogg,.flac,.m4a,.aif,.aiff" style="display:none;">
             </div>
 
             <div class="psl-search-wrap">

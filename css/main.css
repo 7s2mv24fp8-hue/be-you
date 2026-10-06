@@ -6654,3 +6654,13 @@ canvas { display: block; }
   color: #ffffff !important;
 }
 
+/* Edison Audio Editor Drag & Drop Dropzone Highlight */
+.edison-canvas-wrap.ae-drag-over,
+.ae-canvas-wrap.ae-drag-over {
+  outline: 2px dashed #ff6b00 !important;
+  outline-offset: -4px;
+  background: rgba(255, 107, 0, 0.12) !important;
+  transition: all 0.15s ease-in-out;
+}
+
+

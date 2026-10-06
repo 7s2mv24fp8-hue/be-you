@@ -559,14 +559,17 @@ class AudioEngine {
     }
 
     let arrayBuffer;
-    if (source instanceof Blob || (typeof File !== 'undefined' && source instanceof File)) {
+    if (typeof source === 'string') {
+      const resp = await fetch(source);
+      arrayBuffer = await resp.arrayBuffer();
+    } else if (source instanceof Blob || (typeof File !== 'undefined' && source instanceof File)) {
       arrayBuffer = await source.arrayBuffer();
     } else if (source instanceof ArrayBuffer) {
       arrayBuffer = source;
     } else if (ArrayBuffer.isView(source)) {
       arrayBuffer = source.buffer.slice(source.byteOffset, source.byteOffset + source.byteLength);
     } else {
-      throw new Error('Unsupported audio source: expected File, Blob, or ArrayBuffer');
+      throw new Error('Unsupported audio source: expected URL string, File, Blob, or ArrayBuffer');
     }
 
     if (!arrayBuffer || arrayBuffer.byteLength < 16) {
@@ -652,17 +655,16 @@ class AudioEngine {
       console.warn('[AudioEngine] Frame sync scan error:', e);
     }
 
-    // Tier 4: Fallback with OfflineAudioContext
+    // Tier 4: Fallback with a fresh isolated AudioContext instance (bypasses device hardware sample rate mismatch)
     try {
-      const sampleRate = this.ctx ? (this.ctx.sampleRate || 44100) : 44100;
-      const offCtx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, 44100, sampleRate);
-      const buf = await _decodeWithContext(offCtx, arrayBuffer.slice(0));
+      const altCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const buf = await _decodeWithContext(altCtx, arrayBuffer.slice(0));
       if (buf) {
-        console.log('[AudioEngine] Decoded audio via OfflineAudioContext fallback');
+        console.log('[AudioEngine] Decoded audio via isolated AudioContext fallback');
         return buf;
       }
     } catch (t4Err) {
-      console.warn('[AudioEngine] Tier 4 OfflineAudioContext fallback failed:', t4Err);
+      console.warn('[AudioEngine] Tier 4 isolated AudioContext fallback failed:', t4Err);
     }
 
     throw new Error('Unable to decode audio data. Please ensure the MP3 or audio file is valid and uncorrupted.');

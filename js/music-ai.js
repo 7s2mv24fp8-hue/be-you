@@ -456,8 +456,11 @@ class MusicAI {
   }
 
   async toAudioBuffer(blob, audioContext) {
+    if (window.audioEngine && typeof window.audioEngine.decodeAudio === 'function') {
+      return window.audioEngine.decodeAudio(blob);
+    }
     const arrayBuffer = await blob.arrayBuffer();
-    return audioContext.decodeAudioData(arrayBuffer);
+    return audioContext.decodeAudioData(arrayBuffer.slice(0));
   }
 
   cancel() {

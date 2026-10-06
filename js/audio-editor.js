@@ -71,6 +71,32 @@ class AudioEditor {
     if (this._tabCanvas) {
       this._attachCanvasInteractions(this._tabCanvas);
     }
+    const tabWrap = document.getElementById('edison-canvas-wrap');
+    if (tabWrap) {
+      tabWrap.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        tabWrap.classList.add('ae-drag-over');
+      });
+      tabWrap.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        tabWrap.classList.remove('ae-drag-over');
+      });
+      tabWrap.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        tabWrap.classList.remove('ae-drag-over');
+        const file = e.dataTransfer?.files?.[0];
+        if (file) {
+          if (window.app && typeof window.app._importFileToApp === 'function') {
+            await window.app._importFileToApp(file);
+          } else {
+            await this.importAudioFile(file);
+          }
+        }
+      });
+    }
   }
 
   _buildModal() {
@@ -102,6 +128,33 @@ class AudioEditor {
     this._modalCanvas = overlay.querySelector('#ae-canvas');
     if (this._modalCanvas) {
       this._attachCanvasInteractions(this._modalCanvas);
+    }
+
+    const modalWrap = overlay.querySelector('#ae-canvas-wrap');
+    if (modalWrap) {
+      modalWrap.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        modalWrap.classList.add('ae-drag-over');
+      });
+      modalWrap.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        modalWrap.classList.remove('ae-drag-over');
+      });
+      modalWrap.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        modalWrap.classList.remove('ae-drag-over');
+        const file = e.dataTransfer?.files?.[0];
+        if (file) {
+          if (window.app && typeof window.app._importFileToApp === 'function') {
+            await window.app._importFileToApp(file);
+          } else {
+            await this.importAudioFile(file);
+          }
+        }
+      });
     }
 
     overlay.querySelector('#ae-close-btn')?.addEventListener('click', () => this.close());
@@ -209,6 +262,28 @@ class AudioEditor {
     this._renderLayerList();
     this._draw();
     return id;
+  }
+
+  async importAudioFile(file) {
+    if (!file) return null;
+    try {
+      const buf = await this.engine.decodeAudio(file);
+      const name = file.name.replace(/\.[^.]+$/, '');
+      const id = this.addLayer(buf, name);
+      if (window.app && typeof window.app._updateInlineLayerList === 'function') {
+        window.app._updateInlineLayerList();
+      }
+      if (typeof showToast === 'function') {
+        showToast(`Loaded ${file.name} (${buf.duration.toFixed(2)}s)`, 2500);
+      }
+      return id;
+    } catch (err) {
+      console.error('[AudioEditor] Failed to import audio:', err);
+      if (typeof showToast === 'function') {
+        showToast(`Could not decode ${file.name}: ${err.message}`, 3500);
+      }
+      return null;
+    }
   }
 
   selectLayer(id) {

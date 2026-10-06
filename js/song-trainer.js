@@ -31,9 +31,14 @@ window.SongTrainer = class SongTrainer {
    * @param {Object} options { genreHint }
    */
   async analyzeAudioFile(file, options = {}) {
-    const ctx = this._getAudioContext();
-    const arrayBuffer = await file.arrayBuffer();
-    const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+    let audioBuffer;
+    if (window.audioEngine && typeof window.audioEngine.decodeAudio === 'function') {
+      audioBuffer = await window.audioEngine.decodeAudio(file);
+    } else {
+      const ctx = this._getAudioContext();
+      const arrayBuffer = await file.arrayBuffer();
+      audioBuffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
+    }
 
     const numChannels = audioBuffer.numberOfChannels;
     const sampleRate = audioBuffer.sampleRate;
