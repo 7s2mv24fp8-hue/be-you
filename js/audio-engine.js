@@ -10,13 +10,14 @@ class AudioEngine {
     this.masterCompressor = null;
     this.channelGains = {};
     this.initialized = false;
+    window.audioEngine = this;
   }
 
   init() {
     if (this.initialized) return;
     this.ctx = new (window.AudioContext || window.webkitAudioContext)();
 
-    // Master compressor
+    // Master compressor (Fruity Limiter / Master Compressor)
     this.masterCompressor = this.ctx.createDynamicsCompressor();
     this.masterCompressor.threshold.value = -6;
     this.masterCompressor.knee.value = 6;
@@ -28,10 +29,209 @@ class AudioEngine {
     this.masterGain = this.ctx.createGain();
     this.masterGain.gain.value = 0.85;
 
-    this.masterCompressor.connect(this.masterGain);
-    this.masterGain.connect(this.ctx.destination);
+    // Master Analyser Node for Spectrum Visualizer
+    this.analyser = this.ctx.createAnalyser();
+    this.analyser.fftSize = 512;
+    this.analyser.smoothingTimeConstant = 0.82;
+
+    // Setup Fruity Parametric EQ 2 Filter Chain (7 Bands)
+    this.eqNodes = [];
+    this._initEQChain();
+
+    // Setup Soundgoodizer
+    this._initSoundgoodizer();
+
+    // Wire audio bus:
+    // masterCompressor -> eqChainIn -> eqNodes[0..6] -> sgDry/Wet -> masterGain -> analyser -> destination
+    let lastNode = this.masterCompressor;
+    if (this.eqNodes && this.eqNodes.length) {
+      lastNode.connect(this.eqNodes[0]);
+      lastNode = this.eqNodes[this.eqNodes.length - 1];
+    }
+
+    // Connect into Soundgoodizer
+    lastNode.connect(this.sgInput);
+    this.sgOutput.connect(this.masterGain);
+
+    this.masterGain.connect(this.analyser);
+    this.analyser.connect(this.ctx.destination);
 
     this.initialized = true;
+  }
+
+  _initEQChain() {
+    // 7 Bands matching FL Parametric EQ 2:
+    // 0: Highpass (20-100Hz)
+    // 1: Low Shelf (80-250Hz)
+    // 2: Peaking 1 (150-800Hz)
+    // 3: Peaking 2 (500-2500Hz)
+    // 4: Peaking 3 (1500-7000Hz)
+    // 5: High Shelf (5000-14000Hz)
+    // 6: Lowpass (10000-20000Hz)
+    const bandDefs = [
+      { type: 'highpass', freq: 35,    gain: 0, q: 0.707 },
+      { type: 'lowshelf', freq: 110,   gain: 0, q: 0.707 },
+      { type: 'peaking',  freq: 350,   gain: 0, q: 1.0 },
+      { type: 'peaking',  freq: 1000,  gain: 0, q: 1.0 },
+      { type: 'peaking',  freq: 3200,  gain: 0, q: 1.0 },
+      { type: 'highshelf',freq: 8500,  gain: 0, q: 0.707 },
+      { type: 'lowpass',  freq: 18500, gain: 0, q: 0.707 },
+    ];
+
+    this.eqNodes = bandDefs.map((def, idx) => {
+      const f = this.ctx.createBiquadFilter();
+      f.type = def.type;
+      f.frequency.value = def.freq;
+      f.gain.value = def.gain;
+      f.Q.value = def.q;
+      if (idx > 0) {
+        this.eqNodes[idx - 1].connect(f);
+      }
+      return f;
+    });
+  }
+
+  setEQBand(idx, type, freq, gain, q) {
+    if (!this.initialized) this.init();
+    if (!this.eqNodes || !this.eqNodes[idx]) return;
+    const node = this.eqNodes[idx];
+    const now = this.ctx.currentTime;
+    if (type && node.type !== type) node.type = type;
+    if (freq !== undefined && freq > 10 && freq < 22000) {
+      node.frequency.setTargetAtTime(freq, now, 0.015);
+    }
+    if (gain !== undefined && node.type !== 'highpass' && node.type !== 'lowpass') {
+      node.gain.setTargetAtTime(gain, now, 0.015);
+    }
+    if (q !== undefined && q > 0.05 && q < 20) {
+      node.Q.setTargetAtTime(q, now, 0.015);
+    }
+  }
+
+  _initSoundgoodizer() {
+    this.sgInput = this.ctx.createGain();
+    this.sgOutput = this.ctx.createGain();
+
+    this.sgDryGain = this.ctx.createGain();
+    this.sgWetGain = this.ctx.createGain();
+    this.sgDryGain.gain.value = 1.0;
+    this.sgWetGain.gain.value = 0.0;
+
+    // Saturation WaveShaper
+    this.sgShaper = this.ctx.createWaveShaper();
+    this.sgShaper.oversample = '4x';
+    this._updateSGShaperCurve(25);
+
+    // Multiband character filters for Presets A, B, C, D
+    this.sgBassBoost = this.ctx.createBiquadFilter();
+    this.sgBassBoost.type = 'lowshelf';
+    this.sgBassBoost.frequency.value = 120;
+    this.sgBassBoost.gain.value = 3;
+
+    this.sgHighAir = this.ctx.createBiquadFilter();
+    this.sgHighAir.type = 'highshelf';
+    this.sgHighAir.frequency.value = 7500;
+    this.sgHighAir.gain.value = 3.5;
+
+    // Wire Soundgoodizer path:
+    // sgInput -> sgDryGain -> sgOutput
+    // sgInput -> sgBassBoost -> sgHighAir -> sgShaper -> sgWetGain -> sgOutput
+    this.sgInput.connect(this.sgDryGain);
+    this.sgDryGain.connect(this.sgOutput);
+
+    this.sgInput.connect(this.sgBassBoost);
+    this.sgBassBoost.connect(this.sgHighAir);
+    this.sgHighAir.connect(this.sgShaper);
+    this.sgShaper.connect(this.sgWetGain);
+    this.sgWetGain.connect(this.sgOutput);
+
+    this.sgAmount = 0;
+    this.sgMode = 'A';
+  }
+
+  _updateSGShaperCurve(k = 25) {
+    const n = 1024;
+    const curve = new Float32Array(n);
+    const deg = Math.PI / 180;
+    for (let i = 0; i < n; i++) {
+      const x = (i * 2) / n - 1;
+      curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+    }
+    if (this.sgShaper) this.sgShaper.curve = curve;
+  }
+
+  setSoundgoodizer(amount = 0, mode = 'A') {
+    if (!this.initialized) this.init();
+    this.sgAmount = Math.max(0, Math.min(1, amount));
+    this.sgMode = mode;
+    const now = this.ctx.currentTime;
+
+    // Configure Preset EQ Curves
+    if (mode === 'A') {
+      // Maximus A: Punchy low-end + crisp highs
+      this.sgBassBoost.gain.setTargetAtTime(3.5 * this.sgAmount, now, 0.02);
+      this.sgHighAir.gain.setTargetAtTime(4.0 * this.sgAmount, now, 0.02);
+      this._updateSGShaperCurve(25 + 35 * this.sgAmount);
+    } else if (mode === 'B') {
+      // Maximus B: Warm tube warmth & body
+      this.sgBassBoost.gain.setTargetAtTime(5.0 * this.sgAmount, now, 0.02);
+      this.sgHighAir.gain.setTargetAtTime(1.5 * this.sgAmount, now, 0.02);
+      this._updateSGShaperCurve(15 + 20 * this.sgAmount);
+    } else if (mode === 'C') {
+      // Maximus C: Aggressive high-end sparkle & snap
+      this.sgBassBoost.gain.setTargetAtTime(1.0 * this.sgAmount, now, 0.02);
+      this.sgHighAir.gain.setTargetAtTime(6.0 * this.sgAmount, now, 0.02);
+      this._updateSGShaperCurve(30 + 40 * this.sgAmount);
+    } else if (mode === 'D') {
+      // Maximus D: Heavy loud sub punch & saturation
+      this.sgBassBoost.gain.setTargetAtTime(6.5 * this.sgAmount, now, 0.02);
+      this.sgHighAir.gain.setTargetAtTime(3.0 * this.sgAmount, now, 0.02);
+      this._updateSGShaperCurve(40 + 50 * this.sgAmount);
+    }
+
+    // Dry / Wet Crossfade with equal-power curve
+    const wet = Math.sin(this.sgAmount * Math.PI * 0.5);
+    const dry = Math.cos(this.sgAmount * Math.PI * 0.5);
+    this.sgWetGain.gain.setTargetAtTime(wet * 0.9, now, 0.02);
+    this.sgDryGain.gain.setTargetAtTime(dry, now, 0.02);
+  }
+
+  playMetronome(step, time) {
+    if (!this.initialized) this.init();
+    if (!this.ctx) return;
+    const t = time || this.ctx.currentTime;
+    const isDownbeat = (step === 0);
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(isDownbeat ? 1600 : 950, t);
+    gain.gain.setValueAtTime(isDownbeat ? 0.35 : 0.2, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.035);
+
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start(t);
+    osc.stop(t + 0.04);
+  }
+
+  playChime(isSuccess = true) {
+    if (!this.initialized) this.init();
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const freqs = isSuccess ? [523.25, 659.25, 783.99, 1046.50] : [440, 415.3, 392];
+    freqs.forEach((f, i) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(f, t + i * 0.05);
+      gain.gain.setValueAtTime(0.12, t + i * 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.05 + 0.25);
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(t + i * 0.05);
+      osc.stop(t + i * 0.05 + 0.26);
+    });
   }
 
   resume() {
@@ -340,6 +540,132 @@ class AudioEngine {
       default:
         this.playKick(time, { gain: 0.5 * vol }); break;
     }
+  }
+
+  // ── Universal & Resilient Audio Decoder (MP3, WAV, OGG, FLAC, M4A, AIFF) ──
+  /**
+   * Decodes an audio file or ArrayBuffer into an AudioBuffer with multi-tier recovery:
+   * Tier 1: Direct Web Audio decodeAudioData (with cloned buffer to avoid detachment)
+   * Tier 2: ID3v2 tag parser & stripper (recovers MP3s rejected due to large APIC album artwork)
+   * Tier 3: MPEG frame sync bit-scanner (recovers MP3s with corrupted pre-roll or extra containers)
+   * Tier 4: Isolated OfflineAudioContext decoding
+   */
+  async decodeAudio(source) {
+    if (!this.initialized) this.init();
+    if (this.ctx && this.ctx.state === 'suspended') {
+      try {
+        await this.ctx.resume();
+      } catch (_) {}
+    }
+
+    let arrayBuffer;
+    if (source instanceof Blob || (typeof File !== 'undefined' && source instanceof File)) {
+      arrayBuffer = await source.arrayBuffer();
+    } else if (source instanceof ArrayBuffer) {
+      arrayBuffer = source;
+    } else if (ArrayBuffer.isView(source)) {
+      arrayBuffer = source.buffer.slice(source.byteOffset, source.byteOffset + source.byteLength);
+    } else {
+      throw new Error('Unsupported audio source: expected File, Blob, or ArrayBuffer');
+    }
+
+    if (!arrayBuffer || arrayBuffer.byteLength < 16) {
+      throw new Error('Audio file is empty or corrupted');
+    }
+
+    const _decodeWithContext = (ctxInstance, rawBuf) => {
+      return new Promise((resolve, reject) => {
+        try {
+          const res = ctxInstance.decodeAudioData(
+            rawBuf,
+            decoded => resolve(decoded),
+            err => reject(err || new Error('decodeAudioData rejected'))
+          );
+          if (res && typeof res.then === 'function') {
+            res.then(resolve).catch(reject);
+          }
+        } catch (err) {
+          reject(err);
+        }
+      });
+    };
+
+    // Tier 1: Direct native decoding with safe buffer slice
+    try {
+      return await _decodeWithContext(this.ctx, arrayBuffer.slice(0));
+    } catch (tier1Err) {
+      console.warn('[AudioEngine] Tier 1 decode failed, attempting ID3/MPEG stripping...', tier1Err);
+    }
+
+    // Tier 2: Parse and strip ID3v2 metadata
+    // Many MP3s include large ID3v2 tags (with JPEG/PNG artwork) that choke Web Audio's MPEG demuxer.
+    try {
+      const u8 = new Uint8Array(arrayBuffer);
+      if (u8.length > 10 && u8[0] === 0x49 && u8[1] === 0x44 && u8[2] === 0x33) { // 'ID3'
+        const flags = u8[5];
+        const hasFooter = (flags & 0x10) !== 0;
+        const tagSize = ((u8[6] & 0x7F) << 21) |
+                        ((u8[7] & 0x7F) << 14) |
+                        ((u8[8] & 0x7F) << 7)  |
+                        (u8[9] & 0x7F);
+        const headerOffset = 10 + tagSize + (hasFooter ? 10 : 0);
+        if (headerOffset > 0 && headerOffset < arrayBuffer.byteLength - 16) {
+          const stripped = arrayBuffer.slice(headerOffset);
+          try {
+            const buf = await _decodeWithContext(this.ctx, stripped);
+            console.log('[AudioEngine] Successfully decoded MP3 after ID3 tag stripping!');
+            return buf;
+          } catch (t2) {
+            console.warn('[AudioEngine] Tier 2 ID3 strip decode failed:', t2);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[AudioEngine] ID3 inspection error:', e);
+    }
+
+    // Tier 3: Scan for valid MPEG audio frame sync word (0xFF + top 3 bits 111)
+    try {
+      const u8 = new Uint8Array(arrayBuffer);
+      const scanLimit = Math.min(u8.length - 4, 1024 * 1024); // scan first 1 MB
+      for (let i = 0; i < scanLimit; i++) {
+        if (u8[i] === 0xFF && (u8[i + 1] & 0xE0) === 0xE0) {
+          const mpegVer = (u8[i + 1] >> 3) & 0x03; // not 01 (reserved)
+          const layer   = (u8[i + 1] >> 1) & 0x03; // not 00 (reserved)
+          const bitrate = (u8[i + 2] >> 4) & 0x0F; // not 1111 (0x0F)
+          const srate   = (u8[i + 2] >> 2) & 0x03; // not 11 (0x03)
+          if (mpegVer !== 1 && layer !== 0 && bitrate !== 15 && srate !== 3) {
+            if (i > 0) {
+              const sliced = arrayBuffer.slice(i);
+              try {
+                const buf = await _decodeWithContext(this.ctx, sliced);
+                console.log(`[AudioEngine] Successfully decoded MP3 from MPEG frame sync offset +${i}`);
+                return buf;
+              } catch (_) {
+                // False positive sync, continue search
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[AudioEngine] Frame sync scan error:', e);
+    }
+
+    // Tier 4: Fallback with OfflineAudioContext
+    try {
+      const sampleRate = this.ctx ? (this.ctx.sampleRate || 44100) : 44100;
+      const offCtx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(2, 44100, sampleRate);
+      const buf = await _decodeWithContext(offCtx, arrayBuffer.slice(0));
+      if (buf) {
+        console.log('[AudioEngine] Decoded audio via OfflineAudioContext fallback');
+        return buf;
+      }
+    } catch (t4Err) {
+      console.warn('[AudioEngine] Tier 4 OfflineAudioContext fallback failed:', t4Err);
+    }
+
+    throw new Error('Unable to decode audio data. Please ensure the MP3 or audio file is valid and uncorrupted.');
   }
 }
 

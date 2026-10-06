@@ -16,38 +16,38 @@
 
 const DRUM_KITS = {
   'Trap': {
-    color: '#ff6a00',
+    color: '#ffffff',
     pads: [
-      { name: 'Kick 808', color: '#ff6a00', synth: 'kick808' },
-      { name: 'Snare',    color: '#a855f7', synth: 'snare' },
-      { name: 'Hi-Hat C', color: '#22d3ee', synth: 'hihatClosed' },
-      { name: 'Hi-Hat O', color: '#06b6d4', synth: 'hihatOpen' },
-      { name: 'Clap',     color: '#ec4899', synth: 'clap' },
-      { name: 'Tom Lo',   color: '#84cc16', synth: 'tomLo' },
+      { name: 'Kick 808', color: '#ffffff', synth: 'kick808' },
+      { name: 'Snare',    color: '#a1a1aa', synth: 'snare' },
+      { name: 'Hi-Hat C', color: '#ffffff', synth: 'hihatClosed' },
+      { name: 'Hi-Hat O', color: '#8d8d95', synth: 'hihatOpen' },
+      { name: 'Clap',     color: '#52525b', synth: 'clap' },
+      { name: 'Tom Lo',   color: '#a1a1aa', synth: 'tomLo' },
       { name: '808 Bass', color: '#f59e0b', synth: 'bass808' },
-      { name: 'Crash',    color: '#ef4444', synth: 'crash' },
+      { name: 'Crash',    color: '#ffffff', synth: 'crash' },
     ]
   },
   'Acoustic': {
-    color: '#84cc16',
+    color: '#a1a1aa',
     pads: [
-      { name: 'Kick',     color: '#fb923c', synth: 'kickAcoustic' },
-      { name: 'Snare',    color: '#a855f7', synth: 'snareAcoustic' },
-      { name: 'Hi-Hat C', color: '#22d3ee', synth: 'hihatClosed' },
-      { name: 'Hi-Hat O', color: '#06b6d4', synth: 'hihatOpen' },
+      { name: 'Kick',     color: '#e4e4e7', synth: 'kickAcoustic' },
+      { name: 'Snare',    color: '#a1a1aa', synth: 'snareAcoustic' },
+      { name: 'Hi-Hat C', color: '#ffffff', synth: 'hihatClosed' },
+      { name: 'Hi-Hat O', color: '#8d8d95', synth: 'hihatOpen' },
       { name: 'Ride',     color: '#fbbf24', synth: 'ride' },
       { name: 'Tom Hi',   color: '#34d399', synth: 'tomHi' },
-      { name: 'Tom Lo',   color: '#84cc16', synth: 'tomLo' },
-      { name: 'Crash',    color: '#ef4444', synth: 'crash' },
+      { name: 'Tom Lo',   color: '#a1a1aa', synth: 'tomLo' },
+      { name: 'Crash',    color: '#ffffff', synth: 'crash' },
     ]
   },
   'Electronic': {
-    color: '#22d3ee',
+    color: '#ffffff',
     pads: [
-      { name: 'E-Kick',   color: '#f97316', synth: 'kickElec' },
+      { name: 'E-Kick',   color: '#ffffff', synth: 'kickElec' },
       { name: 'E-Snare',  color: '#8b5cf6', synth: 'snareElec' },
-      { name: 'Hi-Hat',   color: '#22d3ee', synth: 'hihatElec' },
-      { name: 'Clap',     color: '#ec4899', synth: 'clap' },
+      { name: 'Hi-Hat',   color: '#ffffff', synth: 'hihatElec' },
+      { name: 'Clap',     color: '#52525b', synth: 'clap' },
       { name: 'Cowbell',  color: '#fbbf24', synth: 'cowbell' },
       { name: 'Noise Hit',color: '#94a3b8', synth: 'noiseHit' },
       { name: 'Zap',      color: '#a78bfa', synth: 'zap' },
@@ -68,16 +68,16 @@ const DRUM_KITS = {
     ]
   },
   '808': {
-    color: '#ef4444',
+    color: '#ffffff',
     pads: [
       { name: '808 C2',   color: '#dc2626', synth: 'bass808', note: 'C2'  },
-      { name: '808 D2',   color: '#ef4444', synth: 'bass808', note: 'D2'  },
-      { name: '808 E2',   color: '#f87171', synth: 'bass808', note: 'E2'  },
+      { name: '808 D2',   color: '#ffffff', synth: 'bass808', note: 'D2'  },
+      { name: '808 E2',   color: '#a1a1aa', synth: 'bass808', note: 'E2'  },
       { name: '808 G2',   color: '#fca5a5', synth: 'bass808', note: 'G2'  },
-      { name: 'Kick 808', color: '#ff6a00', synth: 'kick808' },
-      { name: 'Snare',    color: '#a855f7', synth: 'snare' },
-      { name: 'Hi-Hat C', color: '#22d3ee', synth: 'hihatClosed' },
-      { name: 'Clap',     color: '#ec4899', synth: 'clap' },
+      { name: 'Kick 808', color: '#ffffff', synth: 'kick808' },
+      { name: 'Snare',    color: '#a1a1aa', synth: 'snare' },
+      { name: 'Hi-Hat C', color: '#ffffff', synth: 'hihatClosed' },
+      { name: 'Clap',     color: '#52525b', synth: 'clap' },
     ]
   },
 };
@@ -615,7 +615,7 @@ class DrumMachine {
         <!-- Header -->
         <div class="dm-header">
           <div class="dm-title">
-            <span class="dm-icon">🥁</span>
+            <span class="dm-icon"></span>
             <span>Drum Machine</span>
             <span class="dm-kit-badge" id="dm-kit-badge">${this.kitName}</span>
           </div>
@@ -636,10 +636,10 @@ class DrumMachine {
           </div>
           <div class="dm-transport">
             <button class="dm-btn dm-play" id="dm-play-btn" title="Play">▶</button>
-            <button class="dm-btn dm-stop" id="dm-stop-btn" title="Stop">⏹</button>
+            <button class="dm-btn dm-stop" id="dm-stop-btn" title="Stop">■</button>
             <button class="dm-btn dm-rand" id="dm-rand-btn" title="Randomize">🎲</button>
-            <button class="dm-btn dm-clear" id="dm-clr-btn" title="Clear">🗑</button>
-            <button class="dm-btn dm-human" id="dm-human-btn" title="Humanize">🌊</button>
+            <button class="dm-btn dm-clear" id="dm-clr-btn" title="Clear">✕</button>
+            <button class="dm-btn dm-human" id="dm-human-btn" title="Humanize">Groove</button>
           </div>
         </div>
 
@@ -725,7 +725,7 @@ class DrumMachine {
       // Drag and drop preset onto pad
       label.addEventListener('dragover', (e) => {
         e.preventDefault();
-        label.style.outline = '2px dashed #ff6a00';
+        label.style.outline = '2px dashed #ffffff';
       });
       label.addEventListener('dragleave', () => {
         label.style.outline = 'none';
@@ -741,7 +741,7 @@ class DrumMachine {
               pad.name = data.name;
               if (data.color) pad.color = data.color;
               this._renderPads();
-              if (window.showToast) window.showToast(`🥁 Loaded "${data.name}" onto Drum Pad ${pi + 1}!`);
+              if (window.showToast) window.showToast(` Loaded "${data.name}" onto Drum Pad ${pi + 1}!`);
             }
           }
         } catch (_) {}
@@ -867,7 +867,7 @@ class DrumMachine {
       });
     });
     this._renderPads();
-    if (typeof showToast === 'function') showToast('🌊 Humanized! Velocities varied.', 2000);
+    if (typeof showToast === 'function') showToast('Humanized! Velocities varied.', 2000);
   }
 
   /* ── External API ───────────────────────────────────── */

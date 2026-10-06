@@ -33,7 +33,7 @@ class Mixer {
     }));
     const master = {
       name: 'Master',
-      color: '#ff6a00',
+      color: '#ffffff',
       volume: 85,
       pan: 0,
       muted: false,
@@ -42,6 +42,40 @@ class Mixer {
       isMaster: true,
     };
     return [master, ...seqChannels];
+  }
+
+  syncChannels() {
+    if (!this.sequencer) return;
+    const existing = new Map();
+    this.channels.forEach(c => {
+      if (!c.isMaster) existing.set(c.seqIdx, c);
+    });
+    const master = this.channels.find(c => c.isMaster) || {
+      name: 'Master',
+      color: '#ffffff',
+      volume: 85,
+      pan: 0,
+      muted: false,
+      solo: false,
+      seqIdx: -1,
+      isMaster: true,
+    };
+    const seqChannels = this.sequencer.channels.map((c, i) => {
+      const prev = existing.get(i);
+      return {
+        name: c.name,
+        color: c.color || '#ffffff',
+        volume: prev ? prev.volume : Math.round((c.volume !== undefined ? c.volume : 0.8) * 100),
+        pan: prev ? prev.pan : (c.pan || 0),
+        muted: prev ? prev.muted : (c.muted || false),
+        solo: prev ? prev.solo : (c.solo || false),
+        seqIdx: i,
+      };
+    });
+    this.channels = [master, ...seqChannels];
+    this._vuLevels = Array(this.channels.length).fill(0);
+    this._vuTargets = Array(this.channels.length).fill(0);
+    this.render();
   }
 
   // ── Render ─────────────────────────────────────────────────────
@@ -207,7 +241,7 @@ class Mixer {
     ctx.stroke();
 
     // Fill
-    const fillColor = value === 0 ? '#555' : (color || '#ff6a00');
+    const fillColor = value === 0 ? '#555' : (color || '#ffffff');
     ctx.beginPath();
     ctx.arc(cx, cy, r, startAngle, angle);
     ctx.strokeStyle = fillColor;

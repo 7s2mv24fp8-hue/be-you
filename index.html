@@ -1,1272 +1,1312 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BeYou Studio — Web DAW</title>
-  <meta name="description" content="BeYou Studio — A browser-based Web DAW with step sequencer, piano roll, mixer, audio recorder, and AI beat copilot. Powered by Web Audio API.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/main.css">
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>BeYou Studio — Web DAW</title>
+ <meta name="description" content="BeYou Studio — A browser-based Web DAW with step sequencer, piano roll, mixer, audio recorder, and AI beat copilot. Powered by Web Audio API.">
+ <link rel="preconnect" href="https://fonts.googleapis.com">
+ <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+ <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+ <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
 <div id="app">
 
-  <!-- ── Title Bar ─────────────────────────────────────── -->
-  <div id="titlebar">
-    <div class="win-controls">
-      <div class="win-btn close"  title="Close"></div>
-      <div class="win-btn min"    title="Minimize"></div>
-      <div class="win-btn max"    title="Maximize"></div>
-    </div>
-    <div class="app-title">
-      <span style="color:#ff6a00;font-weight:900;letter-spacing:1px;">BeYou</span>&nbsp;Studio &nbsp;|&nbsp;
-      <input id="project-title-input" class="proj-title-inline-input" value="Untitled Project" title="Click to rename project" spellcheck="false" />
-    </div>
-    <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-      <div style="font-size:10px;color:var(--text-muted);">Space=Play &nbsp; F6=Stop &nbsp; Ctrl+M=Mixer</div>
-    </div>
-  </div>
-
-  <!-- ── Transport / Toolbar ───────────────────────────── -->
-  <div id="toolbar">
-
-    <!-- Transport -->
-    <div class="transport-group">
-      <button id="btn-play"   class="transport-btn play"   title="Play (Space / F5)" data-tooltip="Play">
-        <svg viewBox="0 0 16 16" width="14" fill="currentColor"><polygon points="3,2 13,8 3,14"/></svg>
-      </button>
-      <button id="btn-stop"   class="transport-btn stop"   title="Stop (F6)" data-tooltip="Stop">
-        <svg viewBox="0 0 16 16" width="12" fill="currentColor"><rect x="2" y="2" width="12" height="12" rx="1"/></svg>
-      </button>
-      <button id="btn-record" class="transport-btn record" title="Record" data-tooltip="Record">
-        <svg viewBox="0 0 16 16" width="12" fill="currentColor"><circle cx="8" cy="8" r="5"/></svg>
-      </button>
-    </div>
-
-    <div class="toolbar-separator"></div>
-
-    <!-- Pattern / Song mode -->
-    <div class="mode-toggle">
-      <button class="mode-btn active" id="mode-pattern">PAT</button>
-      <button class="mode-btn"        id="mode-song">SONG</button>
-    </div>
-
-    <div class="toolbar-separator"></div>
-
-    <!-- BPM -->
-    <div class="bpm-group">
-      <span class="bpm-label">BPM</span>
-      <input id="bpm-display" class="bpm-display" type="number" min="20" max="300" value="140" title="Drag to change BPM">
-      <div class="bpm-arrows">
-        <button id="bpm-up"   class="bpm-arrow" title="+1 BPM">▲</button>
-        <button id="bpm-down" class="bpm-arrow" title="−1 BPM">▼</button>
-      </div>
-    </div>
-
-    <!-- Time sig -->
-    <div class="timesig-group">
-      <span>4</span>
-      <span style="font-size:10px;color:var(--text-muted)">/</span>
-      <span>4</span>
-    </div>
-
-    <!-- Position -->
-    <div id="position-display" class="position-display">1:1:1</div>
-
-    <div class="toolbar-separator"></div>
-
-    <!-- Project Name Pill (Click to rename) -->
-    <div class="project-pill-wrap" title="Current Project Name (Click to rename)">
-      <span class="proj-pill-icon">🎵</span>
-      <input id="tb-project-title-input" class="tb-proj-input" value="Untitled Project" spellcheck="false" title="Click to rename project" />
-      <span class="proj-edit-hint">✏️</span>
-    </div>
-
-    <div class="toolbar-separator"></div>
-
-    <!-- View toggles -->
-    <div class="view-btns">
-      <button class="view-btn" onclick="app._switchTab('piano-roll')" title="Piano Roll (Ctrl+P)">
-        <svg viewBox="0 0 16 16" width="13" fill="currentColor">
-          <rect x="1" y="3" width="14" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1"/>
-          <rect x="2" y="4" width="1" height="4" fill="currentColor"/>
-          <rect x="4" y="4" width="1" height="6" fill="currentColor"/>
-          <rect x="6" y="4" width="1" height="4" fill="currentColor"/>
-          <rect x="8" y="4" width="1" height="8" fill="currentColor"/>
-          <rect x="10" y="4" width="1" height="4" fill="currentColor"/>
-          <rect x="12" y="4" width="1" height="6" fill="currentColor"/>
-        </svg>
-        Piano Roll
-      </button>
-      <button class="view-btn" onclick="app._switchTab('mixer')" title="Mixer (Ctrl+M / F9)">
-        <svg viewBox="0 0 16 16" width="13" fill="currentColor">
-          <rect x="1" y="2" width="2" height="12" rx="1"/>
-          <rect x="4" y="4" width="2" height="10" rx="1"/>
-          <rect x="7" y="1" width="2" height="13" rx="1"/>
-          <rect x="10" y="3" width="2" height="11" rx="1"/>
-          <rect x="13" y="5" width="2" height="9" rx="1"/>
-        </svg>
-        Mixer
-      </button>
-      <button class="view-btn" onclick="app._switchTab('playlist')" title="Playlist">
-        <svg viewBox="0 0 16 16" width="13" fill="currentColor">
-          <rect x="1" y="2"  width="8"  height="3" rx="1"/>
-          <rect x="1" y="7"  width="11" height="3" rx="1"/>
-          <rect x="1" y="12" width="5"  height="3" rx="1"/>
-        </svg>
-        Playlist
-      </button>
-    </div>
-
-    <!-- Master knobs -->
-    <div class="master-group">
-      <div class="knob-wrap" data-tooltip="Master Volume">
-        <span class="master-knob-label">VOL</span>
-        <canvas id="master-vol-knob" width="36" height="36" title="Master Volume (drag)"></canvas>
-        <span id="master-vol-val" class="knob-value">85%</span>
-      </div>
-      <div class="knob-wrap" data-tooltip="Master Pitch">
-        <span class="master-knob-label">PITCH</span>
-        <canvas id="master-pitch-knob" width="36" height="36" title="Master Pitch (drag)"></canvas>
-        <span id="master-pitch-val" class="knob-value">0 st</span>
-      </div>
-    </div>
-
-    <div class="toolbar-separator"></div>
-
-    <!-- Main Actions Group -->
-    <div class="cloud-group">
-      <button id="plat-cloud-save-btn" class="tb-cloud-btn" title="Save Project to Cloud">
-        <span>💾</span> Save
-      </button>
-      <button id="btn-cloud-open" class="tb-cloud-btn" title="Open Cloud Projects">
-        <span>📂</span> Projects
-      </button>
-      <button id="btn-import-sound" class="tb-cloud-btn" title="Import audio files or browse instrument presets" style="border-color:rgba(34,211,238,0.4);color:#67e8f9;font-weight:700;">
-        <span>🎵</span> Import Sounds
-      </button>
-      <button id="plat-explore-tab" title="Explore Community Beats">
-        🌐 Explore
-      </button>
-      <button id="plat-train-btn" title="Train Max with song audio & beats">
-        🧠 Train Max
-      </button>
-      <button id="btn-admin-dash" class="tb-cloud-btn admin-btn" title="Super Admin Dashboard">
-        <span>⚡</span> Admin
-      </button>
-    </div>
-
-    <div class="toolbar-separator"></div>
-
-    <!-- User Profile Badge -->
-    <div class="user-badge-group">
-      <div id="user-badge" class="user-pill" title="User Account (Click to Switch/Sign In)">
-        <span class="user-avatar-icon">👑</span>
-        <span id="user-name-display" class="user-name-text">Rahul Sharma</span>
-        <span id="user-role-tag" class="role-badge admin">ADMIN</span>
-      </div>
-    </div>
-
-    <!-- AI Beat Suggester toggle -->
-    <div style="margin-left:auto;padding-right:10px;">
-      <button id="btn-ai-toggle" title="AI Beat Suggester">
-        <span class="ai-btn-dot"></span>
-        ✨ AI Beats
-      </button>
-    </div>
-  </div>
-
-  <!-- ── Floating Live Voice Recording HUD ───────────────── -->
-  <div id="top-rec-hud" class="hidden">
-    <div class="rec-hud-badge">
-      <div class="rec-hud-dot"></div>
-      <span>REC VOICE</span>
-    </div>
-    <div id="rec-hud-timer" class="rec-hud-timer">0:00</div>
-    <div class="rec-hud-pulse-bars">
-      <div class="rec-hud-bar"></div>
-      <div class="rec-hud-bar"></div>
-      <div class="rec-hud-bar"></div>
-      <div class="rec-hud-bar"></div>
-      <div class="rec-hud-bar"></div>
-    </div>
-    <button id="btn-hud-stop-rec" class="rec-hud-stop-btn">⏹ Stop & Insert Take</button>
-  </div>
-
-  <!-- ── Main Content ──────────────────────────────────── -->
-  <div id="main-content">
-
-    <!-- Left: Channel Rack -->
-    <div id="channel-rack" class="panel">
-      <div class="panel-header">
-        <span class="panel-title">Channel <span class="panel-accent">Rack</span></span>
-        <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
-          <select class="rack-pattern-select" id="rack-pattern-select">
-            <option>Pattern 1</option>
-            <option>Pattern 2</option>
-            <option>Pattern 3</option>
-            <option>Pattern 4</option>
-          </select>
-        </div>
-      </div>
-      <div class="rack-controls">
-        <span style="font-size:10px;color:var(--text-muted);">Steps:</span>
-        <span class="rack-step-count" style="color:var(--text-secondary);font-weight:700;">16</span>
-        <div style="margin-left:auto;display:flex;gap:4px;">
-          <button class="ch-btn" title="Randomize All" onclick="sequencerRandomizeAll()" style="width:auto;padding:0 6px;font-size:9px;">🎲 Rand</button>
-          <button class="ch-btn" title="Clear All" onclick="sequencerClearAll()" style="width:auto;padding:0 6px;font-size:9px;">🗑 Clear</button>
-        </div>
-      </div>
-
-      <!-- Step headers -->
-      <div style="display:flex;align-items:center;height:20px;background:#111;border-bottom:1px solid var(--border);padding:0 4px;">
-        <div style="width:84px;flex-shrink:0;"></div>
-        <div style="width:44px;flex-shrink:0;"></div>
-        <div style="flex:1;display:flex;">
-          <script>
-            for(let i=1;i<=16;i++) {
-              document.write(`<div style="flex:1;text-align:center;font-size:8px;font-family:JetBrains Mono,monospace;color:${i%4===1?'#ff6a00':'#444'}">${i}</div>`);
-            }
-          </script>
-        </div>
-      </div>
-
-      <!-- Channel rows -->
-      <div id="channels-list"></div>
-
-      <!-- Add channel / Import Sound / Sample Library -->
-      <div class="rack-footer-actions">
-        <div id="add-channel-btn" class="rack-footer-btn" title="Add a new synth channel">
-          <svg viewBox="0 0 16 16" width="12" fill="currentColor"><path d="M8 1v14M1 8h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          Add Channel
-        </div>
-        <div id="import-sound-rack-btn" class="rack-footer-btn rack-import-btn" title="Import an audio file as a sample channel">
-          <span>🎵</span> Import Sound
-        </div>
-        <div id="preset-library-rack-btn" class="rack-footer-btn" style="border-color:rgba(34,211,238,0.3);color:#67e8f9;background:rgba(34,211,238,0.04);" title="Browse the built-in sample library">
-          <span>🎶</span> Sample Library
-        </div>
-      </div>
-    </div>
-
-    <!-- Resize handle -->
-    <div class="resize-handle-h" id="rack-resize" style="background:#111;border-right:1px solid #000;"></div>
-
-    <!-- Right panel: Piano Roll / Mixer / Playlist tabs -->
-    <div id="right-panel">
-      <div class="right-tabs">
-        <button class="right-tab active" data-tab="piano-roll">
-          <span class="tab-icon">🎹</span> Piano Roll
-        </button>
-        <button class="right-tab" data-tab="mixer">
-          <span class="tab-icon">🎚</span> Mixer
-        </button>
-        <button class="right-tab" data-tab="playlist">
-          <span class="tab-icon">🎼</span> Playlist
-        </button>
-        <button class="right-tab record-tab" data-tab="record">
-          <span class="tab-icon">🎤</span> Record
-          <span class="rec-dot"></span>
-        </button>
-        <button class="right-tab ai-music-tab" data-tab="ai-music">
-          <span class="tab-icon">🎵</span> AI Music
-          <span class="ai-music-dot"></span>
-        </button>
-        <button class="right-tab ai-producer-tab" data-tab="ai-producer">
-          <span class="tab-icon">🤖</span> AI Producer
-          <span class="ai-producer-dot"></span>
-        </button>
-        <button class="right-tab" data-tab="audio-editor">
-          <span class="tab-icon">🎛</span> Editor
-        </button>
-      </div>
-
-      <!-- Piano Roll tab -->
-      <div id="tab-piano-roll" class="tab-content visible">
-        <div id="piano-roll-view">
-          <!-- Toolbar -->
-          <div class="piano-roll-toolbar">
-            <button id="pr-draw-btn"  class="pr-tool-btn active" title="Draw notes">
-              ✏️ Draw
-            </button>
-            <button id="pr-erase-btn" class="pr-tool-btn" title="Erase notes">
-              🩹 Erase
-            </button>
-            <div class="pr-separator"></div>
-            <label style="font-size:10px;color:var(--text-muted);">Q:</label>
-            <select id="pr-quantize" class="pr-quantize-select" title="Quantize (note length)">
-              <option value="1">1/16</option>
-              <option value="2">1/8</option>
-              <option value="4">1/4</option>
-              <option value="8">1/2</option>
-            </select>
-            <div class="pr-separator"></div>
-            <label style="font-size:10px;color:var(--text-muted);">Channel:</label>
-            <select id="pr-channel-select" class="pr-quantize-select" title="Select channel to edit">
-              <!-- Filled dynamically -->
-            </select>
-            <div class="pr-separator"></div>
-            <button id="pr-clear-btn" class="pr-tool-btn" style="margin-left:auto;color:#ef4444;">
-              🗑 Clear
-            </button>
-          </div>
-          <!-- Grid -->
-          <div id="piano-roll-wrap">
-            <div id="piano-keys" style="width:48px;overflow-y:hidden;flex-shrink:0;">
-              <canvas id="piano-keys-canvas"></canvas>
-            </div>
-            <div id="piano-roll-canvas-wrap" style="flex:1;overflow:auto;position:relative;">
-              <canvas id="piano-roll-canvas"></canvas>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Mixer tab -->
-      <div id="tab-mixer" class="tab-content">
-        <div id="mixer-view" style="flex:1;display:flex;flex-direction:row;overflow-x:auto;overflow-y:hidden;height:100%;">
-          <div id="mixer-channels"></div>
-        </div>
-      </div>
-
-      <!-- Playlist tab -->
-      <div id="tab-playlist" class="tab-content">
-        <div id="playlist-view">
-          <div id="playlist-toolbar">
-            <button id="pl-draw-btn"  class="pl-tool-btn active">✏️ Draw</button>
-            <button id="pl-erase-btn" class="pl-tool-btn">🩹 Erase</button>
-            <div style="width:1px;height:18px;background:var(--border);margin:0 4px;"></div>
-            <button id="pl-loop-btn"  class="pl-tool-btn">🔁 Loop</button>
-            <div style="margin-left:auto;font-size:10px;color:var(--text-muted);">
-              Right-click to remove blocks
-            </div>
-          </div>
-          <div id="playlist-wrap">
-            <div id="playlist-track-labels"></div>
-            <div id="playlist-grid-wrap">
-              <canvas id="playlist-canvas"></canvas>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Record tab -->
-      <div id="tab-record" class="tab-content">
-        <div id="record-view">
-
-          <!-- Top control bar -->
-          <div id="record-topbar">
-            <!-- Arm mic -->
-            <button id="btn-arm" title="Arm microphone for recording">🎙</button>
-
-            <!-- Record / Stop -->
-            <button id="btn-rec" disabled title="Record (arm mic first)">REC</button>
-            <button id="btn-rec-stop" title="Stop recording">⏹ Stop</button>
-
-            <!-- Monitor -->
-            <button id="btn-monitor" title="Monitor mic input through auto-tune">👂 Monitor</button>
-
-            <!-- Status badge -->
-            <div id="rec-status" class="rec-status-badge idle">● Idle</div>
-
-            <!-- Mic level -->
-            <div class="mic-level-wrap">
-              <div class="mic-level-label">Input</div>
-              <div class="mic-level-bar-bg">
-                <div class="mic-level-bar-fill" id="mic-level-fill"></div>
-              </div>
-            </div>
-
-            <!-- Timer -->
-            <div id="rec-time-display">0:00</div>
-          </div>
-
-          <!-- Body: auto-tune panel + clips -->
-          <div id="record-body">
-
-            <!-- Left: Auto-tune controls -->
-            <div id="autotune-panel">
-
-              <!-- Live pitch display -->
-              <div class="at-section">
-                <div class="at-section-title">Live Pitch</div>
-                <div id="pitch-display-big">
-                  <div class="pitch-note-name" id="pitch-note-detected">—</div>
-                  <div class="pitch-freq-label" id="pitch-freq-label">Sing or play to detect</div>
-                  <div class="pitch-arrow-row">
-                    <span class="pitch-detected" id="pitch-raw-note">—</span>
-                    <span class="pitch-arrow">→</span>
-                    <span class="pitch-corrected" id="pitch-corrected-note">—</span>
-                  </div>
-                  <div class="cents-meter">
-                    <div class="cents-center"></div>
-                    <div class="cents-needle" id="cents-needle"></div>
-                  </div>
-                </div>
-                <!-- Pitch graph -->
-                <canvas id="pitch-graph-canvas" width="240" height="120"></canvas>
-              </div>
-
-              <!-- Auto-Tune settings -->
-              <div class="at-section">
-                <div class="at-section-title">Auto-Tune Settings</div>
-
-                <div class="at-control-row">
-                  <span class="at-label">Key</span>
-                  <select class="at-select" id="at-key">
-                    <option>C</option><option>C#</option><option>D</option>
-                    <option>D#</option><option>E</option><option>F</option>
-                    <option>F#</option><option>G</option><option>G#</option>
-                    <option>A</option><option>A#</option><option>B</option>
-                  </select>
-                </div>
-
-                <div class="at-control-row">
-                  <span class="at-label">Scale</span>
-                  <select class="at-select" id="at-scale">
-                    <option>Major</option>
-                    <option>Minor</option>
-                    <option>Harmonic Min</option>
-                    <option>Pentatonic</option>
-                    <option>Blues</option>
-                    <option>Dorian</option>
-                    <option>Mixolydian</option>
-                    <option>Chromatic</option>
-                  </select>
-                </div>
-
-                <div class="at-control-row">
-                  <span class="at-label">Strength</span>
-                  <input type="range" class="at-slider" id="at-strength" min="0" max="100" value="95">
-                  <span class="at-slider-val" id="at-strength-val">95%</span>
-                </div>
-
-                <div class="at-control-row">
-                  <span class="at-label">Speed</span>
-                  <input type="range" class="at-slider" id="at-speed" min="1" max="100" value="15">
-                  <span class="at-slider-val" id="at-speed-val">Fast</span>
-                </div>
-
-                <div class="at-control-row">
-                  <span class="at-label">Formant</span>
-                  <div class="at-toggle" id="at-formant-toggle">
-                    <div class="at-toggle-track on" id="at-formant-track">
-                      <div class="at-toggle-thumb"></div>
-                    </div>
-                    <span class="at-toggle-label" id="at-formant-label">Preserve</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Mic gain -->
-              <div class="at-section">
-                <div class="at-section-title">Input Gain</div>
-                <div class="at-control-row">
-                  <span class="at-label">Mic Gain</span>
-                  <input type="range" class="at-slider" id="at-mic-gain" min="0" max="300" value="100">
-                  <span class="at-slider-val" id="at-mic-gain-val">100%</span>
-                </div>
-              </div>
-
-            </div><!-- #autotune-panel -->
-
-            <!-- Right: Clips list -->
-            <div id="clips-panel">
-              <div id="clips-header">
-                <span class="clips-title">🎵 Recorded Clips</span>
-                <span id="clips-count" style="font-size:10px;color:var(--text-muted);margin-left:auto;">0 clips</span>
-              </div>
-              <div id="clips-list">
-                <div id="no-clips-msg">
-                  <span class="no-clips-icon">🎙</span>
-                  <div>No recordings yet</div>
-                  <div style="font-size:10px;">Arm the mic, then hit REC to start capturing</div>
-                </div>
-              </div>
-
-              <!-- Export bar -->
-              <div id="export-bar">
-                <span class="export-label">Bounce:</span>
-                <div class="export-bars-wrap">
-                  <input type="number" class="export-bars-input" id="export-bars" value="8" min="1" max="64">
-                  <span>bars</span>
-                </div>
-                <select class="export-select" id="export-format">
-                  <option value="stereo">Stereo WAV</option>
-                  <option value="mono">Mono WAV</option>
-                </select>
-                <button id="btn-export">
-                  <span class="export-icon">⬇ Bounce to WAV</span>
-                  <span class="export-spinner">⟳</span>
-                </button>
-              </div>
-            </div><!-- #clips-panel -->
-
-          </div><!-- #record-body -->
-        </div><!-- #record-view -->
-      </div><!-- #tab-record -->
-
-      <!-- AI Music tab -->
-      <div id="tab-ai-music" class="tab-content">
-        <div id="ai-music-view">
-
-          <!-- Top bar -->
-          <div id="ai-music-topbar">
-            <div class="ai-music-title">
-              <span class="ai-music-icon">🎵</span>
-              <span>AI Music <strong>Studio</strong></span>
-              <span class="ai-music-badge">MusicGen</span>
-            </div>
-            <div class="ai-music-topbar-right">
-              <button id="ai-music-key-toggle" class="ai-music-key-btn" title="Audio Engine Settings">
-                ⚙️ <span id="ai-music-key-status">Audio Setup</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Audio Generator setup (collapsible) -->
-          <div id="ai-music-key-panel" class="ai-music-key-panel hidden">
-            <div class="ai-key-panel-inner">
-              <div class="ai-provider-nav">
-                <button type="button" class="ai-audio-tab active" data-audio-provider="local">💻 Local Audio Server (MusicGen / AudioCraft)</button>
-                <button type="button" class="ai-audio-tab" data-audio-provider="hf">🤗 Hugging Face Cloud</button>
-              </div>
-
-              <!-- Local Audio Tab -->
-              <div class="ai-audio-content active" id="ai-audio-tab-local">
-                <label class="ai-key-label">Local Audio Generation Server URL</label>
-                <div class="ai-key-input-row">
-                  <input type="text" id="ai-music-local-url" class="ai-key-input" value="http://localhost:8000" placeholder="http://localhost:8000">
-                  <button type="button" id="ai-music-local-test" class="ai-action-btn secondary">⚡ Test Ping</button>
-                  <button type="button" id="ai-music-local-save" class="ai-key-save-btn">Save & Use Local</button>
-                </div>
-                <div class="ai-key-hint">
-                  Run <code>python scripts/local_music_server.py</code> to start your offline generator.
-                </div>
-              </div>
-
-              <!-- HF Tab -->
-              <div class="ai-audio-content" id="ai-audio-tab-hf">
-                <label class="ai-key-label">Hugging Face API Token</label>
-                <div class="ai-key-input-row">
-                  <input type="password" id="ai-music-key-input" class="ai-key-input" placeholder="hf_xxxxxxxxxxxx" autocomplete="off">
-                  <button type="button" id="ai-music-key-save" class="ai-key-save-btn">Save & Use HF</button>
-                </div>
-                <div class="ai-key-hint">
-                  Get a free token at <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener">huggingface.co/settings/tokens</a>
-                </div>
-              </div>
-
-              <div id="ai-music-status-feedback" class="ai-status-feedback hidden"></div>
-            </div>
-          </div>
-
-          <!-- Main body -->
-          <div id="ai-music-body">
-
-            <!-- Left: Prompt builder -->
-            <div id="ai-music-prompt-panel">
-
-              <!-- Prompt textarea -->
-              <div class="ai-prompt-section">
-                <label class="ai-prompt-label">Describe the music you want</label>
-                <textarea id="ai-music-prompt" class="ai-prompt-textarea" rows="3" placeholder="e.g. lo-fi hip hop beat, chill piano, rainy day vibes..."></textarea>
-                <div class="ai-prompt-actions">
-                  <button id="ai-music-smart-prompt" class="ai-smart-prompt-btn" title="Auto-generate prompt from current DAW state">
-                    ✨ Smart Prompt
-                  </button>
-                  <span id="ai-prompt-char-count" class="ai-char-count">0 chars</span>
-                </div>
-              </div>
-
-              <!-- Preset prompts -->
-              <div class="ai-prompt-section">
-                <label class="ai-prompt-label">Quick Presets</label>
-                <div id="ai-music-presets" class="ai-presets-grid">
-                  <!-- Filled dynamically -->
-                </div>
-              </div>
-
-              <!-- Mood tags -->
-              <div class="ai-prompt-section">
-                <label class="ai-prompt-label">Mood</label>
-                <div id="ai-music-moods" class="ai-tags-wrap">
-                  <!-- Filled dynamically -->
-                </div>
-              </div>
-
-              <!-- Instrument tags -->
-              <div class="ai-prompt-section">
-                <label class="ai-prompt-label">Instruments</label>
-                <div id="ai-music-instruments" class="ai-tags-wrap">
-                  <!-- Filled dynamically -->
-                </div>
-              </div>
-
-              <!-- Generate button -->
-              <div class="ai-generate-section">
-                <button id="ai-music-generate" class="ai-generate-btn" disabled>
-                  <span class="ai-gen-icon">🚀</span>
-                  <span class="ai-gen-text">Generate Music</span>
-                  <span class="ai-gen-spinner"></span>
-                </button>
-                <button id="ai-music-cancel" class="ai-cancel-btn hidden">
-                  ✕ Cancel
-                </button>
-              </div>
-
-              <!-- Status -->
-              <div id="ai-music-status" class="ai-status hidden">
-                <div class="ai-status-icon"></div>
-                <div class="ai-status-text"></div>
-              </div>
-
-            </div><!-- #ai-music-prompt-panel -->
-
-            <!-- Right: Results & History -->
-            <div id="ai-music-results-panel">
-
-              <!-- Current result -->
-              <div id="ai-music-result" class="ai-result-card hidden">
-                <div class="ai-result-header">
-                  <span class="ai-result-title">Generated Track</span>
-                  <span id="ai-result-time" class="ai-result-time"></span>
-                </div>
-                <div class="ai-result-waveform">
-                  <canvas id="ai-result-waveform-canvas" height="60"></canvas>
-                  <div id="ai-result-progress" class="ai-result-progress"></div>
-                </div>
-                <div class="ai-result-prompt" id="ai-result-prompt"></div>
-                <div class="ai-result-controls">
-                  <button id="ai-result-play" class="ai-ctrl-btn play" title="Play">
-                    <svg viewBox="0 0 16 16" width="14" fill="currentColor"><polygon points="3,2 13,8 3,14"/></svg>
-                  </button>
-                  <button id="ai-result-stop" class="ai-ctrl-btn stop" title="Stop">
-                    <svg viewBox="0 0 16 16" width="12" fill="currentColor"><rect x="2" y="2" width="12" height="12" rx="1"/></svg>
-                  </button>
-                  <button id="ai-result-download" class="ai-ctrl-btn download" title="Download WAV">
-                    ⬇ Download
-                  </button>
-                  <button id="ai-result-import" class="ai-ctrl-btn import" title="Import to Playlist">
-                    📥 Import
-                  </button>
-                </div>
-              </div>
-
-              <!-- Loading animation -->
-              <div id="ai-music-loading" class="ai-loading hidden">
-                <div class="ai-loading-bars">
-                  <div class="ai-bar"></div>
-                  <div class="ai-bar"></div>
-                  <div class="ai-bar"></div>
-                  <div class="ai-bar"></div>
-                  <div class="ai-bar"></div>
-                  <div class="ai-bar"></div>
-                  <div class="ai-bar"></div>
-                </div>
-                <div id="ai-loading-text" class="ai-loading-text">Generating music...</div>
-                <div class="ai-loading-sub">This may take 10–30 seconds on first request</div>
-              </div>
-
-              <!-- History -->
-              <div class="ai-history-section">
-                <div class="ai-history-header">
-                  <span class="ai-history-title">📜 Generation History</span>
-                  <button id="ai-history-clear" class="ai-history-clear-btn" title="Clear all history">Clear</button>
-                </div>
-                <div id="ai-music-history" class="ai-history-list">
-                  <div class="ai-history-empty">No generations yet — try a preset above!</div>
-                </div>
-              </div>
-
-            </div><!-- #ai-music-results-panel -->
-
-          </div><!-- #ai-music-body -->
-
-        </div><!-- #ai-music-view -->
-      </div><!-- #tab-ai-music -->
-
-      <!-- AI Producer tab -->
-      <div id="tab-ai-producer" class="tab-content">
-        <div id="ai-producer-view">
-
-          <!-- Header bar -->
-          <div id="ai-producer-topbar">
-            <div class="aip-header-left">
-              <div class="aip-avatar-pulse">
-                <div class="aip-avatar">🎧</div>
-              </div>
-              <div>
-                <div class="aip-header-name">Max <span class="aip-online-dot" title="Online"></span></div>
-                <div class="aip-header-sub" id="ai-producer-provider-badge">BeYou AI · Built-in</div>
-              </div>
-            </div>
-            <div class="aip-header-actions">
-              <button id="ai-producer-undo" class="aip-icon-btn" disabled title="Undo last AI change">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 010 11H11"/></svg>
-              </button>
-              <button id="ai-producer-clear-chat" class="aip-icon-btn" title="Clear conversation">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-              </button>
-              <button id="ai-producer-key-toggle" class="aip-icon-btn aip-settings-btn" title="AI Settings">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-              </button>
-            </div>
-          </div>
-
-          <!-- Settings panel (slide-down) -->
-          <div id="ai-producer-key-panel" class="aip-settings-panel hidden">
-            <div class="aip-settings-inner">
-              <div class="aip-provider-tabs">
-                <button type="button" class="aip-provider-tab active" data-provider="beyou">🎵 BeYou AI</button>
-                <button type="button" class="aip-provider-tab" data-provider="ollama">🦙 Ollama</button>
-                <button type="button" class="aip-provider-tab" data-provider="local-openai">🖥️ LM Studio</button>
-                <button type="button" class="aip-provider-tab" data-provider="gemini">✨ Gemini</button>
-              </div>
-
-              <!-- BeYou -->
-              <div class="aip-provider-pane active" id="ai-tab-beyou">
-                <div class="aip-ready-badge">✅ Ready — no setup needed</div>
-                <p class="aip-provider-desc">Trained on real drummer data from the Google Magenta Groove MIDI Dataset. Knows 20 genres. Works offline.</p>
-              </div>
-
-              <!-- Ollama -->
-              <div class="aip-provider-pane" id="ai-tab-ollama">
-                <div class="aip-field-row">
-                  <label>Host URL</label>
-                  <input type="text" id="ai-ollama-url" class="aip-text-input" value="http://localhost:11434" placeholder="http://localhost:11434">
-                </div>
-                <div class="aip-field-row">
-                  <label>Model</label>
-                  <input type="text" id="ai-ollama-model" class="aip-text-input" value="chatmusician" placeholder="chatmusician, llama3.2, mistral...">
-                </div>
-                <div class="aip-quick-models">
-                  <button type="button" class="aip-model-chip" data-model="chatmusician">chatmusician</button>
-                  <button type="button" class="aip-model-chip" data-model="llama3.2">llama3.2</button>
-                  <button type="button" class="aip-model-chip" data-model="mistral">mistral</button>
-                  <button type="button" class="aip-model-chip" data-model="qwen2.5:7b">qwen2.5:7b</button>
-                </div>
-                <div class="aip-btn-row">
-                  <button type="button" id="ai-ollama-scan-btn" class="aip-sec-btn">🔍 Scan Models</button>
-                  <button type="button" id="ai-ollama-test-btn" class="aip-sec-btn">⚡ Test</button>
-                  <button type="button" id="ai-ollama-save-btn" class="aip-primary-btn">Use Ollama</button>
-                </div>
-                <p class="aip-hint">Run <code>OLLAMA_ORIGINS="*" ollama serve</code> to enable CORS</p>
-              </div>
-
-              <!-- LM Studio -->
-              <div class="aip-provider-pane" id="ai-tab-local-openai">
-                <div class="aip-field-row">
-                  <label>Server URL</label>
-                  <input type="text" id="ai-local-openai-url" class="aip-text-input" value="http://localhost:1234/v1" placeholder="http://localhost:1234/v1">
-                </div>
-                <div class="aip-field-row">
-                  <label>Model ID</label>
-                  <input type="text" id="ai-local-openai-model" class="aip-text-input" value="local-model" placeholder="local-model">
-                </div>
-                <div class="aip-btn-row">
-                  <button type="button" id="ai-local-openai-test-btn" class="aip-sec-btn">⚡ Test</button>
-                  <button type="button" id="ai-local-openai-save-btn" class="aip-primary-btn">Use LM Studio</button>
-                </div>
-                <p class="aip-hint">Enable CORS in LM Studio → Local Server tab</p>
-              </div>
-
-              <!-- Gemini -->
-              <div class="aip-provider-pane" id="ai-tab-gemini">
-                <div class="aip-field-row">
-                  <label>Gemini API Key</label>
-                  <input type="password" id="ai-producer-key-input" class="aip-text-input" placeholder="AIza..." autocomplete="off">
-                </div>
-                <div class="aip-btn-row">
-                  <button type="button" id="ai-gemini-test-btn" class="aip-sec-btn">⚡ Test</button>
-                  <button type="button" id="ai-producer-key-save" class="aip-primary-btn">Use Gemini</button>
-                </div>
-                <p class="aip-hint">Free key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a></p>
-              </div>
-
-              <div id="ai-producer-status-feedback" class="aip-feedback hidden"></div>
-            </div>
-          </div>
-
-          <!-- Main chat area -->
-          <div id="ai-producer-body">
-
-            <!-- Chat messages -->
-            <div id="ai-producer-messages" class="aip-messages">
-              <!-- Welcome screen injected here by JS -->
-            </div>
-
-            <!-- Typing indicator -->
-            <div id="ai-producer-typing" class="aip-typing hidden">
-              <div class="aip-typing-avatar">🎧</div>
-              <div class="aip-typing-bubble">
-                <span></span><span></span><span></span>
-              </div>
-            </div>
-
-            <!-- Genre + mood pills -->
-            <div id="aip-context-bar">
-              <div class="aip-context-scroll">
-                <span class="aip-context-label">Genre:</span>
-                <div id="ai-producer-genres" class="aip-pill-group"></div>
-                <span class="aip-context-label aip-context-label--mood">Mood:</span>
-                <div id="ai-producer-moods" class="aip-pill-group"></div>
-              </div>
-            </div>
-
-            <!-- Quick action bar -->
-            <div id="aip-quick-bar">
-              <div id="ai-producer-actions" class="aip-quick-actions"></div>
-            </div>
-
-            <!-- Input bar -->
-            <div id="ai-producer-input-bar" class="aip-input-bar">
-              <textarea id="ai-producer-input" class="aip-input" rows="1"
-                placeholder="Tell Max what you want... e.g. dark trap at 140" maxlength="1000"></textarea>
-              <button id="ai-producer-send" class="aip-send-btn" title="Send (Enter)">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-                </svg>
-              </button>
-            </div>
-
-          </div><!-- #ai-producer-body -->
-
-        </div><!-- #ai-producer-view -->
-      </div><!-- #tab-ai-producer -->
-
-        <!-- Audio Editor tab -->
-        <div id="tab-audio-editor" class="tab-content">
-          <div style="display:flex;flex-direction:column;height:100%;">
-            <!-- Top action bar -->
-            <div class="ae-inline-topbar">
-              <span class="ae-inline-title">🎛 Audio Editor &amp; Layer Mixer</span>
-              <button class="ae-inline-open-btn" id="ae-open-fullscreen" title="Open fullscreen editor">
-                ⛶ Fullscreen
-              </button>
-              <button class="ae-inline-add" id="ae-main-add-layer" title="Import sound into editor">
-                + Import Sound
-              </button>
-              <button class="ae-inline-export" id="ae-main-export" title="Export mix as WAV">
-                💾 Export Mix
-              </button>
-            </div>
-            <!-- Layer list inline -->
-            <div id="ae-inline-layers" style="padding:8px 12px;flex:1;overflow-y:auto;">
-              <div class="ae-empty-msg" id="ae-inline-empty">
-                <div style="font-size:32px;margin-bottom:8px;">🎵</div>
-                <div>Drag &amp; drop audio files here or click + Import Sound</div>
-                <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">WAV · MP3 · OGG · FLAC — Supports layering, fade, normalize, reverse, export</div>
-              </div>
-            </div>
-            <!-- Mini timeline -->
-            <div style="padding:8px 12px;">
-              <canvas id="ae-mini-canvas" style="width:100%;height:80px;border-radius:6px;background:#0a0c10;display:block;"></canvas>
-            </div>
-            <div class="ae-inline-controls">
-              <button class="ae-ctrl-btn" id="ae-inline-play">▶ Play Mix</button>
-              <button class="ae-ctrl-btn" id="ae-inline-pause">⏸</button>
-              <button class="ae-ctrl-btn" id="ae-inline-norm">📊 Normalize</button>
-              <button class="ae-ctrl-btn" id="ae-inline-fadein">↗️ Fade In</button>
-              <button class="ae-ctrl-btn" id="ae-inline-fadeout">↘️ Fade Out</button>
-              <button class="ae-ctrl-btn" id="ae-inline-reverse">🔄 Reverse</button>
-            </div>
-          </div>
-        </div>
-
-    </div>
-  </div>
-
-  <!-- ── Global Sound Drop Zone (always visible) ────────── -->
-  <div id="global-drop-zone" class="gdz-hidden">
-    <div class="gdz-inner">
-      <div class="gdz-icon">🎵</div>
-      <div class="gdz-title">Drop Audio Here</div>
-      <div class="gdz-sub">WAV · MP3 · OGG · FLAC · AIFF</div>
-    </div>
-  </div>
-
-  <!-- ── Quick Import Bar (visible at bottom of main screen) --> 
-  <div id="quick-import-bar">
-    <div class="qib-left">
-      <span class="qib-icon">🎵</span>
-      <span class="qib-label">Drop audio anywhere to import</span>
-    </div>
-    <div class="qib-actions">
-      <button class="qib-btn" id="qib-import-btn">📂 Import File</button>
-      <button class="qib-btn qib-editor-btn" id="qib-editor-btn">🎛 Audio Editor</button>
-      <button class="qib-btn qib-drum-btn" id="qib-drum-btn">🥁 Drum Machine</button>
-    </div>
-  </div>
-
-  <!-- ── Status Bar ─────────────────────────────────────── -->
-  <div id="statusbar">
-    <div class="status-item">
-      🎵 <span id="status-mode">Pattern Mode</span>
-    </div>
-    <div class="status-item">
-      CPU: <span id="status-cpu">0%</span>
-    </div>
-    <div class="status-item">
-      Step: <span id="status-step">—</span>
-    </div>
-    <div class="status-item" style="margin-left:auto;">
-      <span style="color:var(--accent);font-weight:700;">BeYou Studio</span> &nbsp;·&nbsp; Web Audio API + AI Music DAW
-    </div>
-  </div>
-
-  <!-- Toast -->
-  <div id="toast"></div>
+ <!-- ── Title Bar ─────────────────────────────────────── -->
+ <div id="titlebar">
+ <div class="win-controls">
+ <div class="win-btn close" title="Close"></div>
+ <div class="win-btn min" title="Minimize"></div>
+ <div class="win-btn max" title="Maximize"></div>
+ </div>
+ <div class="app-title">
+ <span style="color:#ffffff;font-weight:900;letter-spacing:1px;">BeYou</span>&nbsp;Studio &nbsp;|&nbsp;
+ <input id="project-title-input" class="proj-title-inline-input" value="Untitled Project" title="Click to rename project" spellcheck="false" />
+ </div>
+ <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
+ <div style="font-size:10px;color:var(--text-muted);">Space=Play &nbsp; F6=Stop &nbsp; Ctrl+M=Mixer</div>
+ </div>
+ </div>
+
+ <!-- ── Transport / Toolbar ───────────────────────────── -->
+ <div id="toolbar">
+
+ <!-- Transport -->
+ <div class="transport-group">
+ <button id="btn-play" class="transport-btn play" title="Play (Space / F5)" data-tooltip="Play">
+ <svg viewBox="0 0 16 16" width="14" fill="currentColor"><polygon points="3,2 13,8 3,14"/></svg>
+ </button>
+ <button id="btn-stop" class="transport-btn stop" title="Stop (F6)" data-tooltip="Stop">
+ <svg viewBox="0 0 16 16" width="12" fill="currentColor"><rect x="2" y="2" width="12" height="12" rx="1"/></svg>
+ </button>
+ <button id="btn-record" class="transport-btn record" title="Record" data-tooltip="Record">
+ <svg viewBox="0 0 16 16" width="12" fill="currentColor"><circle cx="8" cy="8" r="5"/></svg>
+ </button>
+ <button id="btn-metronome" class="transport-btn metro" title="Metronome Click (Ctrl+T)" data-tooltip="Metronome">
+ ⏱
+ </button>
+ </div>
+
+ <div class="toolbar-separator"></div>
+
+ <!-- Pattern / Song mode -->
+ <div class="mode-toggle">
+ <button class="mode-btn active" id="mode-pattern">PAT</button>
+ <button class="mode-btn" id="mode-song">SONG</button>
+ </div>
+
+ <div class="toolbar-separator"></div>
+
+ <!-- BPM -->
+ <div class="bpm-group">
+ <span class="bpm-label">BPM</span>
+ <input id="bpm-display" class="bpm-display" type="number" min="20" max="300" value="140" title="Drag to change BPM">
+ <button id="btn-tap-tempo" class="tb-tap-btn" title="Tap Tempo — Click rhythmically to set BPM">TAP</button>
+ <div class="bpm-arrows">
+ <button id="bpm-up" class="bpm-arrow" title="+1 BPM">▲</button>
+ <button id="bpm-down" class="bpm-arrow" title="−1 BPM">▼</button>
+ </div>
+ </div>
+
+ <!-- Time sig -->
+ <div class="timesig-group">
+ <span>4</span>
+ <span style="font-size:10px;color:var(--text-muted)">/</span>
+ <span>4</span>
+ </div>
+
+ <!-- Position -->
+ <div id="position-display" class="position-display">1:1:1</div>
+
+ <div class="toolbar-separator"></div>
+
+ <!-- Project Name Pill (Click to rename) -->
+ <div class="project-pill-wrap" title="Current Project Name (Click to rename)">
+ <span class="proj-pill-icon"></span>
+ <input id="tb-project-title-input" class="tb-proj-input" value="Untitled Project" spellcheck="false" title="Click to rename project" />
+ <span class="proj-edit-hint"></span>
+ </div>
+
+ <div class="toolbar-separator"></div>
+
+ <!-- View toggles -->
+ <div class="view-btns">
+ <button class="view-btn" onclick="app._switchTab('piano-roll')" title="Piano Roll (Ctrl+P)">
+ <svg viewBox="0 0 16 16" width="13" fill="currentColor">
+ <rect x="1" y="3" width="14" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1"/>
+ <rect x="2" y="4" width="1" height="4" fill="currentColor"/>
+ <rect x="4" y="4" width="1" height="6" fill="currentColor"/>
+ <rect x="6" y="4" width="1" height="4" fill="currentColor"/>
+ <rect x="8" y="4" width="1" height="8" fill="currentColor"/>
+ <rect x="10" y="4" width="1" height="4" fill="currentColor"/>
+ <rect x="12" y="4" width="1" height="6" fill="currentColor"/>
+ </svg>
+ Piano Roll
+ </button>
+ <button class="view-btn" onclick="app._switchTab('mixer')" title="Mixer (Ctrl+M / F9)">
+ <svg viewBox="0 0 16 16" width="13" fill="currentColor">
+ <rect x="1" y="2" width="2" height="12" rx="1"/>
+ <rect x="4" y="4" width="2" height="10" rx="1"/>
+ <rect x="7" y="1" width="2" height="13" rx="1"/>
+ <rect x="10" y="3" width="2" height="11" rx="1"/>
+ <rect x="13" y="5" width="2" height="9" rx="1"/>
+ </svg>
+ Mixer
+ </button>
+ <button class="view-btn" onclick="app._switchTab('playlist')" title="Playlist">
+ <svg viewBox="0 0 16 16" width="13" fill="currentColor">
+ <rect x="1" y="2" width="8" height="3" rx="1"/>
+ <rect x="1" y="7" width="11" height="3" rx="1"/>
+ <rect x="1" y="12" width="5" height="3" rx="1"/>
+ </svg>
+ Playlist
+ </button>
+ <button class="view-btn" onclick="app._switchTab('audio-editor')" title="Edison Audio Editor">
+ 🎛 Editor
+ </button>
+ <button class="view-btn plugin-launch-btn" id="tb-btn-soundgoodizer" title="Soundgoodizer Maximus Plugin">
+ ✨ Soundgoodizer
+ </button>
+ <button class="view-btn plugin-launch-btn" id="tb-btn-param-eq" title="Fruity Parametric EQ 2">
+ 📈 EQ 2
+ </button>
+ </div>
+
+ <!-- Master knobs -->
+ <div class="master-group">
+ <div class="knob-wrap" data-tooltip="Master Volume">
+ <span class="master-knob-label">VOL</span>
+ <canvas id="master-vol-knob" width="36" height="36" title="Master Volume (drag)"></canvas>
+ <span id="master-vol-val" class="knob-value">85%</span>
+ </div>
+ <div class="knob-wrap" data-tooltip="Master Pitch">
+ <span class="master-knob-label">PITCH</span>
+ <canvas id="master-pitch-knob" width="36" height="36" title="Master Pitch (drag)"></canvas>
+ <span id="master-pitch-val" class="knob-value">0 st</span>
+ </div>
+ </div>
+
+ <div class="toolbar-separator"></div>
+
+ <!-- Main Actions Group -->
+ <div class="cloud-group">
+ <button id="plat-cloud-save-btn" class="tb-cloud-btn" title="Save Project to Cloud">
+ <span></span> Save
+ </button>
+ <button id="btn-cloud-open" class="tb-cloud-btn" title="Open Cloud Projects">
+ <span></span> Projects
+ </button>
+ <button id="btn-import-sound" class="tb-cloud-btn" title="Import audio files or browse instrument presets" style="border-color:rgba(255,255,255,0.2);color:#ffffff;font-weight:700;">
+ <span></span> Import Sounds
+ </button>
+ <button id="plat-explore-tab" title="Explore Community Beats">
+ Explore
+ </button>
+ <button id="plat-train-btn" title="Train Max with song audio & beats">
+ Train Max
+ </button>
+ <button id="btn-admin-dash" class="tb-cloud-btn admin-btn" title="Super Admin Dashboard">
+ <span></span> Admin
+ </button>
+ </div>
+
+ <div class="toolbar-separator"></div>
+
+ <!-- User Profile Badge -->
+ <div class="user-badge-group">
+ <div id="user-badge" class="user-pill" title="User Account (Click to Switch/Sign In)">
+ <span class="user-avatar-icon"></span>
+ <span id="user-name-display" class="user-name-text">Rahul Sharma</span>
+ <span id="user-role-tag" class="role-badge admin">ADMIN</span>
+ </div>
+ </div>
+
+ <!-- AI Beat Suggester toggle -->
+ <div style="margin-left:auto;padding-right:10px;">
+ <button id="btn-ai-toggle" title="AI Beat Suggester">
+ <span class="ai-btn-dot"></span>
+ AI Beats
+ </button>
+ </div>
+ </div>
+
+ <!-- ── Floating Live Voice Recording HUD ───────────────── -->
+ <div id="top-rec-hud" class="hidden">
+ <div class="rec-hud-badge">
+ <div class="rec-hud-dot"></div>
+ <span>REC VOICE</span>
+ </div>
+ <div id="rec-hud-timer" class="rec-hud-timer">0:00</div>
+ <div class="rec-hud-pulse-bars">
+ <div class="rec-hud-bar"></div>
+ <div class="rec-hud-bar"></div>
+ <div class="rec-hud-bar"></div>
+ <div class="rec-hud-bar"></div>
+ <div class="rec-hud-bar"></div>
+ </div>
+ <button id="btn-hud-stop-rec" class="rec-hud-stop-btn"> Stop & Insert Take</button>
+ </div>
+
+ <!-- ── Main Content ──────────────────────────────────── -->
+ <div id="main-content">
+
+ <!-- Left: Channel Rack -->
+ <div id="channel-rack" class="panel">
+ <div class="panel-header">
+ <span class="panel-title">Channel <span class="panel-accent">Rack</span></span>
+ <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
+ <select class="rack-pattern-select" id="rack-pattern-select">
+ <option>Pattern 1</option>
+ <option>Pattern 2</option>
+ <option>Pattern 3</option>
+ <option>Pattern 4</option>
+ </select>
+ </div>
+ </div>
+ <div class="rack-controls">
+ <span style="font-size:10px;color:var(--text-muted);">Steps:</span>
+ <span class="rack-step-count" style="color:var(--text-secondary);font-weight:700;">16</span>
+ <div style="margin-left:auto;display:flex;gap:4px;">
+ <button class="ch-btn" title="Randomize All" onclick="sequencerRandomizeAll()" style="width:auto;padding:0 6px;font-size:9px;"> Rand</button>
+ <button class="ch-btn" title="Clear All" onclick="sequencerClearAll()" style="width:auto;padding:0 6px;font-size:9px;"> Clear</button>
+ </div>
+ </div>
+
+ <!-- Step headers -->
+ <div style="display:flex;align-items:center;height:20px;background:#111;border-bottom:1px solid var(--border);padding:0 4px;">
+ <div style="width:84px;flex-shrink:0;"></div>
+ <div style="width:44px;flex-shrink:0;"></div>
+ <div style="flex:1;display:flex;">
+ <script>
+ for(let i=1;i<=16;i++) {
+ document.write(`<div style="flex:1;text-align:center;font-size:8px;font-family:JetBrains Mono,monospace;color:${i%4===1?'#ff6a00':'#444'}">${i}</div>`);
+ }
+ </script>
+ </div>
+ </div>
+
+ <!-- Channel rows -->
+ <div id="channels-list"></div>
+
+ <!-- Add channel / Import Sound / Sample Library -->
+ <div class="rack-footer-actions">
+ <div id="add-channel-btn" class="rack-footer-btn" title="Add a new synth channel">
+ <svg viewBox="0 0 16 16" width="12" fill="currentColor"><path d="M8 1v14M1 8h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+ Add Channel
+ </div>
+ <div id="import-sound-rack-btn" class="rack-footer-btn rack-import-btn" title="Import an audio file as a sample channel">
+ <span></span> Import Sound
+ </div>
+ <div id="preset-library-rack-btn" class="rack-footer-btn" style="border-color:rgba(255,255,255,0.15);color:#ffffff;background:rgba(255,255,255,0.03);" title="Browse the built-in sample library">
+ <span></span> Sample Library
+ </div>
+ </div>
+ </div>
+
+ <!-- Resize handle -->
+ <div class="resize-handle-h" id="rack-resize" style="background:#111;border-right:1px solid #000;"></div>
+
+ <!-- Right panel: Piano Roll / Mixer / Playlist tabs -->
+ <div id="right-panel">
+ <div class="right-tabs">
+ <button class="right-tab active" data-tab="piano-roll">
+ <span class="tab-icon">🎹</span> Piano Roll
+ </button>
+ <button class="right-tab" data-tab="mixer">
+ <span class="tab-icon">🎚</span> Mixer
+ </button>
+ <button class="right-tab" data-tab="playlist">
+ <span class="tab-icon">📋</span> Playlist
+ </button>
+ <button class="right-tab record-tab" data-tab="record">
+ <span class="tab-icon">🎙</span> Record
+ <span class="rec-dot"></span>
+ </button>
+ <button class="right-tab ai-music-tab" data-tab="ai-music">
+ <span class="tab-icon"></span> AI Music
+ <span class="ai-music-dot"></span>
+ </button>
+ <button class="right-tab ai-producer-tab" data-tab="ai-producer">
+ <span class="tab-icon"></span> AI Producer
+ <span class="ai-producer-dot"></span>
+ </button>
+ <button class="right-tab" data-tab="audio-editor">
+ <span class="tab-icon">🎛</span> Editor
+ </button>
+ </div>
+
+ <!-- Piano Roll tab -->
+ <div id="tab-piano-roll" class="tab-content visible">
+ <div id="piano-roll-view">
+ <!-- Toolbar -->
+ <div class="piano-roll-toolbar">
+ <button id="pr-draw-btn" class="pr-tool-btn active" title="Draw notes">
+ Draw
+ </button>
+ <button id="pr-erase-btn" class="pr-tool-btn" title="Erase notes">
+ Erase
+ </button>
+ <div class="pr-separator"></div>
+ <label style="font-size:10px;color:var(--text-muted);">Q:</label>
+ <select id="pr-quantize" class="pr-quantize-select" title="Quantize (note length)">
+ <option value="1">1/16</option>
+ <option value="2">1/8</option>
+ <option value="4">1/4</option>
+ <option value="8">1/2</option>
+ </select>
+ <div class="pr-separator"></div>
+ <label style="font-size:10px;color:var(--text-muted);">Channel:</label>
+ <select id="pr-channel-select" class="pr-quantize-select" title="Select channel to edit">
+ <!-- Filled dynamically -->
+ </select>
+ <div class="pr-separator"></div>
+ <button id="pr-clear-btn" class="pr-tool-btn" style="margin-left:auto;color:#ffffff;">
+ Clear
+ </button>
+ </div>
+ <!-- Grid -->
+ <div id="piano-roll-wrap">
+ <div id="piano-keys" style="width:48px;overflow-y:hidden;flex-shrink:0;">
+ <canvas id="piano-keys-canvas"></canvas>
+ </div>
+ <div id="piano-roll-canvas-wrap" style="flex:1;overflow:auto;position:relative;">
+ <canvas id="piano-roll-canvas"></canvas>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <!-- Mixer tab -->
+ <div id="tab-mixer" class="tab-content">
+ <div id="mixer-view" style="flex:1;display:flex;flex-direction:row;overflow-x:auto;overflow-y:hidden;height:100%;">
+ <div id="mixer-channels"></div>
+ </div>
+ </div>
+
+ <!-- Playlist tab -->
+ <div id="tab-playlist" class="tab-content">
+ <div id="playlist-view">
+ <div id="playlist-toolbar">
+ <button id="pl-draw-btn" class="pl-tool-btn active"> Draw</button>
+ <button id="pl-erase-btn" class="pl-tool-btn"> Erase</button>
+ <div style="width:1px;height:18px;background:var(--border);margin:0 4px;"></div>
+ <button id="pl-loop-btn" class="pl-tool-btn"> Loop</button>
+ <div style="margin-left:auto;font-size:10px;color:var(--text-muted);">
+ Right-click to remove blocks
+ </div>
+ </div>
+ <div id="playlist-wrap">
+ <div id="playlist-track-labels"></div>
+ <div id="playlist-grid-wrap">
+ <canvas id="playlist-canvas"></canvas>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <!-- Record tab -->
+ <div id="tab-record" class="tab-content">
+ <div id="record-view">
+
+ <!-- Top control bar -->
+ <div id="record-topbar">
+ <!-- Arm mic -->
+ <button id="btn-arm" title="Arm microphone for recording"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px;"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" x2="12" y1="19" y2="22"></line></svg>Arm</button>
+
+ <!-- Record / Stop -->
+ <button id="btn-rec" title="Record (click to arm mic & start recording)">● REC</button>
+ <button id="btn-rec-stop" title="Stop recording">■ Stop</button>
+
+ <!-- Monitor -->
+ <button id="btn-monitor" title="Monitor mic input through auto-tune">🎧 Monitor</button>
+
+ <!-- Status badge -->
+ <div id="rec-status" class="rec-status-badge idle">● Idle</div>
+
+ <!-- Mic level -->
+ <div class="mic-level-wrap">
+ <div class="mic-level-label">Input</div>
+ <div class="mic-level-bar-bg">
+ <div class="mic-level-bar-fill" id="mic-level-fill"></div>
+ </div>
+ </div>
+
+ <!-- Timer -->
+ <div id="rec-time-display">0:00</div>
+ </div>
+
+ <!-- Body: auto-tune panel + clips -->
+ <div id="record-body">
+
+ <!-- Left: Auto-tune controls -->
+ <div id="autotune-panel">
+
+ <!-- Live pitch display -->
+ <div class="at-section">
+ <div class="at-section-title">Live Pitch</div>
+ <div id="pitch-display-big">
+ <div class="pitch-note-name" id="pitch-note-detected">—</div>
+ <div class="pitch-freq-label" id="pitch-freq-label">Sing or play to detect</div>
+ <div class="pitch-arrow-row">
+ <span class="pitch-detected" id="pitch-raw-note">—</span>
+ <span class="pitch-arrow">→</span>
+ <span class="pitch-corrected" id="pitch-corrected-note">—</span>
+ </div>
+ <div class="cents-meter">
+ <div class="cents-center"></div>
+ <div class="cents-needle" id="cents-needle"></div>
+ </div>
+ </div>
+ <!-- Pitch graph -->
+ <canvas id="pitch-graph-canvas" width="240" height="120"></canvas>
+ </div>
+
+ <!-- Auto-Tune settings -->
+ <div class="at-section">
+ <div class="at-section-title">Auto-Tune Settings</div>
+
+ <div class="at-control-row">
+ <span class="at-label">Key</span>
+ <select class="at-select" id="at-key">
+ <option>C</option><option>C#</option><option>D</option>
+ <option>D#</option><option>E</option><option>F</option>
+ <option>F#</option><option>G</option><option>G#</option>
+ <option>A</option><option>A#</option><option>B</option>
+ </select>
+ </div>
+
+ <div class="at-control-row">
+ <span class="at-label">Scale</span>
+ <select class="at-select" id="at-scale">
+ <option>Major</option>
+ <option>Minor</option>
+ <option>Harmonic Min</option>
+ <option>Pentatonic</option>
+ <option>Blues</option>
+ <option>Dorian</option>
+ <option>Mixolydian</option>
+ <option>Chromatic</option>
+ </select>
+ </div>
+
+ <div class="at-control-row">
+ <span class="at-label">Strength</span>
+ <input type="range" class="at-slider" id="at-strength" min="0" max="100" value="95">
+ <span class="at-slider-val" id="at-strength-val">95%</span>
+ </div>
+
+ <div class="at-control-row">
+ <span class="at-label">Speed</span>
+ <input type="range" class="at-slider" id="at-speed" min="1" max="100" value="15">
+ <span class="at-slider-val" id="at-speed-val">Fast</span>
+ </div>
+
+ <div class="at-control-row">
+ <span class="at-label">Formant</span>
+ <div class="at-toggle" id="at-formant-toggle">
+ <div class="at-toggle-track on" id="at-formant-track">
+ <div class="at-toggle-thumb"></div>
+ </div>
+ <span class="at-toggle-label" id="at-formant-label">Preserve</span>
+ </div>
+ </div>
+ </div>
+
+ <!-- Mic gain -->
+ <div class="at-section">
+ <div class="at-section-title">Input Gain</div>
+ <div class="at-control-row">
+ <span class="at-label">Mic Gain</span>
+ <input type="range" class="at-slider" id="at-mic-gain" min="0" max="300" value="100">
+ <span class="at-slider-val" id="at-mic-gain-val">100%</span>
+ </div>
+ </div>
+
+ </div><!-- #autotune-panel -->
+
+ <!-- Right: Clips list -->
+ <div id="clips-panel">
+ <div id="clips-header">
+ <span class="clips-title"> Recorded Clips</span>
+ <span id="clips-count" style="font-size:10px;color:var(--text-muted);margin-left:auto;">0 clips</span>
+ </div>
+ <div id="clips-list">
+ <div id="no-clips-msg">
+ <span class="no-clips-icon"></span>
+ <div>No recordings yet</div>
+ <div style="font-size:10px;">Arm the mic, then hit REC to start capturing</div>
+ </div>
+ </div>
+
+ <!-- Export bar -->
+ <div id="export-bar">
+ <span class="export-label">Bounce:</span>
+ <div class="export-bars-wrap">
+ <input type="number" class="export-bars-input" id="export-bars" value="8" min="1" max="64">
+ <span>bars</span>
+ </div>
+ <select class="export-select" id="export-format">
+ <option value="stereo">Stereo WAV</option>
+ <option value="mono">Mono WAV</option>
+ </select>
+ <button id="btn-export">
+ <span class="export-icon">⬇ Bounce to WAV</span>
+ <span class="export-spinner">⟳</span>
+ </button>
+ </div>
+ </div><!-- #clips-panel -->
+
+ </div><!-- #record-body -->
+ </div><!-- #record-view -->
+ </div><!-- #tab-record -->
+
+ <!-- AI Music tab -->
+ <div id="tab-ai-music" class="tab-content">
+ <div id="ai-music-view">
+
+ <!-- Top bar -->
+ <div id="ai-music-topbar">
+ <div class="ai-music-title">
+ <span class="ai-music-icon"></span>
+ <span>AI Music <strong>Studio</strong></span>
+ <span class="ai-music-badge">MusicGen</span>
+ </div>
+ <div class="ai-music-topbar-right">
+ <button id="ai-music-key-toggle" class="ai-music-key-btn" title="Audio Engine Settings">
+ <span id="ai-music-key-status">Audio Setup</span>
+ </button>
+ </div>
+ </div>
+
+ <!-- Audio Generator setup (collapsible) -->
+ <div id="ai-music-key-panel" class="ai-music-key-panel hidden">
+ <div class="ai-key-panel-inner">
+ <div class="ai-provider-nav">
+ <button type="button" class="ai-audio-tab active" data-audio-provider="local"> Local Audio Server (MusicGen / AudioCraft)</button>
+ <button type="button" class="ai-audio-tab" data-audio-provider="hf"> Hugging Face Cloud</button>
+ </div>
+
+ <!-- Local Audio Tab -->
+ <div class="ai-audio-content active" id="ai-audio-tab-local">
+ <label class="ai-key-label">Local Audio Generation Server URL</label>
+ <div class="ai-key-input-row">
+ <input type="text" id="ai-music-local-url" class="ai-key-input" value="http://localhost:8000" placeholder="http://localhost:8000">
+ <button type="button" id="ai-music-local-test" class="ai-action-btn secondary"> Test Ping</button>
+ <button type="button" id="ai-music-local-save" class="ai-key-save-btn">Save & Use Local</button>
+ </div>
+ <div class="ai-key-hint">
+ Run <code>python scripts/local_music_server.py</code> to start your offline generator.
+ </div>
+ </div>
+
+ <!-- HF Tab -->
+ <div class="ai-audio-content" id="ai-audio-tab-hf">
+ <label class="ai-key-label">Hugging Face API Token</label>
+ <div class="ai-key-input-row">
+ <input type="password" id="ai-music-key-input" class="ai-key-input" placeholder="hf_xxxxxxxxxxxx" autocomplete="off">
+ <button type="button" id="ai-music-key-save" class="ai-key-save-btn">Save & Use HF</button>
+ </div>
+ <div class="ai-key-hint">
+ Get a free token at <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener">huggingface.co/settings/tokens</a>
+ </div>
+ </div>
+
+ <div id="ai-music-status-feedback" class="ai-status-feedback hidden"></div>
+ </div>
+ </div>
+
+ <!-- Main body -->
+ <div id="ai-music-body">
+
+ <!-- Left: Prompt builder -->
+ <div id="ai-music-prompt-panel">
+
+ <!-- Prompt textarea -->
+ <div class="ai-prompt-section">
+ <label class="ai-prompt-label">Describe the music you want</label>
+ <textarea id="ai-music-prompt" class="ai-prompt-textarea" rows="3" placeholder="e.g. lo-fi hip hop beat, chill piano, rainy day vibes..."></textarea>
+ <div class="ai-prompt-actions">
+ <button id="ai-music-smart-prompt" class="ai-smart-prompt-btn" title="Auto-generate prompt from current DAW state">
+ Smart Prompt
+ </button>
+ <span id="ai-prompt-char-count" class="ai-char-count">0 chars</span>
+ </div>
+ </div>
+
+ <!-- Preset prompts -->
+ <div class="ai-prompt-section">
+ <label class="ai-prompt-label">Quick Presets</label>
+ <div id="ai-music-presets" class="ai-presets-grid">
+ <!-- Filled dynamically -->
+ </div>
+ </div>
+
+ <!-- Mood tags -->
+ <div class="ai-prompt-section">
+ <label class="ai-prompt-label">Mood</label>
+ <div id="ai-music-moods" class="ai-tags-wrap">
+ <!-- Filled dynamically -->
+ </div>
+ </div>
+
+ <!-- Instrument tags -->
+ <div class="ai-prompt-section">
+ <label class="ai-prompt-label">Instruments</label>
+ <div id="ai-music-instruments" class="ai-tags-wrap">
+ <!-- Filled dynamically -->
+ </div>
+ </div>
+
+ <!-- Generate button -->
+ <div class="ai-generate-section">
+ <button id="ai-music-generate" class="ai-generate-btn" disabled>
+ <span class="ai-gen-icon"></span>
+ <span class="ai-gen-text">Generate Music</span>
+ <span class="ai-gen-spinner"></span>
+ </button>
+ <button id="ai-music-cancel" class="ai-cancel-btn hidden">
+ Cancel
+ </button>
+ </div>
+
+ <!-- Status -->
+ <div id="ai-music-status" class="ai-status hidden">
+ <div class="ai-status-icon"></div>
+ <div class="ai-status-text"></div>
+ </div>
+
+ </div><!-- #ai-music-prompt-panel -->
+
+ <!-- Right: Results & History -->
+ <div id="ai-music-results-panel">
+
+ <!-- Current result -->
+ <div id="ai-music-result" class="ai-result-card hidden">
+ <div class="ai-result-header">
+ <span class="ai-result-title">Generated Track</span>
+ <span id="ai-result-time" class="ai-result-time"></span>
+ </div>
+ <div class="ai-result-waveform">
+ <canvas id="ai-result-waveform-canvas" height="60"></canvas>
+ <div id="ai-result-progress" class="ai-result-progress"></div>
+ </div>
+ <div class="ai-result-prompt" id="ai-result-prompt"></div>
+ <div class="ai-result-controls">
+ <button id="ai-result-play" class="ai-ctrl-btn play" title="Play">
+ <svg viewBox="0 0 16 16" width="14" fill="currentColor"><polygon points="3,2 13,8 3,14"/></svg>
+ </button>
+ <button id="ai-result-stop" class="ai-ctrl-btn stop" title="Stop">
+ <svg viewBox="0 0 16 16" width="12" fill="currentColor"><rect x="2" y="2" width="12" height="12" rx="1"/></svg>
+ </button>
+ <button id="ai-result-download" class="ai-ctrl-btn download" title="Download WAV">
+ ⬇ Download
+ </button>
+ <button id="ai-result-import" class="ai-ctrl-btn import" title="Import to Playlist">
+ Import
+ </button>
+ </div>
+ </div>
+
+ <!-- Loading animation -->
+ <div id="ai-music-loading" class="ai-loading hidden">
+ <div class="ai-loading-bars">
+ <div class="ai-bar"></div>
+ <div class="ai-bar"></div>
+ <div class="ai-bar"></div>
+ <div class="ai-bar"></div>
+ <div class="ai-bar"></div>
+ <div class="ai-bar"></div>
+ <div class="ai-bar"></div>
+ </div>
+ <div id="ai-loading-text" class="ai-loading-text">Generating music...</div>
+ <div class="ai-loading-sub">This may take 10–30 seconds on first request</div>
+ </div>
+
+ <!-- History -->
+ <div class="ai-history-section">
+ <div class="ai-history-header">
+ <span class="ai-history-title"> Generation History</span>
+ <button id="ai-history-clear" class="ai-history-clear-btn" title="Clear all history">Clear</button>
+ </div>
+ <div id="ai-music-history" class="ai-history-list">
+ <div class="ai-history-empty">No generations yet — try a preset above!</div>
+ </div>
+ </div>
+
+ </div><!-- #ai-music-results-panel -->
+
+ </div><!-- #ai-music-body -->
+
+ </div><!-- #ai-music-view -->
+ </div><!-- #tab-ai-music -->
+
+ <!-- AI Producer tab -->
+ <div id="tab-ai-producer" class="tab-content">
+ <div id="ai-producer-view">
+
+ <!-- Header bar -->
+ <div id="ai-producer-topbar">
+ <div class="aip-header-left">
+ <div class="aip-avatar-pulse">
+ <div class="aip-avatar"></div>
+ </div>
+ <div>
+ <div class="aip-header-name">Max <span class="aip-online-dot" title="Online"></span></div>
+ <div class="aip-header-sub" id="ai-producer-provider-badge">BeYou AI · Built-in</div>
+ </div>
+ </div>
+ <div class="aip-header-actions">
+ <button id="ai-producer-undo" class="aip-icon-btn" disabled title="Undo last AI change">
+ <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 010 11H11"/></svg>
+ </button>
+ <button id="ai-producer-clear-chat" class="aip-icon-btn" title="Clear conversation">
+ <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+ </button>
+ <button id="ai-producer-key-toggle" class="aip-icon-btn aip-settings-btn" title="AI Settings">
+ <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+ </button>
+ </div>
+ </div>
+
+ <!-- Settings panel (slide-down) -->
+ <div id="ai-producer-key-panel" class="aip-settings-panel hidden">
+ <div class="aip-settings-inner">
+ <div class="aip-provider-tabs">
+ <button type="button" class="aip-provider-tab active" data-provider="beyou"> BeYou AI</button>
+ <button type="button" class="aip-provider-tab" data-provider="ollama"> Ollama</button>
+ <button type="button" class="aip-provider-tab" data-provider="local-openai"> LM Studio</button>
+ <button type="button" class="aip-provider-tab" data-provider="gemini"> Gemini</button>
+ </div>
+
+ <!-- BeYou -->
+ <div class="aip-provider-pane active" id="ai-tab-beyou">
+ <div class="aip-ready-badge"> Ready — no setup needed</div>
+ <p class="aip-provider-desc">Trained on real drummer data from the Google Magenta Groove MIDI Dataset. Knows 20 genres. Works offline.</p>
+ </div>
+
+ <!-- Ollama -->
+ <div class="aip-provider-pane" id="ai-tab-ollama">
+ <div class="aip-field-row">
+ <label>Host URL</label>
+ <input type="text" id="ai-ollama-url" class="aip-text-input" value="http://localhost:11434" placeholder="http://localhost:11434">
+ </div>
+ <div class="aip-field-row">
+ <label>Model</label>
+ <input type="text" id="ai-ollama-model" class="aip-text-input" value="chatmusician" placeholder="chatmusician, llama3.2, mistral...">
+ </div>
+ <div class="aip-quick-models">
+ <button type="button" class="aip-model-chip" data-model="chatmusician">chatmusician</button>
+ <button type="button" class="aip-model-chip" data-model="llama3.2">llama3.2</button>
+ <button type="button" class="aip-model-chip" data-model="mistral">mistral</button>
+ <button type="button" class="aip-model-chip" data-model="qwen2.5:7b">qwen2.5:7b</button>
+ </div>
+ <div class="aip-btn-row">
+ <button type="button" id="ai-ollama-scan-btn" class="aip-sec-btn"> Scan Models</button>
+ <button type="button" id="ai-ollama-test-btn" class="aip-sec-btn"> Test</button>
+ <button type="button" id="ai-ollama-save-btn" class="aip-primary-btn">Use Ollama</button>
+ </div>
+ <p class="aip-hint">Run <code>OLLAMA_ORIGINS="*" ollama serve</code> to enable CORS</p>
+ </div>
+
+ <!-- LM Studio -->
+ <div class="aip-provider-pane" id="ai-tab-local-openai">
+ <div class="aip-field-row">
+ <label>Server URL</label>
+ <input type="text" id="ai-local-openai-url" class="aip-text-input" value="http://localhost:1234/v1" placeholder="http://localhost:1234/v1">
+ </div>
+ <div class="aip-field-row">
+ <label>Model ID</label>
+ <input type="text" id="ai-local-openai-model" class="aip-text-input" value="local-model" placeholder="local-model">
+ </div>
+ <div class="aip-btn-row">
+ <button type="button" id="ai-local-openai-test-btn" class="aip-sec-btn"> Test</button>
+ <button type="button" id="ai-local-openai-save-btn" class="aip-primary-btn">Use LM Studio</button>
+ </div>
+ <p class="aip-hint">Enable CORS in LM Studio → Local Server tab</p>
+ </div>
+
+ <!-- Gemini -->
+ <div class="aip-provider-pane" id="ai-tab-gemini">
+ <div class="aip-field-row">
+ <label>Gemini API Key</label>
+ <input type="password" id="ai-producer-key-input" class="aip-text-input" placeholder="AIza..." autocomplete="off">
+ </div>
+ <div class="aip-btn-row">
+ <button type="button" id="ai-gemini-test-btn" class="aip-sec-btn"> Test</button>
+ <button type="button" id="ai-producer-key-save" class="aip-primary-btn">Use Gemini</button>
+ </div>
+ <p class="aip-hint">Free key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a></p>
+ </div>
+
+ <div id="ai-producer-status-feedback" class="aip-feedback hidden"></div>
+ </div>
+ </div>
+
+ <!-- Main chat area -->
+ <div id="ai-producer-body">
+
+ <!-- Chat messages -->
+ <div id="ai-producer-messages" class="aip-messages">
+ <!-- Welcome screen injected here by JS -->
+ </div>
+
+ <!-- Typing indicator -->
+ <div id="ai-producer-typing" class="aip-typing hidden">
+ <div class="aip-typing-avatar"></div>
+ <div class="aip-typing-bubble">
+ <span></span><span></span><span></span>
+ </div>
+ </div>
+
+ <!-- Genre + mood pills -->
+ <div id="aip-context-bar">
+ <div class="aip-context-scroll">
+ <span class="aip-context-label">Genre:</span>
+ <div id="ai-producer-genres" class="aip-pill-group"></div>
+ <span class="aip-context-label aip-context-label--mood">Mood:</span>
+ <div id="ai-producer-moods" class="aip-pill-group"></div>
+ </div>
+ </div>
+
+ <!-- Quick action bar -->
+ <div id="aip-quick-bar">
+ <div id="ai-producer-actions" class="aip-quick-actions"></div>
+ </div>
+
+ <!-- Input bar -->
+ <div id="ai-producer-input-bar" class="aip-input-bar">
+ <textarea id="ai-producer-input" class="aip-input" rows="1"
+ placeholder="Tell Max what you want... e.g. dark trap at 140" maxlength="1000"></textarea>
+ <button id="ai-producer-send" class="aip-send-btn" title="Send (Enter)">
+ <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+ <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+ </svg>
+ </button>
+ </div>
+
+ </div><!-- #ai-producer-body -->
+
+ </div><!-- #ai-producer-view -->
+ </div><!-- #tab-ai-producer -->
+
+ <!-- Audio Editor tab (Edison Waveform Studio) -->
+ <div id="tab-audio-editor" class="tab-content">
+ <div class="edison-studio-wrap">
+   <!-- Top Edison Control Toolbar -->
+   <div class="edison-topbar">
+     <div class="edison-brand">
+       <span class="edison-led"></span>
+       <span class="edison-title">EDISON AUDIO EDITOR</span>
+     </div>
+
+     <!-- Playback & Selection Controls -->
+     <div class="edison-btn-group">
+       <button class="edison-btn" id="ae-play-btn" title="Play (Space)">▶ Play</button>
+       <button class="edison-btn" id="ae-loop-btn" title="Loop Selection">🔁 Loop</button>
+       <button class="edison-btn" id="ae-pause-btn" title="Pause / Stop">⏸ Stop</button>
+     </div>
+
+     <!-- Edit Tools -->
+     <div class="edison-btn-group">
+       <button class="edison-btn" id="ae-cut-btn" title="Cut Region (Ctrl+X)">✂ Cut</button>
+       <button class="edison-btn" id="ae-copy-btn" title="Copy Region (Ctrl+C)">⎘ Copy</button>
+       <button class="edison-btn" id="ae-paste-btn" title="Paste Region (Ctrl+V)">📋 Paste</button>
+       <button class="edison-btn" id="ae-trim-btn" title="Trim to Selection">✂ Trim</button>
+       <button class="edison-btn" id="ae-del-btn" title="Delete Region">✕ Del</button>
+     </div>
+
+     <!-- DSP Processing Tools -->
+     <div class="edison-btn-group">
+       <button class="edison-btn" id="ae-norm-btn" title="Normalize Peak to 0 dBFS">📊 Norm</button>
+       <button class="edison-btn" id="ae-fadein-btn" title="Fade In (0.5s)">↗ Fade In</button>
+       <button class="edison-btn" id="ae-fadeout-btn" title="Fade Out (0.5s)">↘ Fade Out</button>
+       <button class="edison-btn" id="ae-reverse-btn" title="Reverse Audio">🔄 Rev</button>
+       <button class="edison-btn" id="ae-silence-btn" title="Silence Region">🔇 Silence</button>
+       <button class="edison-btn" id="ae-gain-up-btn" title="Boost Gain (+3 dB)">▲ +3dB</button>
+       <button class="edison-btn" id="ae-gain-down-btn" title="Attenuate Gain (-3 dB)">▼ -3dB</button>
+       <button class="edison-btn" id="ae-pitch-up-btn" title="Pitch Shift +1 Semitone">♯ +1st</button>
+       <button class="edison-btn" id="ae-pitch-down-btn" title="Pitch Shift -1 Semitone">♭ -1st</button>
+     </div>
+
+     <!-- Actions -->
+     <div class="edison-btn-group" style="margin-left:auto;">
+       <button class="edison-btn accent" id="ae-send-channel-btn" title="Send to Channel Rack as Sampler Track">🎹 Send to Rack</button>
+       <button class="edison-btn" id="ae-main-export" title="Export as 16-bit WAV">💾 Export WAV</button>
+       <button class="edison-btn" id="ae-open-fullscreen" title="Open Fullscreen Studio">⛶ Fullscreen</button>
+     </div>
+   </div>
+
+   <!-- Quick Demo Sound Loader & Importer Bar -->
+   <div class="edison-sound-bar">
+     <span class="edison-sound-label">QUICK SOUNDS:</span>
+     <button class="edison-sound-chip" id="ae-demo-808-btn">⚡ 808 Sub Drop</button>
+     <button class="edison-sound-chip" id="ae-demo-snare-btn">⚡ Trap Snare</button>
+     <button class="edison-sound-chip" id="ae-demo-hihat-btn">⚡ Closed Hi-Hat</button>
+     <button class="edison-sound-chip" id="ae-demo-vocal-btn">⚡ Vocal Formant</button>
+     <button class="edison-sound-chip" id="ae-load-project-channels">⎘ Load Project Tracks</button>
+     <button class="edison-sound-chip primary" id="ae-main-add-layer">+ Import WAV/MP3</button>
+   </div>
+
+   <!-- Main High-Resolution Waveform Display -->
+   <div class="edison-canvas-wrap" id="edison-canvas-wrap">
+     <canvas id="ae-tab-waveform-canvas"></canvas>
+   </div>
+
+   <!-- Layers / Clips Tray -->
+   <div class="edison-bottom-tray">
+     <div class="edison-tray-header">
+       <span>AUDIO CLIPS &amp; LAYERS</span>
+       <span style="font-size:10px;color:var(--text-muted);margin-left:auto;">Click &amp; drag on waveform to select region · Double-click to select all</span>
+     </div>
+     <div id="ae-inline-layers" class="edison-layers-list">
+       <div class="ae-empty-msg" id="ae-inline-empty" style="display:none;">
+         <div>No clips loaded — click a quick sound above or import audio!</div>
+       </div>
+     </div>
+   </div>
+ </div>
+ </div>
+
+ </div>
+ </div>
+
+ <!-- ── Global Sound Drop Zone (always visible) ────────── -->
+ <div id="global-drop-zone" class="gdz-hidden">
+ <div class="gdz-inner">
+ <div class="gdz-icon"></div>
+ <div class="gdz-title">Drop Audio Here</div>
+ <div class="gdz-sub">WAV · MP3 · OGG · FLAC · AIFF</div>
+ </div>
+ </div>
+
+
+ <!-- ── Status Bar ─────────────────────────────────────── -->
+ <div id="statusbar">
+ <div class="status-item">
+ <span id="status-mode">Pattern Mode</span>
+ </div>
+ <div class="status-item">
+ CPU: <span id="status-cpu">0%</span>
+ </div>
+ <div class="status-item">
+ Step: <span id="status-step">—</span>
+ </div>
+ <div class="status-item" style="margin-left:auto;">
+ <span style="color:var(--accent);font-weight:700;">BeYou Studio</span> &nbsp;·&nbsp; Web Audio API + AI Music DAW
+ </div>
+ </div>
+
+ <!-- Toast -->
+ <div id="toast"></div>
 
 </div><!-- #app -->
 
 <!-- Inline styles for correct layout -->
 <style>
-  /* Tab content layout overrides */
-  .tab-content.visible {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    overflow: hidden;
-    height: 100%;
-  }
-  #tab-mixer.visible {
-    flex-direction: row;
-    overflow-x: auto;
-    overflow-y: hidden;
-  }
-  #tab-mixer.visible #mixer-view {
-    flex: 1;
-    display: flex;
-    flex-direction: row;
-    height: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
-  }
-  #mixer-channels {
-    display: flex;
-    flex-direction: row;
-    height: 100%;
-    padding: 10px;
-    gap: 2px;
-    min-width: max-content;
-    align-items: flex-start;
-  }
+ /* Tab content layout overrides */
+ .tab-content.visible {
+ display: flex;
+ flex-direction: column;
+ flex: 1;
+ overflow: hidden;
+ height: 100%;
+ }
+ #tab-mixer.visible {
+ flex-direction: row;
+ overflow-x: auto;
+ overflow-y: hidden;
+ }
+ #tab-mixer.visible #mixer-view {
+ flex: 1;
+ display: flex;
+ flex-direction: row;
+ height: 100%;
+ overflow-x: auto;
+ overflow-y: hidden;
+ }
+ #mixer-channels {
+ display: flex;
+ flex-direction: row;
+ height: 100%;
+ padding: 10px;
+ gap: 2px;
+ min-width: max-content;
+ align-items: flex-start;
+ }
 
-  /* Piano roll layout */
-  #piano-roll-view {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    overflow: hidden;
-    height: 100%;
-  }
-  #piano-roll-wrap {
-    display: flex;
-    flex: 1;
-    overflow: hidden;
-  }
-  #piano-roll-canvas-wrap {
-    flex: 1;
-    overflow: auto;
-    position: relative;
-  }
-  #piano-keys {
-    width: 48px;
-    flex-shrink: 0;
-    background: #1a1a1a;
-    border-right: 1px solid var(--border);
-    overflow-y: hidden;
-  }
+ /* Piano roll layout */
+ #piano-roll-view {
+ display: flex;
+ flex-direction: column;
+ flex: 1;
+ overflow: hidden;
+ height: 100%;
+ }
+ #piano-roll-wrap {
+ display: flex;
+ flex: 1;
+ overflow: hidden;
+ }
+ #piano-roll-canvas-wrap {
+ flex: 1;
+ overflow: auto;
+ position: relative;
+ }
+ #piano-keys {
+ width: 48px;
+ flex-shrink: 0;
+ background: #1a1a1a;
+ border-right: 1px solid var(--border);
+ overflow-y: hidden;
+ }
 
-  /* Playlist layout */
-  #playlist-view {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    height: 100%;
-  }
-  #playlist-wrap {
-    flex: 1;
-    display: flex;
-    overflow: hidden;
-  }
-  #playlist-track-labels {
-    width: 120px;
-    flex-shrink: 0;
-    border-right: 1px solid var(--border);
-    overflow-y: auto;
-  }
-  #playlist-grid-wrap {
-    flex: 1;
-    overflow: auto;
-    position: relative;
-  }
-  /* Step number header */
-  .step-header {
-    display: flex;
-    height: 18px;
-    align-items: center;
-    background: #111;
-    border-bottom: 1px solid var(--border);
-    padding: 0 4px;
-  }
+ /* Playlist layout */
+ #playlist-view {
+ flex: 1;
+ display: flex;
+ flex-direction: column;
+ overflow: hidden;
+ height: 100%;
+ }
+ #playlist-wrap {
+ flex: 1;
+ display: flex;
+ overflow: hidden;
+ }
+ #playlist-track-labels {
+ width: 120px;
+ flex-shrink: 0;
+ border-right: 1px solid var(--border);
+ overflow-y: auto;
+ }
+ #playlist-grid-wrap {
+ flex: 1;
+ overflow: auto;
+ position: relative;
+ }
+ /* Step number header */
+ .step-header {
+ display: flex;
+ height: 18px;
+ align-items: center;
+ background: #111;
+ border-bottom: 1px solid var(--border);
+ padding: 0 4px;
+ }
 </style>
 
 <!-- ── Modals: Cloud Projects, Save, Admin Dashboard, Auth ──────────── -->
 
 <!-- Modal: Save Project -->
 <div id="modal-save-project" class="fl-modal-overlay hidden">
-  <div class="fl-modal-box">
-    <div class="fl-modal-header">
-      <div class="fl-modal-title">💾 Save Project to Database</div>
-      <button class="fl-modal-close" data-close="modal-save-project">✕</button>
-    </div>
-    <div class="fl-modal-body">
-      <div class="fl-form-group">
-        <label class="fl-form-label">Project Title</label>
-        <input type="text" id="save-project-title" class="fl-form-input" placeholder="e.g. Cyberpunk Trap Beat" value="My Project">
-      </div>
-      <div class="fl-form-group">
-        <div style="display:flex;gap:12px;font-size:11px;color:var(--text-muted);font-family:var(--font-mono);background:rgba(255,255,255,0.02);padding:10px;border-radius:6px;border:1px solid var(--border);">
-          <div>BPM: <span id="save-preview-bpm" style="color:var(--accent);font-weight:700;">140</span></div>
-          <div>Channels: <span id="save-preview-channels" style="color:#a855f7;font-weight:700;">8</span></div>
-          <div>Mode: <span style="color:#00d4aa;font-weight:700;">16 Steps</span></div>
-        </div>
-      </div>
-    </div>
-    <div class="fl-modal-footer">
-      <button class="fl-btn-secondary" data-close="modal-save-project">Cancel</button>
-      <button id="btn-save-project-confirm" class="fl-btn-primary">Save to Cloud</button>
-    </div>
-  </div>
+ <div class="fl-modal-box">
+ <div class="fl-modal-header">
+ <div class="fl-modal-title"> Save Project to Database</div>
+ <button class="fl-modal-close" data-close="modal-save-project">✕</button>
+ </div>
+ <div class="fl-modal-body">
+ <div class="fl-form-group">
+ <label class="fl-form-label">Project Title</label>
+ <input type="text" id="save-project-title" class="fl-form-input" placeholder="e.g. Cyberpunk Trap Beat" value="My Project">
+ </div>
+ <div class="fl-form-group">
+ <div style="display:flex;gap:12px;font-size:11px;color:var(--text-muted);font-family:var(--font-mono);background:rgba(255,255,255,0.02);padding:10px;border-radius:6px;border:1px solid var(--border);">
+ <div>BPM: <span id="save-preview-bpm" style="color:var(--accent);font-weight:700;">140</span></div>
+ <div>Channels: <span id="save-preview-channels" style="color:#a1a1aa;font-weight:700;">8</span></div>
+ <div>Mode: <span style="color:#ffffff;font-weight:700;">16 Steps</span></div>
+ </div>
+ </div>
+ </div>
+ <div class="fl-modal-footer">
+ <button class="fl-btn-secondary" data-close="modal-save-project">Cancel</button>
+ <button id="btn-save-project-confirm" class="fl-btn-primary">Save to Cloud</button>
+ </div>
+ </div>
 </div>
 
 <!-- Modal: Cloud Projects Browser -->
 <div id="modal-cloud-projects" class="fl-modal-overlay hidden">
-  <div class="fl-modal-box large">
-    <div class="fl-modal-header">
-      <div class="fl-modal-title">📂 Cloud Projects Database</div>
-      <button class="fl-modal-close" data-close="modal-cloud-projects">✕</button>
-    </div>
-    <div class="fl-modal-body">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-        <input type="text" id="cloud-proj-search" class="fl-form-input" placeholder="Search saved projects..." style="max-width:280px;margin-bottom:0;">
-        <button id="btn-modal-new-save" class="fl-btn-primary" style="padding:6px 12px;font-size:11px;">+ Save Current Project</button>
-      </div>
-      <div id="cloud-proj-container" class="cloud-proj-list">
-        <div style="text-align:center;padding:30px;color:var(--text-muted);font-size:12px;">Loading projects from database...</div>
-      </div>
-    </div>
-    <div class="fl-modal-footer">
-      <button class="fl-btn-secondary" data-close="modal-cloud-projects">Close</button>
-    </div>
-  </div>
+ <div class="fl-modal-box large">
+ <div class="fl-modal-header">
+ <div class="fl-modal-title"> Cloud Projects Database</div>
+ <button class="fl-modal-close" data-close="modal-cloud-projects">✕</button>
+ </div>
+ <div class="fl-modal-body">
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+ <input type="text" id="cloud-proj-search" class="fl-form-input" placeholder="Search saved projects..." style="max-width:280px;margin-bottom:0;">
+ <button id="btn-modal-new-save" class="fl-btn-primary" style="padding:6px 12px;font-size:11px;">+ Save Current Project</button>
+ </div>
+ <div id="cloud-proj-container" class="cloud-proj-list">
+ <div style="text-align:center;padding:30px;color:var(--text-muted);font-size:12px;">Loading projects from database...</div>
+ </div>
+ </div>
+ <div class="fl-modal-footer">
+ <button class="fl-btn-secondary" data-close="modal-cloud-projects">Close</button>
+ </div>
+ </div>
 </div>
 
 <!-- Modal: Super Admin Dashboard -->
 <div id="modal-admin-dashboard" class="fl-modal-overlay hidden">
-  <div class="fl-modal-box large" style="max-width:920px;">
-    <div class="fl-modal-header">
-      <div class="fl-modal-title">
-        <span style="color:#ff6a00;">⚡</span> BeYou Admin Dashboard
-        <span class="role-badge admin" style="margin-left:6px;">SUPER ADMIN: Rahul Sharma</span>
-      </div>
-      <button class="fl-modal-close" data-close="modal-admin-dashboard">✕</button>
-    </div>
-    <div class="admin-tabs">
-      <button class="admin-tab-btn active" data-admin-tab="overview">📊 System Overview</button>
-      <button class="admin-tab-btn" data-admin-tab="users">👥 User Management</button>
-      <button class="admin-tab-btn" data-admin-tab="projects">📁 All Projects</button>
-      <button class="admin-tab-btn" data-admin-tab="logs">📜 Audit Logs</button>
-    </div>
-    <div class="fl-modal-body" style="min-height:360px;">
-      <!-- Tab 1: Overview -->
-      <div id="admin-tab-overview" class="admin-tab-pane active">
-        <div class="admin-stats-grid">
-          <div class="admin-stat-card">
-            <div class="admin-stat-label">Total Users</div>
-            <div id="adm-stat-users" class="admin-stat-value">—</div>
-            <div class="admin-stat-sub">Registered accounts</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-label">Cloud Projects</div>
-            <div id="adm-stat-projects" class="admin-stat-value">—</div>
-            <div class="admin-stat-sub">Saved project states</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-label">Active Sessions</div>
-            <div id="adm-stat-sessions" class="admin-stat-value">—</div>
-            <div class="admin-stat-sub">Bearer auth tokens</div>
-          </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-label">Database Size</div>
-            <div id="adm-stat-db" class="admin-stat-value">—</div>
-            <div class="admin-stat-sub">SQLite storage</div>
-          </div>
-        </div>
-        <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:10px;">
-          <div style="font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:10px;">Backend & AI Engine Status</div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:10px;font-size:11px;">
-            <div>Audio Engine: <span id="adm-stat-engine" style="color:var(--accent);font-weight:600;">—</span></div>
-            <div>Server Uptime: <span id="adm-stat-uptime" style="color:#00d4aa;font-family:var(--font-mono);">—</span></div>
-            <div>Super Admin: <span style="color:#f59e0b;font-weight:600;">Rahul Sharma (username: rahul)</span></div>
-            <div>Database Engine: <span style="font-family:var(--font-mono);color:var(--text-muted);">fl_studio.db (SQLite 3)</span></div>
-          </div>
-        </div>
-      </div>
+ <div class="fl-modal-box large" style="max-width:920px;">
+ <div class="fl-modal-header">
+ <div class="fl-modal-title">
+ <span style="color:#ffffff;"></span> BeYou Admin Dashboard
+ <span class="role-badge admin" style="margin-left:6px;">SUPER ADMIN: Rahul Sharma</span>
+ </div>
+ <button class="fl-modal-close" data-close="modal-admin-dashboard">✕</button>
+ </div>
+ <div class="admin-tabs">
+ <button class="admin-tab-btn active" data-admin-tab="overview"> System Overview</button>
+ <button class="admin-tab-btn" data-admin-tab="users"> User Management</button>
+ <button class="admin-tab-btn" data-admin-tab="projects"> All Projects</button>
+ <button class="admin-tab-btn" data-admin-tab="logs"> Audit Logs</button>
+ </div>
+ <div class="fl-modal-body" style="min-height:360px;">
+ <!-- Tab 1: Overview -->
+ <div id="admin-tab-overview" class="admin-tab-pane active">
+ <div class="admin-stats-grid">
+ <div class="admin-stat-card">
+ <div class="admin-stat-label">Total Users</div>
+ <div id="adm-stat-users" class="admin-stat-value">—</div>
+ <div class="admin-stat-sub">Registered accounts</div>
+ </div>
+ <div class="admin-stat-card">
+ <div class="admin-stat-label">Cloud Projects</div>
+ <div id="adm-stat-projects" class="admin-stat-value">—</div>
+ <div class="admin-stat-sub">Saved project states</div>
+ </div>
+ <div class="admin-stat-card">
+ <div class="admin-stat-label">Active Sessions</div>
+ <div id="adm-stat-sessions" class="admin-stat-value">—</div>
+ <div class="admin-stat-sub">Bearer auth tokens</div>
+ </div>
+ <div class="admin-stat-card">
+ <div class="admin-stat-label">Database Size</div>
+ <div id="adm-stat-db" class="admin-stat-value">—</div>
+ <div class="admin-stat-sub">SQLite storage</div>
+ </div>
+ </div>
+ <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;padding:14px;margin-top:10px;">
+ <div style="font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:10px;">Backend & AI Engine Status</div>
+ <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:10px;font-size:11px;">
+ <div>Audio Engine: <span id="adm-stat-engine" style="color:var(--accent);font-weight:600;">—</span></div>
+ <div>Server Uptime: <span id="adm-stat-uptime" style="color:#ffffff;font-family:var(--font-mono);">—</span></div>
+ <div>Super Admin: <span style="color:#a1a1aa;font-weight:600;">Rahul Sharma (username: rahul)</span></div>
+ <div>Database Engine: <span style="font-family:var(--font-mono);color:var(--text-muted);">fl_studio.db (SQLite 3)</span></div>
+ </div>
+ </div>
+ </div>
 
-      <!-- Tab 2: Users -->
-      <div id="admin-tab-users" class="admin-tab-pane">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <div style="font-size:12px;font-weight:600;color:var(--text-primary);">Registered User Accounts</div>
-          <button id="btn-admin-show-add-user" class="fl-btn-primary" style="padding:4px 10px;font-size:11px;">+ Add User</button>
-        </div>
-        <!-- Add User Form -->
-        <div id="admin-add-user-form" class="hidden" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:12px;">
-          <div style="font-size:11px;font-weight:700;margin-bottom:8px;color:#ff6a00;">Create New User Account</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-            <input type="text" id="adm-new-username" class="fl-form-input" placeholder="Username">
-            <input type="email" id="adm-new-email" class="fl-form-input" placeholder="Email">
-            <input type="password" id="adm-new-password" class="fl-form-input" placeholder="Password">
-            <input type="text" id="adm-new-fullname" class="fl-form-input" placeholder="Full Name">
-          </div>
-          <div style="display:flex;justify-content:flex-end;gap:8px;">
-            <button id="adm-cancel-add-user" class="fl-btn-secondary" style="padding:4px 10px;font-size:10px;">Cancel</button>
-            <button id="adm-submit-add-user" class="fl-btn-primary" style="padding:4px 12px;font-size:10px;">Create User</button>
-          </div>
-        </div>
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Username</th>
-                <th>Full Name</th>
-                <th>Role</th>
-                <th>Projects</th>
-                <th>Last Login</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="admin-users-tbody">
-            </tbody>
-          </table>
-        </div>
-      </div>
+ <!-- Tab 2: Users -->
+ <div id="admin-tab-users" class="admin-tab-pane">
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+ <div style="font-size:12px;font-weight:600;color:var(--text-primary);">Registered User Accounts</div>
+ <button id="btn-admin-show-add-user" class="fl-btn-primary" style="padding:4px 10px;font-size:11px;">+ Add User</button>
+ </div>
+ <!-- Add User Form -->
+ <div id="admin-add-user-form" class="hidden" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:12px;">
+ <div style="font-size:11px;font-weight:700;margin-bottom:8px;color:#ffffff;">Create New User Account</div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+ <input type="text" id="adm-new-username" class="fl-form-input" placeholder="Username">
+ <input type="email" id="adm-new-email" class="fl-form-input" placeholder="Email">
+ <input type="password" id="adm-new-password" class="fl-form-input" placeholder="Password">
+ <input type="text" id="adm-new-fullname" class="fl-form-input" placeholder="Full Name">
+ </div>
+ <div style="display:flex;justify-content:flex-end;gap:8px;">
+ <button id="adm-cancel-add-user" class="fl-btn-secondary" style="padding:4px 10px;font-size:10px;">Cancel</button>
+ <button id="adm-submit-add-user" class="fl-btn-primary" style="padding:4px 12px;font-size:10px;">Create User</button>
+ </div>
+ </div>
+ <div class="admin-table-wrap">
+ <table class="admin-table">
+ <thead>
+ <tr>
+ <th>ID</th>
+ <th>Username</th>
+ <th>Full Name</th>
+ <th>Role</th>
+ <th>Projects</th>
+ <th>Last Login</th>
+ <th>Actions</th>
+ </tr>
+ </thead>
+ <tbody id="admin-users-tbody">
+ </tbody>
+ </table>
+ </div>
+ </div>
 
-      <!-- Tab 3: Projects -->
-      <div id="admin-tab-projects" class="admin-tab-pane">
-        <div style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:12px;">All Projects Across All Users</div>
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Project ID</th>
-                <th>Title</th>
-                <th>Creator</th>
-                <th>BPM</th>
-                <th>Updated</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="admin-projects-tbody">
-            </tbody>
-          </table>
-        </div>
-      </div>
+ <!-- Tab 3: Projects -->
+ <div id="admin-tab-projects" class="admin-tab-pane">
+ <div style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:12px;">All Projects Across All Users</div>
+ <div class="admin-table-wrap">
+ <table class="admin-table">
+ <thead>
+ <tr>
+ <th>Project ID</th>
+ <th>Title</th>
+ <th>Creator</th>
+ <th>BPM</th>
+ <th>Updated</th>
+ <th>Actions</th>
+ </tr>
+ </thead>
+ <tbody id="admin-projects-tbody">
+ </tbody>
+ </table>
+ </div>
+ </div>
 
-      <!-- Tab 4: Logs -->
-      <div id="admin-tab-logs" class="admin-tab-pane">
-        <div style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:12px;">System & Audit Trail</div>
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Time</th>
-                <th>User</th>
-                <th>Action</th>
-                <th>Details</th>
-              </tr>
-            </thead>
-            <tbody id="admin-logs-tbody">
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-    <div class="fl-modal-footer">
-      <button class="fl-btn-secondary" data-close="modal-admin-dashboard">Close</button>
-    </div>
-  </div>
+ <!-- Tab 4: Logs -->
+ <div id="admin-tab-logs" class="admin-tab-pane">
+ <div style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:12px;">System & Audit Trail</div>
+ <div class="admin-table-wrap">
+ <table class="admin-table">
+ <thead>
+ <tr>
+ <th>Time</th>
+ <th>User</th>
+ <th>Action</th>
+ <th>Details</th>
+ </tr>
+ </thead>
+ <tbody id="admin-logs-tbody">
+ </tbody>
+ </table>
+ </div>
+ </div>
+ </div>
+ <div class="fl-modal-footer">
+ <button class="fl-btn-secondary" data-close="modal-admin-dashboard">Close</button>
+ </div>
+ </div>
 </div>
 
 <!-- Modal: User Sign In / Register -->
 <div id="modal-auth" class="fl-modal-overlay hidden">
-  <div class="fl-modal-box">
-    <div class="fl-modal-header">
-      <div class="fl-modal-title">🔐 Account & Authentication</div>
-      <button class="fl-modal-close" data-close="modal-auth">✕</button>
-    </div>
-    <div class="admin-tabs" style="padding:0 14px;">
-      <button class="admin-tab-btn active" id="auth-tab-btn-login">Sign In</button>
-      <button class="admin-tab-btn" id="auth-tab-btn-register">Register</button>
-    </div>
-    <div class="fl-modal-body">
-      <!-- 1-Click Super Admin Login shortcut -->
-      <div style="background:linear-gradient(135deg,rgba(255,106,0,0.15),rgba(168,85,247,0.15));border:1px solid rgba(255,106,0,0.3);border-radius:6px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
-        <div>
-          <div style="font-size:11px;font-weight:700;color:#ffaa44;">👑 Rahul Sharma (Super Admin)</div>
-          <div style="font-size:10px;color:var(--text-muted);">Quick sign in with Super Admin rights</div>
-        </div>
-        <button id="btn-quick-admin-login" class="fl-btn-primary" style="padding:4px 10px;font-size:10px;">Quick Sign In</button>
-      </div>
+ <div class="fl-modal-box">
+ <div class="fl-modal-header">
+ <div class="fl-modal-title"> Account & Authentication</div>
+ <button class="fl-modal-close" data-close="modal-auth">✕</button>
+ </div>
+ <div class="admin-tabs" style="padding:0 14px;">
+ <button class="admin-tab-btn active" id="auth-tab-btn-login">Sign In</button>
+ <button class="admin-tab-btn" id="auth-tab-btn-register">Register</button>
+ </div>
+ <div class="fl-modal-body">
+ <!-- 1-Click Super Admin Login shortcut -->
+ <div style="background:linear-gradient(135deg,rgba(255,106,0,0.15),rgba(168,85,247,0.15));border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
+ <div>
+ <div style="font-size:11px;font-weight:700;color:#ffffff;"> Rahul Sharma (Super Admin)</div>
+ <div style="font-size:10px;color:var(--text-muted);">Quick sign in with Super Admin rights</div>
+ </div>
+ <button id="btn-quick-admin-login" class="fl-btn-primary" style="padding:4px 10px;font-size:10px;">Quick Sign In</button>
+ </div>
 
-      <!-- Sign In Form -->
-      <div id="auth-form-login">
-        <!-- Bot protection honeypot (hidden from real users) -->
-        <input type="text" id="auth-login-hp" style="display:none!important;position:absolute;left:-9999px;" tabindex="-1" autocomplete="off">
-        <div class="fl-form-group">
-          <label class="fl-form-label">Username or Email</label>
-          <input type="text" id="auth-login-user" class="fl-form-input" placeholder="e.g. rahul">
-        </div>
-        <div class="fl-form-group">
-          <label class="fl-form-label">Password</label>
-          <input type="password" id="auth-login-pass" class="fl-form-input" placeholder="Password">
-        </div>
-        <button id="btn-auth-login-submit" class="fl-btn-primary" style="width:100%;margin-top:8px;">Sign In</button>
-      </div>
+ <!-- Sign In Form -->
+ <div id="auth-form-login">
+ <!-- Bot protection honeypot (hidden from real users) -->
+ <input type="text" id="auth-login-hp" style="display:none!important;position:absolute;left:-9999px;" tabindex="-1" autocomplete="off">
+ <div class="fl-form-group">
+ <label class="fl-form-label">Username or Email</label>
+ <input type="text" id="auth-login-user" class="fl-form-input" placeholder="e.g. rahul">
+ </div>
+ <div class="fl-form-group">
+ <label class="fl-form-label">Password</label>
+ <input type="password" id="auth-login-pass" class="fl-form-input" placeholder="Password">
+ </div>
+ <button id="btn-auth-login-submit" class="fl-btn-primary" style="width:100%;margin-top:8px;">Sign In</button>
+ </div>
 
-      <!-- Register Form -->
-      <div id="auth-form-register" class="hidden">
-        <!-- Bot protection honeypot (hidden from real users) -->
-        <input type="text" id="auth-reg-hp" style="display:none!important;position:absolute;left:-9999px;" tabindex="-1" autocomplete="off">
-        <div class="fl-form-group">
-          <label class="fl-form-label">Username</label>
-          <input type="text" id="auth-reg-user" class="fl-form-input" placeholder="e.g. beatmaker99 (alphanumeric, 3-30 chars)">
-        </div>
-        <div class="fl-form-group">
-          <label class="fl-form-label">Full Name</label>
-          <input type="text" id="auth-reg-fullname" class="fl-form-input" placeholder="e.g. Alex Producer">
-        </div>
-        <div class="fl-form-group">
-          <label class="fl-form-label">Email</label>
-          <input type="email" id="auth-reg-email" class="fl-form-input" placeholder="name@example.com">
-        </div>
-        <div class="fl-form-group">
-          <label class="fl-form-label">Password</label>
-          <input type="password" id="auth-reg-pass" class="fl-form-input" placeholder="Min 8 characters with numbers/symbols">
-        </div>
-        <button id="btn-auth-register-submit" class="fl-btn-primary" style="width:100%;margin-top:8px;">Create Account</button>
-      </div>
-    </div>
-    <div class="fl-modal-footer">
-      <button class="fl-btn-secondary" data-close="modal-auth">Cancel</button>
-    </div>
-  </div>
+ <!-- Register Form -->
+ <div id="auth-form-register" class="hidden">
+ <!-- Bot protection honeypot (hidden from real users) -->
+ <input type="text" id="auth-reg-hp" style="display:none!important;position:absolute;left:-9999px;" tabindex="-1" autocomplete="off">
+ <div class="fl-form-group">
+ <label class="fl-form-label">Username</label>
+ <input type="text" id="auth-reg-user" class="fl-form-input" placeholder="e.g. beatmaker99 (alphanumeric, 3-30 chars)">
+ </div>
+ <div class="fl-form-group">
+ <label class="fl-form-label">Full Name</label>
+ <input type="text" id="auth-reg-fullname" class="fl-form-input" placeholder="e.g. Alex Producer">
+ </div>
+ <div class="fl-form-group">
+ <label class="fl-form-label">Email</label>
+ <input type="email" id="auth-reg-email" class="fl-form-input" placeholder="name@example.com">
+ </div>
+ <div class="fl-form-group">
+ <label class="fl-form-label">Password</label>
+ <input type="password" id="auth-reg-pass" class="fl-form-input" placeholder="Min 8 characters with numbers/symbols">
+ </div>
+ <button id="btn-auth-register-submit" class="fl-btn-primary" style="width:100%;margin-top:8px;">Create Account</button>
+ </div>
+ </div>
+ <div class="fl-modal-footer">
+ <button class="fl-btn-secondary" data-close="modal-auth">Cancel</button>
+ </div>
+ </div>
 </div>
 
 <!-- ── Scripts ──────────────────────────────────────────── -->
@@ -1287,374 +1327,378 @@
 <script src="js/song-trainer.js"></script>
 <script src="js/platform.js"></script>
 <script src="js/fl-features.js"></script>
+<script src="js/fl-graph-editor.js"></script>
+<script src="js/fl-piano-extras.js"></script>
+<script src="js/fl-parametric-eq.js"></script>
+<script src="js/fl-soundgoodizer.js"></script>
+<script src="js/fl-pattern-picker.js"></script>
+<script src="js/max-3d-avatar.js"></script>
+<script src="js/max-ai-copilot.js"></script>
 <script src="js/drum-machine.js"></script>
 <script src="js/audio-editor.js"></script>
 <script src="js/app.js"></script>
 
 <!-- Global utility functions (called from inline HTML) -->
 <script>
-  function sequencerRandomizeAll() {
-    if (!window.app) return;
-    app.sequencer.channels.forEach((_, i) => app.sequencer.randomizeChannel(i));
-    app._refreshChannelRack();
-    showToast('🎲 All channels randomized!');
-  }
-  function sequencerClearAll() {
-    if (!window.app) return;
-    app.sequencer.channels.forEach((_, i) => app.sequencer.clearChannel(i));
-    app._refreshChannelRack();
-    showToast('🗑 All channels cleared');
-  }
+ function sequencerRandomizeAll() {
+ if (!window.app) return;
+ app.sequencer.channels.forEach((_, i) => app.sequencer.randomizeChannel(i));
+ app._refreshChannelRack();
+ showToast(' All channels randomized!');
+ }
+ function sequencerClearAll() {
+ if (!window.app) return;
+ app.sequencer.channels.forEach((_, i) => app.sequencer.clearChannel(i));
+ app._refreshChannelRack();
+ showToast(' All channels cleared');
+ }
 
-  // Build piano roll channel selector dynamically
-  document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-      const sel = document.getElementById('pr-channel-select');
-      if (sel && window.app) {
-        app.sequencer.channels.forEach((ch, i) => {
-          const opt = document.createElement('option');
-          opt.value = i;
-          opt.textContent = ch.name;
-          sel.appendChild(opt);
-        });
-        sel.value = app.sequencer.pianoRollChannel;
-      }
-    }, 200);
+ // Build piano roll channel selector dynamically
+ document.addEventListener('DOMContentLoaded', () => {
+ setTimeout(() => {
+ const sel = document.getElementById('pr-channel-select');
+ if (sel && window.app) {
+ app.sequencer.channels.forEach((ch, i) => {
+ const opt = document.createElement('option');
+ opt.value = i;
+ opt.textContent = ch.name;
+ sel.appendChild(opt);
+ });
+ sel.value = app.sequencer.pianoRollChannel;
+ }
+ }, 200);
 
-    // Mode toggle
-    document.getElementById('mode-pattern').addEventListener('click', e => {
-      e.currentTarget.classList.add('active');
-      document.getElementById('mode-song').classList.remove('active');
-      document.getElementById('status-mode').textContent = 'Pattern Mode';
-    });
-    document.getElementById('mode-song').addEventListener('click', e => {
-      e.currentTarget.classList.add('active');
-      document.getElementById('mode-pattern').classList.remove('active');
-      document.getElementById('status-mode').textContent = 'Song Mode';
-    });
+ // Mode toggle
+ document.getElementById('mode-pattern').addEventListener('click', e => {
+ e.currentTarget.classList.add('active');
+ document.getElementById('mode-song').classList.remove('active');
+ document.getElementById('status-mode').textContent = 'Pattern Mode';
+ });
+ document.getElementById('mode-song').addEventListener('click', e => {
+ e.currentTarget.classList.add('active');
+ document.getElementById('mode-pattern').classList.remove('active');
+ document.getElementById('status-mode').textContent = 'Song Mode';
+ });
 
-    // Status step update
-    document.addEventListener('keydown', () => {
-      if (window.app) {
-        document.getElementById('status-step').textContent =
-          window.app.sequencer.isPlaying ? `${window.app.sequencer.currentStep + 1}` : '—';
-      }
-    });
+ // Status step update
+ document.addEventListener('keydown', () => {
+ if (window.app) {
+ document.getElementById('status-step').textContent =
+ window.app.sequencer.isPlaying ? `${window.app.sequencer.currentStep + 1}` : '—';
+ }
+ });
 
-    // Sync rack resize
-    const rackEl = document.getElementById('channel-rack');
-    const resizeHandle = document.getElementById('rack-resize');
-    const rightPanel = document.getElementById('right-panel');
-    if (resizeHandle && rackEl && rightPanel) {
-      makeResizeHandle(resizeHandle, rackEl, rightPanel, 280, 350);
-    }
+ // Sync rack resize
+ const rackEl = document.getElementById('channel-rack');
+ const resizeHandle = document.getElementById('rack-resize');
+ const rightPanel = document.getElementById('right-panel');
+ if (resizeHandle && rackEl && rightPanel) {
+ makeResizeHandle(resizeHandle, rackEl, rightPanel, 280, 350);
+ }
 
-    // CPU usage estimator (mock)
-    setInterval(() => {
-      const cpu = window.app && window.app.sequencer.isPlaying
-        ? Math.round(5 + Math.random() * 8)
-        : Math.round(1 + Math.random() * 2);
-      const el = document.getElementById('status-cpu');
-      if (el) el.textContent = `${cpu}%`;
-    }, 1000);
-  });
+ // CPU usage estimator (mock)
+ setInterval(() => {
+ const cpu = window.app && window.app.sequencer.isPlaying
+ ? Math.round(5 + Math.random() * 8)
+ : Math.round(1 + Math.random() * 2);
+ const el = document.getElementById('status-cpu');
+ if (el) el.textContent = `${cpu}%`;
+ }, 1000);
+ });
 </script>
 
-<script src="js/sound-importer.js"></script>
-<script src="js/preset-samples.js"></script>
-<script src="js/fl-features.js"></script>
-<script src="js/platform.js"></script>
+<!-- Modules loaded -->
 
 <!-- ═══════════════════════════════════════════════════════════
-     PLATFORM MODAL OVERLAY
+ PLATFORM MODAL OVERLAY
 ═══════════════════════════════════════════════════════════ -->
 <div id="plat-modal-overlay" class="plat-modal-overlay hidden">
 
-  <!-- EXPLORE MODAL -->
-  <div id="explore-modal" class="plat-modal hidden">
-    <div class="plat-modal-header">
-      <div class="plat-modal-title">
-        <span class="plat-modal-icon">🌐</span>
-        <span>Explore Beats</span>
-        <span class="plat-modal-sub">Discover what the community is making</span>
-      </div>
-      <button class="plat-modal-close" onclick="window.platform.closeAll()">✕</button>
-    </div>
-    <div class="plat-modal-toolbar">
-      <div id="explore-sort-tabs" class="plat-tabs">
-        <button class="plat-tab active" data-sort="recent">🕐 Latest</button>
-        <button class="plat-tab" data-sort="likes">♥ Top Liked</button>
-        <button class="plat-tab" data-sort="plays">▶ Most Played</button>
-      </div>
-      <select id="explore-genre-filter" class="plat-select">
-        <option value="">All Genres</option>
-      </select>
-    </div>
-    <div id="explore-grid" class="explore-grid plat-modal-body-scroll"></div>
-  </div>
+ <!-- EXPLORE MODAL -->
+ <div id="explore-modal" class="plat-modal hidden">
+ <div class="plat-modal-header">
+ <div class="plat-modal-title">
+ <span class="plat-modal-icon"></span>
+ <span>Explore Beats</span>
+ <span class="plat-modal-sub">Discover what the community is making</span>
+ </div>
+ <button class="plat-modal-close" onclick="window.platform.closeAll()">✕</button>
+ </div>
+ <div class="plat-modal-toolbar">
+ <div id="explore-sort-tabs" class="plat-tabs">
+ <button class="plat-tab active" data-sort="recent"> Latest</button>
+ <button class="plat-tab" data-sort="likes"> Top Liked</button>
+ <button class="plat-tab" data-sort="plays">▶ Most Played</button>
+ </div>
+ <select id="explore-genre-filter" class="plat-select">
+ <option value="">All Genres</option>
+ </select>
+ </div>
+ <div id="explore-grid" class="explore-grid plat-modal-body-scroll"></div>
+ </div>
 
-  <!-- PROFILE MODAL -->
-  <div id="profile-modal" class="plat-modal hidden">
-    <div class="plat-modal-header">
-      <div class="plat-modal-title">
-        <span class="plat-modal-icon">👤</span>
-        <span>Producer Profile</span>
-      </div>
-      <button class="plat-modal-close" onclick="window.platform.closeAll()">✕</button>
-    </div>
-    <div id="profile-modal-body" class="plat-modal-body-scroll"></div>
-  </div>
+ <!-- PROFILE MODAL -->
+ <div id="profile-modal" class="plat-modal hidden">
+ <div class="plat-modal-header">
+ <div class="plat-modal-title">
+ <span class="plat-modal-icon"></span>
+ <span>Producer Profile</span>
+ </div>
+ <button class="plat-modal-close" onclick="window.platform.closeAll()">✕</button>
+ </div>
+ <div id="profile-modal-body" class="plat-modal-body-scroll"></div>
+ </div>
 
-  <!-- TRAIN MAX MODAL -->
-  <div id="train-modal" class="plat-modal hidden" style="width: 860px; max-width: 95vw;">
-    <div class="plat-modal-header">
-      <div class="plat-modal-title">
-        <span class="plat-modal-icon">🧠</span>
-        <span>Train Max AI Producer</span>
-        <span class="plat-modal-sub">Teach Max real songs, audio files & custom grooves</span>
-      </div>
-      <button class="plat-modal-close" onclick="window.platform.closeAll()">✕</button>
-    </div>
+ <!-- TRAIN MAX MODAL -->
+ <div id="train-modal" class="plat-modal hidden" style="width: 860px; max-width: 95vw;">
+ <div class="plat-modal-header">
+ <div class="plat-modal-title">
+ <span class="plat-modal-icon"></span>
+ <span>Train Max AI Producer</span>
+ <span class="plat-modal-sub">Teach Max real songs, audio files & custom grooves</span>
+ </div>
+ <button class="plat-modal-close" onclick="window.platform.closeAll()">✕</button>
+ </div>
 
-    <!-- Train Max Navigation Tabs -->
-    <div class="train-tabs-bar" id="train-tabs-bar">
-      <button class="train-tab-btn active" data-tab="song">🎵 Train from Song Audio</button>
-      <button class="train-tab-btn" data-tab="daw">🎹 Train from DAW Beat</button>
-      <button class="train-tab-btn" data-tab="brain">🧠 Max's Brain & Dataset</button>
-    </div>
+ <!-- Train Max Navigation Tabs -->
+ <div class="train-tabs-bar" id="train-tabs-bar">
+ <button class="train-tab-btn active" data-tab="song"> Train from Song Audio</button>
+ <button class="train-tab-btn" data-tab="daw"> Train from DAW Beat</button>
+ <button class="train-tab-btn" data-tab="brain"> Max's Brain & Dataset</button>
+ </div>
 
-    <div class="plat-modal-body-scroll">
-      <div id="train-stats-panel" class="train-stats-panel">
-        <div class="plat-loading"><div class="plat-spinner"></div><span>Loading stats...</span></div>
-      </div>
+ <div class="plat-modal-body-scroll">
+ <div id="train-stats-panel" class="train-stats-panel">
+ <div class="plat-loading"><div class="plat-spinner"></div><span>Loading stats...</span></div>
+ </div>
 
-      <!-- TAB 1: SONG AUDIO TRAINER -->
-      <div id="train-tab-song" class="train-tab-pane">
-        <div class="train-dropzone" id="train-song-dropzone">
-          <div class="td-icon">🎵</div>
-          <div class="td-title">Drop any Song Audio File here (MP3, WAV, OGG, FLAC)</div>
-          <div class="td-sub">or click to browse your songs — Max will extract the rhythm & tempo automatically</div>
-          <input type="file" id="train-song-file-input" accept="audio/*" style="display:none;">
-        </div>
+ <!-- TAB 1: SONG AUDIO TRAINER -->
+ <div id="train-tab-song" class="train-tab-pane">
+ <div class="train-dropzone" id="train-song-dropzone">
+ <div class="td-icon"></div>
+ <div class="td-title">Drop any Song Audio File here (MP3, WAV, OGG, FLAC)</div>
+ <div class="td-sub">or click to browse your songs — Max will extract the rhythm & tempo automatically</div>
+ <input type="file" id="train-song-file-input" accept="audio/*" style="display:none;">
+ </div>
 
-        <div id="train-song-analysis-container" class="hidden" style="margin-top: 18px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,106,0,0.25); border-radius: 12px; padding: 18px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
-            <div>
-              <h4 id="ts-song-name" style="margin: 0; color: #fff; font-size: 16px; font-weight: 700;">Song Name</h4>
-              <span id="ts-song-meta" style="font-size: 12px; color: #a1a1aa;">Extracted 120 BPM · Hip-Hop</span>
-            </div>
-            <div style="display: flex; gap: 8px; align-items: center;">
-              <label style="font-size: 11px; color: #a1a1aa;">Genre:</label>
-              <select id="ts-genre-select" class="plat-input" style="width: 130px; padding: 5px 8px; font-size: 12px;">
-                <option value="hip-hop">Hip-Hop</option>
-                <option value="trap">Trap</option>
-                <option value="drill">Drill</option>
-                <option value="lo-fi">Lo-Fi</option>
-                <option value="house">House</option>
-                <option value="techno">Techno</option>
-                <option value="afrobeats">Afrobeats</option>
-                <option value="reggaeton">Reggaeton</option>
-                <option value="r&b">R&B</option>
-                <option value="pop">Pop</option>
-                <option value="rock">Rock</option>
-              </select>
-              <label style="font-size: 11px; color: #a1a1aa;">BPM:</label>
-              <input type="number" id="ts-bpm-input" class="plat-input" value="120" min="40" max="220" style="width: 65px; padding: 5px 8px; font-size: 12px;">
-            </div>
-          </div>
+ <div id="train-song-analysis-container" class="hidden" style="margin-top: 18px; background: rgba(0,0,0,0.35); border: 1px solid rgba(255,106,0,0.25); border-radius: 12px; padding: 18px;">
+ <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+ <div>
+ <h4 id="ts-song-name" style="margin: 0; color: #fff; font-size: 16px; font-weight: 700;">Song Name</h4>
+ <span id="ts-song-meta" style="font-size: 12px; color: #a1a1aa;">Extracted 120 BPM · Hip-Hop</span>
+ </div>
+ <div style="display: flex; gap: 8px; align-items: center;">
+ <label style="font-size: 11px; color: #a1a1aa;">Genre:</label>
+ <select id="ts-genre-select" class="plat-input" style="width: 130px; padding: 5px 8px; font-size: 12px;">
+ <option value="hip-hop">Hip-Hop</option>
+ <option value="trap">Trap</option>
+ <option value="drill">Drill</option>
+ <option value="lo-fi">Lo-Fi</option>
+ <option value="house">House</option>
+ <option value="techno">Techno</option>
+ <option value="afrobeats">Afrobeats</option>
+ <option value="reggaeton">Reggaeton</option>
+ <option value="r&b">R&B</option>
+ <option value="pop">Pop</option>
+ <option value="rock">Rock</option>
+ </select>
+ <label style="font-size: 11px; color: #a1a1aa;">BPM:</label>
+ <input type="number" id="ts-bpm-input" class="plat-input" value="120" min="40" max="220" style="width: 65px; padding: 5px 8px; font-size: 12px;">
+ </div>
+ </div>
 
-          <!-- Waveform Canvas -->
-          <canvas id="ts-waveform-canvas" width="780" height="42" style="width: 100%; height: 42px; background: rgba(0,0,0,0.6); border-radius: 6px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.05);"></canvas>
+ <!-- Waveform Canvas -->
+ <canvas id="ts-waveform-canvas" width="780" height="42" style="width: 100%; height: 42px; background: rgba(0,0,0,0.6); border-radius: 6px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.05);"></canvas>
 
-          <!-- Extracted 16-Step Pattern Grid Preview -->
-          <div style="font-size: 11px; font-weight: 700; color: #ff9d00; letter-spacing: 0.5px; margin-bottom: 8px; display: flex; justify-content: space-between;">
-            <span>EXTRACTED 16-STEP DRUM MATRIX</span>
-            <span style="color: #a1a1aa;">Web Audio AI Rhythm Detection</span>
-          </div>
-          <div id="ts-matrix-grid" style="display: grid; gap: 4px; background: rgba(0,0,0,0.4); padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.06);"></div>
+ <!-- Extracted 16-Step Pattern Grid Preview -->
+ <div style="font-size: 11px; font-weight: 700; color: #ff9d00; letter-spacing: 0.5px; margin-bottom: 8px; display: flex; justify-content: space-between;">
+ <span>EXTRACTED 16-STEP DRUM MATRIX</span>
+ <span style="color: #a1a1aa;">Web Audio AI Rhythm Detection</span>
+ </div>
+ <div id="ts-matrix-grid" style="display: grid; gap: 4px; background: rgba(0,0,0,0.4); padding: 12px; border-radius: 8px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.06);"></div>
 
-          <div style="display: flex; gap: 12px;">
-            <button id="ts-teach-btn" class="plat-btn-primary" style="flex: 2; background: linear-gradient(135deg, #ff6a00, #ee0979); border: none; font-size: 14px; font-weight: 700; height: 38px; cursor: pointer;">
-              🧠 Teach Max this Song's Beat
-            </button>
-            <button id="ts-load-daw-btn" class="plat-btn-secondary" style="flex: 1; border: 1px solid rgba(255,255,255,0.2); font-size: 13px; height: 38px; cursor: pointer; color: #fff;">
-              📥 Load into DAW
-            </button>
-          </div>
-          <div id="ts-status-msg" class="plat-status hidden" style="margin-top: 10px;"></div>
-        </div>
-      </div>
+ <div style="display: flex; gap: 12px;">
+ <button id="ts-teach-btn" class="plat-btn-primary" style="flex: 2; background: #ffffff; color: #000000; border: none; font-size: 14px; font-weight: 700; height: 38px; cursor: pointer;">
+ Teach Max this Song's Beat
+ </button>
+ <button id="ts-load-daw-btn" class="plat-btn-secondary" style="flex: 1; border: 1px solid rgba(255,255,255,0.2); font-size: 13px; height: 38px; cursor: pointer; color: #fff;">
+ Load into DAW
+ </button>
+ </div>
+ <div id="ts-status-msg" class="plat-status hidden" style="margin-top: 10px;"></div>
+ </div>
+ </div>
 
-      <!-- TAB 2: DAW BEAT TRAINER -->
-      <div id="train-tab-daw" class="train-tab-pane hidden">
-        <div class="train-submit-section">
-          <div class="train-section-title">📤 Submit your current DAW beat to train Max</div>
-          <p class="train-hint">Max learns from real beats made by the community. Your current active DAW step sequencer pattern will be saved and injected into Max's brain.</p>
+ <!-- TAB 2: DAW BEAT TRAINER -->
+ <div id="train-tab-daw" class="train-tab-pane hidden">
+ <div class="train-submit-section">
+ <div class="train-section-title"> Submit your current DAW beat to train Max</div>
+ <p class="train-hint">Max learns from real beats made by the community. Your current active DAW step sequencer pattern will be saved and injected into Max's brain.</p>
 
-          <div class="train-form">
-            <label class="plat-label">Genre</label>
-            <input class="plat-input" id="train-genre-input" placeholder="trap, lofi, drill, afrobeats, house..." maxlength="50">
+ <div class="train-form">
+ <label class="plat-label">Genre</label>
+ <input class="plat-input" id="train-genre-input" placeholder="trap, lofi, drill, afrobeats, house..." maxlength="50">
 
-            <label class="plat-label">Describe what makes this beat unique</label>
-            <textarea class="plat-input plat-textarea" id="train-prompt-input" placeholder="e.g. Dark 808 trap with hi-hat rolls and heavy sub bass, perfect for drill" maxlength="500"></textarea>
+ <label class="plat-label">Describe what makes this beat unique</label>
+ <textarea class="plat-input plat-textarea" id="train-prompt-input" placeholder="e.g. Dark 808 trap with hi-hat rolls and heavy sub bass, perfect for drill" maxlength="500"></textarea>
 
-            <button class="plat-btn-primary" id="train-submit-btn">
-              🚀 Submit Pattern to Train Max
-            </button>
-            <div id="train-submit-status" class="plat-status hidden"></div>
-          </div>
-        </div>
-      </div>
+ <button class="plat-btn-primary" id="train-submit-btn">
+ Submit Pattern to Train Max
+ </button>
+ <div id="train-submit-status" class="plat-status hidden"></div>
+ </div>
+ </div>
+ </div>
 
-      <!-- TAB 3: MAX'S BRAIN & DATASET -->
-      <div id="train-tab-brain" class="train-tab-pane hidden">
-        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 18px; margin-bottom: 20px;">
-          <h4 style="margin: 0 0 8px 0; color: #ff9d00; font-size: 15px; font-weight: 700;">🧠 Max's Learned Knowledge Base</h4>
-          <p style="font-size: 12px; color: #a1a1aa; line-height: 1.5; margin: 0 0 14px 0;">
-            Max uses dynamic pattern blending. Song uploads and submitted beats are analyzed and blended with dataset patterns to give you instant studio-grade beat generation.
-          </p>
+ <!-- TAB 3: MAX'S BRAIN & DATASET -->
+ <div id="train-tab-brain" class="train-tab-pane hidden">
+ <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+ <h4 style="margin: 0 0 8px 0; color: #ff9d00; font-size: 15px; font-weight: 700;"> Max's Learned Knowledge Base</h4>
+ <p style="font-size: 12px; color: #a1a1aa; line-height: 1.5; margin: 0 0 14px 0;">
+ Max uses dynamic pattern blending. Song uploads and submitted beats are analyzed and blended with dataset patterns to give you instant studio-grade beat generation.
+ </p>
 
-          <div id="brain-genres-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px;">
-            <div class="plat-loading"><div class="plat-spinner"></div><span>Loading learned genres...</span></div>
-          </div>
-        </div>
+ <div id="brain-genres-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px;">
+ <div class="plat-loading"><div class="plat-spinner"></div><span>Loading learned genres...</span></div>
+ </div>
+ </div>
 
-        <div style="background: rgba(255,106,0,0.08); border: 1px solid rgba(255,106,0,0.25); border-radius: 12px; padding: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
-          <div>
-            <h5 style="margin: 0; color: #fff; font-size: 14px; font-weight: 700;">Google Magenta Groove MIDI Dataset</h5>
-            <p style="margin: 3px 0 0 0; font-size: 12px; color: #a1a1aa;">
-              Train Max on 1,000+ authentic real drummer performances across 20 genres.
-            </p>
-          </div>
-          <button id="btn-run-groove-training" class="plat-btn-primary" style="background: #ff6a00; border: none; white-space: nowrap; font-weight: 700;">
-            ⚡ Auto-Train Dataset
-          </button>
-        </div>
-        <div id="groove-train-status" class="plat-status hidden" style="margin-top: 10px;"></div>
-      </div>
+ <div style="background: rgba(255,106,0,0.08); border: 1px solid rgba(255,106,0,0.25); border-radius: 12px; padding: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+ <div>
+ <h5 style="margin: 0; color: #fff; font-size: 14px; font-weight: 700;">Google Magenta Groove MIDI Dataset</h5>
+ <p style="margin: 3px 0 0 0; font-size: 12px; color: #a1a1aa;">
+ Train Max on 1,000+ authentic real drummer performances across 20 genres.
+ </p>
+ </div>
+ <button id="btn-run-groove-training" class="plat-btn-primary" style="background: #ffffff; color: #000000; border: none; white-space: nowrap; font-weight: 700;">
+ Auto-Train Dataset
+ </button>
+ </div>
+ <div id="groove-train-status" class="plat-status hidden" style="margin-top: 10px;"></div>
+ </div>
 
-    </div>
-  </div>
+ </div>
+ </div>
 
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════
-     PLATFORM TOAST
+ PLATFORM TOAST
 ═══════════════════════════════════════════════════════════ -->
 <div id="plat-toast"></div>
 
 <!-- ═══════════════════════════════════════════════════════════
-     PLATFORM CSS
+ PLATFORM CSS
 ═══════════════════════════════════════════════════════════ -->
 <style>
 /* ── Overlay ──────────────────────────────────────────────────────────────── */
 .plat-modal-overlay {
-  position: fixed; inset: 0; z-index: 20000;
-  background: rgba(0,0,0,0.85);
-  backdrop-filter: blur(10px);
-  display: flex; align-items: center; justify-content: center;
-  padding: 20px;
+ position: fixed; inset: 0; z-index: 20000;
+ background: rgba(0,0,0,0.85);
+ backdrop-filter: blur(10px);
+ display: flex; align-items: center; justify-content: center;
+ padding: 20px;
 }
 .plat-modal-overlay.hidden { display: none; }
 
 /* ── Modal Shell ──────────────────────────────────────────────────────────── */
 .plat-modal {
-  background: #0f1117;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 14px;
-  box-shadow: 0 30px 80px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,106,0,0.12);
-  width: 100%; max-width: 900px;
-  max-height: 88vh;
-  display: flex; flex-direction: column;
-  overflow: hidden;
-  animation: plat-pop 0.22s cubic-bezier(0.16,1,0.3,1);
+ background: #0f1117;
+ border: 1px solid rgba(255,255,255,0.1);
+ border-radius: 14px;
+ box-shadow: 0 30px 80px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,106,0,0.12);
+ width: 100%; max-width: 900px;
+ max-height: 88vh;
+ display: flex; flex-direction: column;
+ overflow: hidden;
+ animation: plat-pop 0.22s cubic-bezier(0.16,1,0.3,1);
 }
 .plat-modal.hidden { display: none; }
 @keyframes plat-pop {
-  from { transform: scale(0.95) translateY(12px); opacity: 0; }
-  to   { transform: scale(1) translateY(0); opacity: 1; }
+ from { transform: scale(0.95) translateY(12px); opacity: 0; }
+ to { transform: scale(1) translateY(0); opacity: 1; }
 }
 
 /* ── Modal Header ─────────────────────────────────────────────────────────── */
 .plat-modal-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 18px;
-  background: #0a0c11;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
-  flex-shrink: 0;
+ display: flex; align-items: center; justify-content: space-between;
+ padding: 14px 18px;
+ background: #0a0c11;
+ border-bottom: 1px solid rgba(255,255,255,0.07);
+ flex-shrink: 0;
 }
 .plat-modal-title {
-  display: flex; align-items: center; gap: 9px;
-  font-size: 15px; font-weight: 700; color: #fff;
+ display: flex; align-items: center; gap: 9px;
+ font-size: 15px; font-weight: 700; color: #fff;
 }
 .plat-modal-icon { font-size: 18px; }
 .plat-modal-sub { font-size: 11px; font-weight: 400; color: rgba(255,255,255,0.4); margin-left: 4px; }
 .plat-modal-close {
-  background: none; border: none; color: rgba(255,255,255,0.4); font-size: 18px;
-  cursor: pointer; border-radius: 6px; padding: 4px 8px; transition: all 0.15s;
+ background: none; border: none; color: rgba(255,255,255,0.4); font-size: 18px;
+ cursor: pointer; border-radius: 6px; padding: 4px 8px; transition: all 0.15s;
 }
 .plat-modal-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
 
 /* ── Modal Toolbar ────────────────────────────────────────────────────────── */
 .plat-modal-toolbar {
-  display: flex; align-items: center; gap: 10px;
-  padding: 8px 16px;
-  background: #0d0f15;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-  flex-shrink: 0;
+ display: flex; align-items: center; gap: 10px;
+ padding: 8px 16px;
+ background: #0d0f15;
+ border-bottom: 1px solid rgba(255,255,255,0.06);
+ flex-shrink: 0;
 }
 .plat-tabs { display: flex; gap: 3px; }
 .plat-tab {
-  background: none; border: none;
-  color: rgba(255,255,255,0.45); font-size: 12px; font-weight: 600;
-  padding: 5px 12px; border-radius: 6px; cursor: pointer; transition: all 0.15s;
+ background: none; border: none;
+ color: rgba(255,255,255,0.45); font-size: 12px; font-weight: 600;
+ padding: 5px 12px; border-radius: 6px; cursor: pointer; transition: all 0.15s;
 }
 .plat-tab:hover { color: #fff; background: rgba(255,255,255,0.07); }
 .plat-tab.active { background: rgba(255,106,0,0.18); color: #ff8040; }
 .plat-select {
-  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 6px; padding: 5px 10px; color: #fff; font-size: 11px;
-  outline: none; cursor: pointer; margin-left: auto;
+ background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+ border-radius: 6px; padding: 5px 10px; color: #fff; font-size: 11px;
+ outline: none; cursor: pointer; margin-left: auto;
 }
 .plat-select option { background: #1a1d24; }
 
 /* ── Scrollable body ──────────────────────────────────────────────────────── */
 .plat-modal-body-scroll {
-  flex: 1; overflow-y: auto; padding: 16px;
-  scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;
+ flex: 1; overflow-y: auto; padding: 16px;
+ scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent;
 }
 
 /* ── Explore Grid ─────────────────────────────────────────────────────────── */
 .explore-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 12px;
+ display: grid;
+ grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+ gap: 12px;
 }
 .explore-card {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 10px; overflow: hidden;
-  transition: all 0.2s; cursor: pointer;
+ background: rgba(255,255,255,0.03);
+ border: 1px solid rgba(255,255,255,0.07);
+ border-radius: 10px; overflow: hidden;
+ transition: all 0.2s; cursor: pointer;
 }
 .explore-card:hover {
-  border-color: rgba(255,106,0,0.3);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+ border-color: rgba(255,106,0,0.3);
+ transform: translateY(-2px);
+ box-shadow: 0 8px 24px rgba(0,0,0,0.5);
 }
 /* Waveform viz */
 .ec-waveform {
-  height: 64px; background: #0a0c10;
-  display: flex; align-items: flex-end; gap: 2px;
-  padding: 6px 10px; cursor: pointer;
+ height: 64px; background: #0a0c10;
+ display: flex; align-items: flex-end; gap: 2px;
+ padding: 6px 10px; cursor: pointer;
 }
 .ec-bar {
-  flex: 1; background: linear-gradient(to top, #ff6a00, #a855f7);
-  border-radius: 2px 2px 0 0;
-  animation: ec-wave 1.4s ease-in-out infinite alternate;
+ flex: 1; background: linear-gradient(to top, #ff6a00, #a855f7);
+ border-radius: 2px 2px 0 0;
+ animation: ec-wave 1.4s ease-in-out infinite alternate;
 }
 @keyframes ec-wave {
-  from { opacity: 0.4; transform: scaleY(0.7); }
-  to   { opacity: 1;   transform: scaleY(1); }
+ from { opacity: 0.4; transform: scaleY(0.7); }
+ to { opacity: 1; transform: scaleY(1); }
 }
 .explore-card:not(:hover) .ec-bar { animation-play-state: paused; }
 .ec-body { padding: 10px 12px; }
@@ -1663,7 +1707,7 @@
 .ec-genre { background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.25); color: #c084fc; font-size: 10px; padding: 2px 7px; border-radius: 10px; }
 .ec-bpm { font-size: 10px; color: rgba(255,255,255,0.35); font-family: monospace; align-self: center; }
 .ec-author { display: flex; align-items: center; gap: 6px; cursor: pointer; margin-bottom: 8px; }
-.ec-avatar { width: 20px; height: 20px; background: linear-gradient(135deg, #ff6a00, #a855f7); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #fff; flex-shrink: 0; }
+.ec-avatar { width: 20px; height: 20px; background: #27272a; color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #fff; flex-shrink: 0; }
 .ec-author span:last-child { font-size: 11px; color: rgba(255,255,255,0.55); }
 .ec-author:hover span:last-child { color: #ff8040; }
 .ec-stats { display: flex; align-items: center; gap: 10px; }
@@ -1673,15 +1717,15 @@
 
 /* ── Public Profile ───────────────────────────────────────────────────────── */
 .prof-header {
-  display: flex; align-items: flex-start; gap: 16px;
-  padding-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.07);
-  margin-bottom: 16px;
+ display: flex; align-items: flex-start; gap: 16px;
+ padding-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.07);
+ margin-bottom: 16px;
 }
 .prof-avatar-lg {
-  width: 72px; height: 72px; flex-shrink: 0;
-  background: linear-gradient(135deg, #ff6a00, #a855f7);
-  border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  font-size: 30px; font-weight: 800; color: #fff;
+ width: 72px; height: 72px; flex-shrink: 0;
+ background: #27272a; color: #ffffff;
+ border-radius: 50%; display: flex; align-items: center; justify-content: center;
+ font-size: 30px; font-weight: 800; color: #fff;
 }
 .prof-info { flex: 1; }
 .prof-name { font-size: 18px; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 8px; }
@@ -1693,9 +1737,9 @@
 .prof-tag.muted { opacity: 0.4; }
 .prof-actions { flex-shrink: 0; }
 .prof-follow-btn {
-  background: linear-gradient(135deg, #ff6a00, #ea580c);
-  border: none; color: #fff; font-weight: 700; font-size: 12px;
-  padding: 8px 18px; border-radius: 20px; cursor: pointer; transition: all 0.2s;
+ background: #ffffff; color: #000000;
+ border: none; color: #fff; font-weight: 700; font-size: 12px;
+ padding: 8px 18px; border-radius: 20px; cursor: pointer; transition: all 0.2s;
 }
 .prof-follow-btn.following { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.6); }
 .prof-follow-btn.following:hover { background: rgba(239,68,68,0.15); border-color: #ef4444; color: #ef4444; }
@@ -1743,23 +1787,23 @@
 .train-how-it-works { margin-top: 20px; }
 .train-steps { display: flex; flex-direction: column; gap: 8px; }
 .train-step { display: flex; align-items: center; gap: 10px; font-size: 12px; color: rgba(255,255,255,0.6); }
-.ts-num { width: 24px; height: 24px; background: linear-gradient(135deg, #ff6a00, #a855f7); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: #fff; flex-shrink: 0; }
+.ts-num { width: 24px; height: 24px; background: #27272a; color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: #fff; flex-shrink: 0; }
 
 /* ── Shared inputs ────────────────────────────────────────────────────────── */
 .plat-label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.4px; }
 .plat-input {
-  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 8px; padding: 9px 12px; font-size: 12.5px; color: #fff;
-  outline: none; font-family: inherit; transition: border-color 0.2s; width: 100%; box-sizing: border-box;
+ background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+ border-radius: 8px; padding: 9px 12px; font-size: 12.5px; color: #fff;
+ outline: none; font-family: inherit; transition: border-color 0.2s; width: 100%; box-sizing: border-box;
 }
 .plat-input:focus { border-color: rgba(255,106,0,0.5); }
 .plat-input::placeholder { color: rgba(255,255,255,0.2); }
 .plat-textarea { resize: vertical; min-height: 80px; }
 .plat-btn-primary {
-  background: linear-gradient(135deg, #ff6a00, #ea580c);
-  border: none; color: #fff; font-weight: 700; font-size: 13px;
-  padding: 10px 20px; border-radius: 8px; cursor: pointer;
-  transition: all 0.18s; align-self: flex-start;
+ background: #ffffff; color: #000000;
+ border: none; color: #fff; font-weight: 700; font-size: 13px;
+ padding: 10px 20px; border-radius: 8px; cursor: pointer;
+ transition: all 0.18s; align-self: flex-start;
 }
 .plat-btn-primary:hover { filter: brightness(1.12); box-shadow: 0 0 16px rgba(255,106,0,0.4); }
 
@@ -1767,8 +1811,8 @@
 .plat-status { font-size: 12px; font-weight: 600; padding: 7px 12px; border-radius: 6px; }
 .plat-status.hidden { display: none; }
 .plat-status.success { background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
-.plat-status.error   { background: rgba(239,68,68,0.12);  color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
-.plat-status.loading { background: rgba(255,106,0,0.1);   color: #fb923c; border: 1px solid rgba(255,106,0,0.2); }
+.plat-status.error { background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
+.plat-status.loading { background: rgba(255,106,0,0.1); color: #fb923c; border: 1px solid rgba(255,106,0,0.2); }
 
 /* ── Loading / empty / error states ──────────────────────────────────────── */
 .plat-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 40px; color: rgba(255,255,255,0.4); font-size: 13px; }
@@ -1780,28 +1824,28 @@
 
 /* ── Toast ────────────────────────────────────────────────────────────────── */
 #plat-toast {
-  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
-  z-index: 30000; background: #1a1d24; border: 1px solid rgba(255,255,255,0.12);
-  color: #fff; font-size: 13px; font-weight: 600; padding: 10px 20px;
-  border-radius: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.6);
-  opacity: 0; transition: opacity 0.2s; pointer-events: none; white-space: nowrap;
+ position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+ z-index: 30000; background: #1a1d24; border: 1px solid rgba(255,255,255,0.12);
+ color: #fff; font-size: 13px; font-weight: 600; padding: 10px 20px;
+ border-radius: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+ opacity: 0; transition: opacity 0.2s; pointer-events: none; white-space: nowrap;
 }
 #plat-toast.visible { opacity: 1; }
 
 /* ── Platform explore button in toolbar ──────────────────────────────────── */
 #plat-explore-tab {
-  display: inline-flex; align-items: center; gap: 5px;
-  background: rgba(168,85,247,0.12); border: 1px solid rgba(168,85,247,0.3);
-  color: #c084fc; font-size: 11px; font-weight: 700;
-  padding: 4px 11px; border-radius: 5px; cursor: pointer; transition: all 0.18s; height: 26px;
+ display: inline-flex; align-items: center; gap: 5px;
+ background: rgba(168,85,247,0.12); border: 1px solid rgba(168,85,247,0.3);
+ color: #c084fc; font-size: 11px; font-weight: 700;
+ padding: 4px 11px; border-radius: 5px; cursor: pointer; transition: all 0.18s; height: 26px;
 }
 #plat-explore-tab:hover { background: rgba(168,85,247,0.22); color: #fff; }
 
 #plat-train-btn {
-  display: inline-flex; align-items: center; gap: 5px;
-  background: rgba(255,106,0,0.12); border: 1px solid rgba(255,106,0,0.3);
-  color: #fb923c; font-size: 11px; font-weight: 700;
-  padding: 4px 11px; border-radius: 5px; cursor: pointer; transition: all 0.18s; height: 26px;
+ display: inline-flex; align-items: center; gap: 5px;
+ background: rgba(255,106,0,0.12); border: 1px solid rgba(255,106,0,0.3);
+ color: #fb923c; font-size: 11px; font-weight: 700;
+ padding: 4px 11px; border-radius: 5px; cursor: pointer; transition: all 0.18s; height: 26px;
 }
 #plat-train-btn:hover { background: rgba(255,106,0,0.22); color: #fff; }
 

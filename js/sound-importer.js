@@ -47,7 +47,7 @@ class SoundImporter {
       <div class="si-modal">
         <div class="si-header">
           <div class="si-title">
-            <span class="si-icon">🎵</span>
+            <span class="si-icon"></span>
             <span>Import Sound</span>
             <span class="si-sub">Add a sample to the channel rack</span>
           </div>
@@ -58,7 +58,7 @@ class SoundImporter {
           <!-- Drop zone -->
           <div class="si-drop-zone" id="si-drop-zone" tabindex="0" role="button"
                aria-label="Drop audio file here or click to browse">
-            <div class="si-drop-icon">🎚️</div>
+            <div class="si-drop-icon"></div>
             <div class="si-drop-label">Drop your audio file here</div>
             <div class="si-drop-sub">WAV · MP3 · OGG · FLAC · AIFF — up to 50 MB</div>
             <button class="si-browse-btn" id="si-browse-btn">Browse Files</button>
@@ -127,7 +127,7 @@ class SoundImporter {
     this._fileInput = fi;
 
     // Color swatches
-    const COLORS = ['#ff6a00','#a855f7','#00d4aa','#ec4899','#22d3ee','#84cc16','#f59e0b','#ef4444','#6366f1','#f97316'];
+    const COLORS = ['#ffffff','#a1a1aa','#ffffff','#52525b','#ffffff','#a1a1aa','#f59e0b','#ffffff','#6366f1','#ffffff'];
     this._selectedColor = COLORS[0];
     const swatchWrap = overlay.querySelector('#si-color-swatches');
     COLORS.forEach((c, i) => {
@@ -191,12 +191,12 @@ class SoundImporter {
     const MAX = 50 * 1024 * 1024; // 50 MB
     const ALLOWED = ['audio/wav','audio/wave','audio/x-wav','audio/mpeg','audio/mp3','audio/ogg','audio/flac','audio/x-flac','audio/aiff','audio/x-aiff','audio/m4a','audio/mp4','audio/x-m4a'];
 
-    if (file.size > MAX) { this._setStatus('❌ File too large (max 50 MB)', 'error'); return; }
+    if (file.size > MAX) { this._setStatus(' File too large (max 50 MB)', 'error'); return; }
 
     const isAudio = file.type.startsWith('audio/') || /\.(wav|mp3|ogg|flac|aif|aiff|m4a)$/i.test(file.name);
-    if (!isAudio) { this._setStatus('❌ Not an audio file', 'error'); return; }
+    if (!isAudio) { this._setStatus(' Not an audio file', 'error'); return; }
 
-    this._setStatus('⏳ Decoding audio...', 'loading');
+    this._setStatus(' Decoding audio...', 'loading');
     this._showProgress(0);
 
     try {
@@ -214,7 +214,7 @@ class SoundImporter {
       const baseName = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ').replace(/\s+/g, ' ').trim();
       this._modal.querySelector('#si-channel-name').value = baseName.slice(0, 32);
 
-      this._setStatus(`✅ Decoded — ${(file.size / 1024).toFixed(0)} KB · ${audioBuffer.duration.toFixed(2)}s · ${audioBuffer.numberOfChannels}ch · ${(audioBuffer.sampleRate / 1000).toFixed(1)} kHz`, 'success');
+      this._setStatus(` Decoded — ${(file.size / 1024).toFixed(0)} KB · ${audioBuffer.duration.toFixed(2)}s · ${audioBuffer.numberOfChannels}ch · ${(audioBuffer.sampleRate / 1000).toFixed(1)} kHz`, 'success');
       this._renderPreview(file.name, audioBuffer);
       this._showNameRow();
       this._showActions();
@@ -224,7 +224,7 @@ class SoundImporter {
 
     } catch (err) {
       console.error('[SoundImporter] Decode error:', err);
-      this._setStatus(`❌ Could not decode: ${err.message || 'Unsupported format'}`, 'error');
+      this._setStatus(` Could not decode: ${err.message || 'Unsupported format'}`, 'error');
       this._hideProgress();
     }
   }
@@ -282,9 +282,9 @@ class SoundImporter {
     const data   = buf.getChannelData(0);
     const step   = Math.ceil(data.length / 320);
     const grad   = ctx.createLinearGradient(0, 0, 320, 0);
-    grad.addColorStop(0,   '#ff6a00');
-    grad.addColorStop(0.5, '#a855f7');
-    grad.addColorStop(1,   '#00d4aa');
+    grad.addColorStop(0,   '#ffffff');
+    grad.addColorStop(0.5, '#a1a1aa');
+    grad.addColorStop(1,   '#ffffff');
 
     ctx.fillStyle = 'rgba(255,255,255,0.03)';
     ctx.fillRect(0, 0, 320, 50);
@@ -367,7 +367,7 @@ class SoundImporter {
     this.close();
     this._resetState();
 
-    if (window.showToast) showToast(`🎵 "${name}" added to channel rack!`);
+    if (window.showToast) showToast(` "${name}" added to channel rack!`);
   }
 
   /* ── UI helpers ──────────────────────────────────────────────── */
@@ -436,7 +436,7 @@ class SoundImporter {
   background: #0f1117;
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 16px;
-  box-shadow: 0 32px 80px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,106,0,0.15);
+  box-shadow: 0 32px 80px rgba(0,0,0,0.9), 0 0 0 1px rgba(255, 255, 255,0.15);
   width: 100%; max-width: 520px;
   max-height: 90vh; overflow-y: auto;
   animation: si-pop 0.22s cubic-bezier(0.16,1,0.3,1);
@@ -485,28 +485,28 @@ class SoundImporter {
 .si-drop-zone::before {
   content: '';
   position: absolute; inset: 0;
-  background: radial-gradient(ellipse at center, rgba(255,106,0,0.04) 0%, transparent 70%);
+  background: radial-gradient(ellipse at center, rgba(255, 255, 255,0.04) 0%, transparent 70%);
   pointer-events: none;
 }
 .si-drop-zone:hover, .si-drop-zone:focus {
-  border-color: rgba(255,106,0,0.4);
-  background: rgba(255,106,0,0.04);
+  border-color: rgba(255, 255, 255,0.4);
+  background: rgba(255, 255, 255,0.04);
   outline: none;
 }
 .si-drop-zone.si-drag-over {
-  border-color: #ff6a00;
-  background: rgba(255,106,0,0.1);
-  box-shadow: 0 0 0 4px rgba(255,106,0,0.15);
+  border-color: #ffffff;
+  background: rgba(255, 255, 255,0.1);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255,0.15);
 }
 .si-drop-icon { font-size: 40px; margin-bottom: 10px; }
 .si-drop-label { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 6px; }
 .si-drop-sub { font-size: 11px; color: rgba(255,255,255,0.35); margin-bottom: 14px; }
 .si-browse-btn {
-  background: rgba(255,106,0,0.15); border: 1px solid rgba(255,106,0,0.35);
+  background: rgba(255, 255, 255,0.15); border: 1px solid rgba(255, 255, 255,0.35);
   color: #ff8040; font-size: 12px; font-weight: 700;
   padding: 7px 18px; border-radius: 20px; cursor: pointer; transition: all 0.15s;
 }
-.si-browse-btn:hover { background: rgba(255,106,0,0.28); color: #fff; }
+.si-browse-btn:hover { background: rgba(255, 255, 255,0.28); color: #fff; }
 
 /* Format pills */
 .si-formats { display: flex; gap: 5px; flex-wrap: wrap; }
@@ -515,21 +515,21 @@ class SoundImporter {
   color: rgba(255,255,255,0.4); font-size: 10px; font-weight: 700;
   padding: 3px 9px; border-radius: 20px; letter-spacing: 0.4px; user-select: none;
 }
-.si-fmt.active { background: rgba(255,106,0,0.12); border-color: rgba(255,106,0,0.3); color: #fb923c; }
+.si-fmt.active { background: rgba(255, 255, 255,0.12); border-color: rgba(255, 255, 255,0.3); color: #e4e4e7; }
 
 /* Status */
 .si-status-wrap { display: flex; flex-direction: column; gap: 6px; }
 .si-status { font-size: 12px; font-weight: 600; min-height: 18px; }
-.si-status-success { color: #4ade80; }
-.si-status-error   { color: #f87171; }
-.si-status-loading { color: #fb923c; }
+.si-status-success { color: #ffffff; }
+.si-status-error   { color: #a1a1aa; }
+.si-status-loading { color: #e4e4e7; }
 
 .si-progress-track {
   height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden;
 }
 .si-progress-fill {
   height: 100%; width: 0;
-  background: linear-gradient(90deg, #ff6a00, #a855f7);
+  background: linear-gradient(90deg, #ffffff, #a1a1aa);
   border-radius: 2px; transition: width 0.2s ease;
 }
 
@@ -544,11 +544,11 @@ class SoundImporter {
 .si-preview-info { font-size: 11px; color: rgba(255,255,255,0.4); }
 .si-preview-actions { display: flex; gap: 6px; }
 .si-preview-play {
-  background: rgba(255,106,0,0.15); border: 1px solid rgba(255,106,0,0.3);
+  background: rgba(255, 255, 255,0.15); border: 1px solid rgba(255, 255, 255,0.3);
   color: #ff8040; font-size: 11px; font-weight: 700;
   padding: 6px 14px; border-radius: 6px; cursor: pointer; transition: all 0.15s;
 }
-.si-preview-play:hover { background: rgba(255,106,0,0.28); }
+.si-preview-play:hover { background: rgba(255, 255, 255,0.28); }
 .si-preview-stop {
   background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
   color: rgba(255,255,255,0.6); font-size: 11px;
@@ -564,7 +564,7 @@ class SoundImporter {
   border-radius: 8px; padding: 9px 12px; font-size: 13px; color: #fff;
   outline: none; font-family: inherit; transition: border-color 0.2s; width: 100%; box-sizing: border-box;
 }
-.si-input:focus { border-color: rgba(255,106,0,0.5); }
+.si-input:focus { border-color: rgba(255, 255, 255,0.5); }
 .si-input::placeholder { color: rgba(255,255,255,0.2); }
 .si-color-row { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
 .si-color-swatches { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -584,23 +584,23 @@ class SoundImporter {
 }
 .si-btn-secondary:hover { background: rgba(255,255,255,0.1); }
 .si-btn-primary {
-  background: linear-gradient(135deg, #ff6a00, #ea580c);
+  background: linear-gradient(135deg, #ffffff, #ea580c);
   border: none; color: #fff; font-size: 13px; font-weight: 700;
   padding: 9px 22px; border-radius: 8px; cursor: pointer;
   display: flex; align-items: center; gap: 6px; transition: all 0.18s;
 }
-.si-btn-primary:hover { filter: brightness(1.12); box-shadow: 0 0 18px rgba(255,106,0,0.45); }
+.si-btn-primary:hover { filter: brightness(1.12); box-shadow: 0 0 18px rgba(255, 255, 255,0.45); }
 
 .si-hidden { display: none !important; }
 
 /* Import button in toolbar */
 #btn-import-sound {
   display: inline-flex; align-items: center; gap: 5px;
-  background: rgba(34,211,238,0.1); border: 1px solid rgba(34,211,238,0.28);
-  color: #67e8f9; font-size: 11px; font-weight: 700;
+  background: rgba(255, 255, 255,0.1); border: 1px solid rgba(255, 255, 255,0.28);
+  color: #e4e4e7; font-size: 11px; font-weight: 700;
   padding: 4px 11px; border-radius: 5px; cursor: pointer; transition: all 0.18s; height: 26px;
 }
-#btn-import-sound:hover { background: rgba(34,211,238,0.2); color: #fff; }
+#btn-import-sound:hover { background: rgba(255, 255, 255,0.2); color: #fff; }
 `;
     document.head.appendChild(style);
   }
@@ -629,7 +629,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const addBtn = document.getElementById('add-channel-btn');
     if (addBtn) {
       addBtn.addEventListener('click', () => {
-        const COLORS = ['#ff6a00','#a855f7','#00d4aa','#ec4899','#22d3ee','#84cc16','#f59e0b','#ef4444','#6366f1','#f97316'];
+        const COLORS = ['#ffffff','#a1a1aa','#ffffff','#52525b','#ffffff','#a1a1aa','#f59e0b','#ffffff','#6366f1','#ffffff'];
         const idx  = window.app.sequencer.channels.length;
         const color = COLORS[idx % COLORS.length];
         window.app.sequencer.channels.push({
@@ -641,7 +641,7 @@ document.addEventListener('DOMContentLoaded', () => {
           type: 'synth', notes: [], filterFreq: 2000, filterRes: 1,
         });
         window.app._buildChannelRack();
-        if (window.showToast) showToast(`✚ Channel ${idx + 1} added`);
+        if (window.showToast) showToast(` Channel ${idx + 1} added`);
       });
     }
   };

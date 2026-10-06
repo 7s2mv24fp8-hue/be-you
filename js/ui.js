@@ -13,7 +13,7 @@ function showToast(msg, duration = 2000) {
 }
 
 // ── Draw canvas knob (standalone, for toolbar) ─────────────────
-function drawKnob(canvas, value, min, max, color = '#ff6a00', label = '') {
+function drawKnob(canvas, value, min, max, color = '#ffffff', label = '') {
   const ctx = canvas.getContext('2d');
   const cx = canvas.width / 2;
   const cy = canvas.height / 2;

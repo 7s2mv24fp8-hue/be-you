@@ -39,14 +39,18 @@ class RecorderEngine {
   // ── Request microphone permission ─────────────────────────────────────────
   async requestMic() {
     try {
-      this.micStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl:  false,
-          sampleRate: this.engine.ctx.sampleRate,
-        }
-      });
+      try {
+        this.micStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl:  false,
+          }
+        });
+      } catch (err1) {
+        // Fallback for browsers that reject specific constraint keys
+        this.micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
       this.isArmed = true;
       if (this.onStateChange) this.onStateChange('armed');
       return true;
@@ -103,11 +107,18 @@ class RecorderEngine {
     // If not monitoring, start it first
     if (!this.isMonitoring) await this.startMonitoring();
 
-    this.mediaRecorder = new MediaRecorder(this.micStream, {
-      mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-        ? 'audio/webm;codecs=opus'
-        : 'audio/webm',
-    });
+    let mimeType = '';
+    if (typeof MediaRecorder !== 'undefined' && typeof MediaRecorder.isTypeSupported === 'function') {
+      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+        mimeType = 'audio/webm;codecs=opus';
+      } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+        mimeType = 'audio/webm';
+      } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+        mimeType = 'audio/mp4';
+      }
+    }
+    const options = mimeType ? { mimeType } : {};
+    this.mediaRecorder = new MediaRecorder(this.micStream, options);
 
     this.mediaRecorder.addEventListener('dataavailable', e => {
       if (e.data.size > 0) this._chunks.push(e.data);
@@ -210,7 +221,7 @@ class RecorderEngine {
   }
 
   // ── Waveform rendering ─────────────────────────────────────────────────────
-  drawWaveform(canvas, clip, color = '#00d4aa') {
+  drawWaveform(canvas, clip, color = '#ffffff') {
     const ctx   = canvas.getContext('2d');
     const W = canvas.width, H = canvas.height;
     ctx.clearRect(0, 0, W, H);
@@ -307,16 +318,16 @@ class RecorderEngine {
       const semitone = ((midi - keyIdx) % 12 + 12) % 12;
       if (scale.includes(semitone)) {
         const y = midiToY(midi);
-        ctx.fillStyle = 'rgba(255,106,0,0.06)';
+        ctx.fillStyle = 'rgba(255, 255, 255,0.06)';
         ctx.fillRect(0, y - 0.5, W, 1);
       }
     }
 
     // Corrected pitch line (orange — where auto-tune snaps to)
     ctx.beginPath();
-    ctx.strokeStyle = '#ff6a00';
+    ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 2;
-    ctx.shadowColor = '#ff6a00';
+    ctx.shadowColor = '#ffffff';
     ctx.shadowBlur = 4;
     let first = true;
     corr.forEach((m, i) => {
@@ -331,9 +342,9 @@ class RecorderEngine {
 
     // Detected pitch line (teal — raw voice)
     ctx.beginPath();
-    ctx.strokeStyle = '#00d4aa';
+    ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 1.5;
-    ctx.shadowColor = '#00d4aa';
+    ctx.shadowColor = '#ffffff';
     ctx.shadowBlur = 3;
     first = true;
     history.forEach((m, i) => {

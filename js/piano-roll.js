@@ -34,17 +34,17 @@ class PianoRoll {
 
     // Colors
     this.colors = {
-      bg: '#1a1a1a',
-      bgAlt: '#1e1e1e',
-      gridLine: '#2d2d2d',
-      gridLineBeat: '#383838',
-      blackKey: '#111',
-      whiteKey: '#2a2a2a',
-      note: '#ec4899',
-      noteSelected: '#ff6a00',
-      noteOutline: 'rgba(0,0,0,0.5)',
-      playhead: '#ff6a00',
-      cLine: '#3a3a3a',
+      bg: '#09090b',
+      bgAlt: '#121215',
+      gridLine: '#27272a',
+      gridLineBeat: '#3f3f46',
+      blackKey: '#000000',
+      whiteKey: '#18181b',
+      note: '#ffffff',
+      noteSelected: '#e4e4e7',
+      noteOutline: 'rgba(0,0,0,0.8)',
+      playhead: '#ffffff',
+      cLine: '#27272a',
     };
 
     this._initCanvas();
@@ -63,7 +63,7 @@ class PianoRoll {
   setChannel(idx) {
     this.channelIdx = idx;
     const ch = this.sequencer.channels[idx];
-    this.colors.note = ch ? ch.color : '#ec4899';
+    this.colors.note = ch ? ch.color : '#ffffff';
     this.render();
   }
 
@@ -135,7 +135,7 @@ class PianoRoll {
 
       // C note highlight
       if (noteIdx % 12 === 0) {
-        ctx.fillStyle = 'rgba(255,106,0,0.04)';
+        ctx.fillStyle = 'rgba(255, 255, 255,0.04)';
         ctx.fillRect(0, y, totalW, cellH);
         ctx.strokeStyle = '#2a2a2a';
         ctx.lineWidth = 0.5;
@@ -192,7 +192,7 @@ class PianoRoll {
         ctx.shadowBlur = 6;
 
         // Note body
-        const noteColor = ch.color || '#ec4899';
+        const noteColor = ch.color || '#ffffff';
         ctx.fillStyle = noteColor;
         ctx.beginPath();
         ctx.roundRect(x, y, w, h, 2);
@@ -223,8 +223,8 @@ class PianoRoll {
     if (this.sequencer.isPlaying) {
       const px = this.playhead * cellW;
       const grad = ctx.createLinearGradient(px, 0, px + 3, 0);
-      grad.addColorStop(0, 'rgba(255,106,0,0.9)');
-      grad.addColorStop(1, 'rgba(255,106,0,0)');
+      grad.addColorStop(0, 'rgba(255, 255, 255,0.9)');
+      grad.addColorStop(1, 'rgba(255, 255, 255,0)');
       ctx.fillStyle = grad;
       ctx.fillRect(px, 0, 3, totalH);
     }

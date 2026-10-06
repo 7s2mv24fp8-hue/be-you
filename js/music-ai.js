@@ -296,14 +296,14 @@ class PromptBuilder {
    */
   static presets() {
     return [
-      { label: '🎹 Lo-Fi Chill',        prompt: 'lo-fi hip hop, mellow piano, vinyl crackle, chill, relaxing, rainy day, high quality' },
-      { label: '🔥 Trap Banger',         prompt: 'trap beat, heavy 808 bass, rapid hi-hats, dark synths, aggressive, high energy, studio quality' },
-      { label: '🏠 Deep House',           prompt: 'deep house music, four-on-the-floor kick, warm bass, atmospheric pads, groovy, high quality' },
-      { label: '🎸 Acoustic Vibes',       prompt: 'acoustic guitar, warm fingerpicking, gentle percussion, folk, intimate, high quality' },
-      { label: '🌌 Ambient Space',        prompt: 'ambient music, ethereal pads, reverb, atmospheric, dreamy, space, cinematic, high quality' },
-      { label: '🥁 Drum & Bass Energy',   prompt: 'drum and bass, fast breakbeat, rolling bass, energetic, jungle, high quality' },
-      { label: '🎷 Jazz Lounge',          prompt: 'jazz, smooth saxophone, piano chords, upright bass, relaxed, lounge, high quality' },
-      { label: '🎮 Retro Synthwave',      prompt: 'synthwave, 80s retro, arpeggiated synth, driving bass, neon, cinematic, high quality' },
+      { label: ' Lo-Fi Chill',        prompt: 'lo-fi hip hop, mellow piano, vinyl crackle, chill, relaxing, rainy day, high quality' },
+      { label: ' Trap Banger',         prompt: 'trap beat, heavy 808 bass, rapid hi-hats, dark synths, aggressive, high energy, studio quality' },
+      { label: ' Deep House',           prompt: 'deep house music, four-on-the-floor kick, warm bass, atmospheric pads, groovy, high quality' },
+      { label: ' Acoustic Vibes',       prompt: 'acoustic guitar, warm fingerpicking, gentle percussion, folk, intimate, high quality' },
+      { label: ' Ambient Space',        prompt: 'ambient music, ethereal pads, reverb, atmospheric, dreamy, space, cinematic, high quality' },
+      { label: ' Drum & Bass Energy',   prompt: 'drum and bass, fast breakbeat, rolling bass, energetic, jungle, high quality' },
+      { label: ' Jazz Lounge',          prompt: 'jazz, smooth saxophone, piano chords, upright bass, relaxed, lounge, high quality' },
+      { label: ' Retro Synthwave',      prompt: 'synthwave, 80s retro, arpeggiated synth, driving bass, neon, cinematic, high quality' },
     ];
   }
 }

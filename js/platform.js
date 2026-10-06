@@ -133,7 +133,7 @@ window.Platform = class Platform {
     const grid = document.getElementById('explore-grid');
     if (!grid) return;
     if (!beats.length) {
-      grid.innerHTML = '<div class="plat-empty"><span>🎵</span><p>No beats published yet.<br>Be the first!</p></div>';
+      grid.innerHTML = '<div class="plat-empty"><span></span><p>No beats published yet.<br>Be the first!</p></div>';
       return;
     }
     grid.innerHTML = '';
@@ -146,7 +146,7 @@ window.Platform = class Platform {
           <div class="ec-title">${esc(b.title)}</div>
           <div class="ec-meta">
             <span class="ec-genre">${esc(b.genre || 'Beat')}</span>
-            <span class="ec-bpm">♩ ${b.bpm} BPM</span>
+            <span class="ec-bpm"> ${b.bpm} BPM</span>
           </div>
           <div class="ec-author" data-username="${esc(b.username)}">
             <span class="ec-avatar">${b.full_name?.[0]?.toUpperCase() || '?'}</span>
@@ -211,7 +211,7 @@ window.Platform = class Platform {
           window.app._refreshChannelRack?.();
           if (state.bpm && document.getElementById('bpm-display'))
             document.getElementById('bpm-display').value = state.bpm;
-          this._toast(`✅ "${title}" loaded!`);
+          this._toast(` "${title}" loaded!`);
         }
       }
     } catch (e) {
@@ -250,7 +250,7 @@ window.Platform = class Platform {
         <div class="prof-avatar-lg">${user.full_name?.[0]?.toUpperCase() || '?'}</div>
         <div class="prof-info">
           <div class="prof-name">${esc(user.full_name || user.username)}
-            ${user.role === 'admin' ? '<span class="prof-crown">👑</span>' : ''}
+            ${user.role === 'admin' ? '<span class="prof-crown"></span>' : ''}
           </div>
           <div class="prof-handle">@${esc(user.username)}</div>
           <div class="prof-bio">${esc(user.bio || 'No bio yet.')}</div>
@@ -258,10 +258,10 @@ window.Platform = class Platform {
         </div>
         <div class="prof-actions">
           ${isMe
-            ? `<button class="prof-edit-btn" id="prof-edit-btn">✏️ Edit Profile</button>`
+            ? `<button class="prof-edit-btn" id="prof-edit-btn"> Edit Profile</button>`
             : `<button class="prof-follow-btn ${is_following ? 'following' : ''}" 
                 data-username="${esc(user.username)}">
-                ${is_following ? '✓ Following' : '+ Follow'}
+                ${is_following ? ' Following' : '+ Follow'}
               </button>`
           }
         </div>
@@ -276,7 +276,7 @@ window.Platform = class Platform {
       <div class="prof-beats-section">
         <div class="prof-section-title">Public Beats</div>
         <div class="prof-beats-grid" id="prof-beats-grid">
-          ${beats.length ? '' : '<div class="plat-empty"><span>🎵</span><p>No public beats yet</p></div>'}
+          ${beats.length ? '' : '<div class="plat-empty"><span></span><p>No public beats yet</p></div>'}
         </div>
       </div>
       ${isMe ? `
@@ -304,10 +304,10 @@ window.Platform = class Platform {
           <div class="pbc-title">${esc(b.title)}</div>
           <div class="pbc-meta">
             <span class="pbc-genre">${esc(b.genre || 'Beat')}</span>
-            <span>♩ ${b.bpm} BPM</span>
+            <span> ${b.bpm} BPM</span>
           </div>
           <div class="pbc-stats">
-            <span>♥ ${b.like_count}</span>
+            <span> ${b.like_count}</span>
             <span>▶ ${b.play_count}</span>
           </div>
           <button class="pbc-load-btn" data-id="${b.id}" data-title="${esc(b.title)}">Load into DAW</button>`;
@@ -324,7 +324,7 @@ window.Platform = class Platform {
       if (!localStorage.getItem('bs_token')) { this._toast('Please log in first'); return; }
       const res = await API.post(`/api/users/${btn.dataset.username}/follow`, {});
       btn.classList.toggle('following', res.following);
-      btn.textContent = res.following ? '✓ Following' : '+ Follow';
+      btn.textContent = res.following ? ' Following' : '+ Follow';
     });
 
     // Edit button
@@ -351,7 +351,7 @@ window.Platform = class Platform {
           u.full_name = payload.full_name || u.full_name;
           localStorage.setItem('bs_user', JSON.stringify(u));
         }
-        status.textContent = '✓ Profile saved!';
+        status.textContent = ' Profile saved!';
         status.className = 'plat-status success';
         this._syncAuthState();
       } catch (e) {
@@ -404,7 +404,7 @@ window.Platform = class Platform {
         <div class="train-level-track">
           <div class="train-level-fill" style="width:${Math.min(100, Math.max(15, s.global_approved_patterns * 8))}%"></div>
         </div>
-        <div class="train-level-hint">${s.max_trained ? '🧠 Max is actively learning from community songs & patterns!' : 'Be the first to train Max!'}</div>
+        <div class="train-level-hint">${s.max_trained ? ' Max is actively learning from community songs & patterns!' : 'Be the first to train Max!'}</div>
       </div>`;
   }
 
@@ -473,14 +473,14 @@ window.Platform = class Platform {
     document.getElementById('btn-run-groove-training')?.addEventListener('click', async () => {
       const statusEl = document.getElementById('groove-train-status');
       if (statusEl) {
-        statusEl.textContent = '⚡ Training Max on Google Groove Dataset...';
+        statusEl.textContent = ' Training Max on Google Groove Dataset...';
         statusEl.className = 'plat-status loading';
         statusEl.classList.remove('hidden');
       }
       try {
         const res = await API.get('/api/train/learned-patterns');
         if (statusEl) {
-          statusEl.textContent = `✅ Max loaded ${res.total_learned_patterns || 24} patterns across ${res.genres_with_real_data?.length || 8} genres!`;
+          statusEl.textContent = ` Max loaded ${res.total_learned_patterns || 24} patterns across ${res.genres_with_real_data?.length || 8} genres!`;
           statusEl.className = 'plat-status success';
         }
         this._loadBrainKnowledge();
@@ -498,7 +498,7 @@ window.Platform = class Platform {
     const container = document.getElementById('train-song-analysis-container');
 
     try {
-      this._toast(`🎵 Analyzing "${file.name}" rhythm...`);
+      this._toast(` Analyzing "${file.name}" rhythm...`);
       if (statusMsg) {
         statusMsg.textContent = 'Decoding audio and analyzing drum rhythm...';
         statusMsg.className = 'plat-status loading';
@@ -526,7 +526,7 @@ window.Platform = class Platform {
       container?.classList.remove('hidden');
 
       if (statusMsg) {
-        statusMsg.textContent = `✓ Song rhythm extracted successfully! Click "Teach Max" to train the AI.`;
+        statusMsg.textContent = ` Song rhythm extracted successfully! Click "Teach Max" to train the AI.`;
         statusMsg.className = 'plat-status success';
       }
     } catch (err) {
@@ -544,7 +544,7 @@ window.Platform = class Platform {
     const w = cvs.width, h = cvs.height;
 
     ctx.clearRect(0, 0, w, h);
-    ctx.fillStyle = 'rgba(255, 106, 0, 0.15)';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
     ctx.fillRect(0, 0, w, h);
 
     const stepW = w / waveform.length;
@@ -618,11 +618,11 @@ window.Platform = class Platform {
       const res = await window.songTrainer.trainMaxWithSong(analysis);
 
       if (statusMsg) {
-        statusMsg.textContent = `🧠 ${res.message || 'Max trained successfully!'}`;
+        statusMsg.textContent = ` ${res.message || 'Max trained successfully!'}`;
         statusMsg.className = 'plat-status success';
       }
 
-      this._toast(`🧠 Max learned pattern from "${analysis.songName}"!`);
+      this._toast(` Max learned pattern from "${analysis.songName}"!`);
 
       // Refresh training stats & knowledge
       const s = await API.get('/api/train/status');
@@ -666,7 +666,7 @@ window.Platform = class Platform {
 
     window.app._refreshChannelRack?.();
     this._closeModal('train-modal');
-    this._toast(`📥 Extracted pattern from "${analysis.songName}" loaded into DAW!`);
+    this._toast(` Extracted pattern from "${analysis.songName}" loaded into DAW!`);
   }
 
   async _loadBrainKnowledge() {
@@ -689,7 +689,7 @@ window.Platform = class Platform {
             <div style="font-weight: 700; color: #fff; font-size: 13px; text-transform: capitalize;">${genre}</div>
             <div style="font-size: 10px; color: #a1a1aa;">${count} learned patterns</div>
           </div>
-          <span style="font-size: 14px;">🧠</span>
+          <span style="font-size: 14px;"></span>
         `;
         container.appendChild(card);
       });
@@ -724,7 +724,7 @@ window.Platform = class Platform {
       if (status) { status.textContent = 'Submitting...'; status.className = 'plat-status loading'; status.classList.remove('hidden'); }
       const res = await API.post('/api/train/submit', { prompt, genre, bpm, pattern_json, mix_json });
       if (status) { status.textContent = res.message || 'Submitted!'; status.className = 'plat-status success'; }
-      this._toast('🧠 Pattern submitted to train Max!');
+      this._toast(' Pattern submitted to train Max!');
       // Refresh stats
       const s = await API.get('/api/train/status');
       this._renderTrainStatus(s);
@@ -762,7 +762,7 @@ window.Platform = class Platform {
       const res = await API.post('/api/projects', {
         title, bpm, channel_count: chCount, state_json, is_public: false,
       });
-      this._toast(`☁️ "${title}" saved to cloud!`);
+      this._toast(` "${title}" saved to cloud!`);
       return res.id;
     } catch (e) {
       this._toast('Cloud save failed: ' + e.message);
@@ -777,7 +777,7 @@ window.Platform = class Platform {
     }
     const genre = window.app?.aiProducer?.selectedGenres?.[0] || 'Beat';
     const res = await API.put(`/api/projects/${projectId}/publish`, { is_public: true, genre });
-    if (res.ok) this._toast('🌐 Beat is now public on Explore!');
+    if (res.ok) this._toast(' Beat is now public on Explore!');
   }
 
 

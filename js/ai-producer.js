@@ -22,21 +22,21 @@ const AI_PRODUCER_MOODS = [
 ];
 
 const AI_PRODUCER_ACTIONS = [
-  { id: 'full',      icon: '🚀', label: 'Full Production',  desc: 'Beat + Arrangement + Mix' },
-  { id: 'beat',      icon: '🥁', label: 'Generate Beat',    desc: 'Create drum & melodic patterns' },
-  { id: 'mix',       icon: '🎚️', label: 'Mix & Master',     desc: 'Auto-level, pan, balance' },
-  { id: 'variation', icon: '🔄', label: 'Add Variation',    desc: 'Modify current pattern' },
-  { id: 'random',    icon: '🎲', label: 'Surprise Me',      desc: 'Random genre & style' },
+  { id: 'full',      icon: '', label: 'Full Production',  desc: 'Beat + Arrangement + Mix' },
+  { id: 'beat',      icon: '', label: 'Generate Beat',    desc: 'Create drum & melodic patterns' },
+  { id: 'mix',       icon: '', label: 'Mix & Master',     desc: 'Auto-level, pan, balance' },
+  { id: 'variation', icon: '', label: 'Add Variation',    desc: 'Modify current pattern' },
+  { id: 'random',    icon: '', label: 'Surprise Me',      desc: 'Random genre & style' },
 ];
 
 // Prompt starters shown in the chat welcome screen
 const PROMPT_STARTERS = [
-  { emoji: '🔥', text: 'Dark trap beat at 140 BPM' },
-  { emoji: '😌', text: 'Chill lo-fi hip hop groove' },
-  { emoji: '🎸', text: 'Hard rock with heavy toms' },
-  { emoji: '🌆', text: 'Synthwave 80s retro vibes' },
-  { emoji: '🕺', text: 'Funky house, four-on-the-floor' },
-  { emoji: '💙', text: 'Emotional R&B at 75 BPM' },
+  { emoji: '', text: 'Dark trap beat at 140 BPM' },
+  { emoji: '', text: 'Chill lo-fi hip hop groove' },
+  { emoji: '', text: 'Hard rock with heavy toms' },
+  { emoji: '', text: 'Synthwave 80s retro vibes' },
+  { emoji: '', text: 'Funky house, four-on-the-floor' },
+  { emoji: '', text: 'Emotional R&B at 75 BPM' },
 ];
 
 const GEMINI_SYSTEM_PROMPT = `You are an expert music producer AI inside a DAW (Digital Audio Workstation).
@@ -81,7 +81,7 @@ class GeminiClient {
     try {
       const r = await fetch(`${this.base}/${this.model}?key=${this.apiKey}`);
       if (!r.ok) { const e = await r.json().catch(() => ({})); return { ok: false, message: e.error?.message || `HTTP ${r.status}` }; }
-      return { ok: true, message: '✅ Gemini is connected and ready!' };
+      return { ok: true, message: ' Gemini is connected and ready!' };
     } catch (e) { return { ok: false, message: `Connection failed: ${e.message}` }; }
   }
 
@@ -137,7 +137,7 @@ class OllamaClient {
   async testConnection() {
     try {
       const models = await this.fetchModels();
-      return { ok: true, message: `✅ Ollama connected! ${models.length} model(s) available.` };
+      return { ok: true, message: ` Ollama connected! ${models.length} model(s) available.` };
     } catch (e) { return { ok: false, message: `Can't reach Ollama at ${this.base}. Is it running?` }; }
   }
   async chat(messages, systemPrompt, { onStatus = () => {} } = {}) {
@@ -188,7 +188,7 @@ class OpenAICompatClient {
   async testConnection() {
     try {
       await this.fetchModels();
-      return { ok: true, message: `✅ Local server connected at ${this.base}!` };
+      return { ok: true, message: ` Local server connected at ${this.base}!` };
     } catch (e) { return { ok: false, message: `Can't reach server at ${this.base}. Is it running with CORS enabled?` }; }
   }
   async chat(messages, systemPrompt, { onStatus = () => {} } = {}) {
@@ -230,7 +230,7 @@ class BeYouClient {
     try {
       const r = await fetch('/health');
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      return { ok: true, message: '✅ BeYou Music AI is ready — 20 genres, trained on real drummer data.' };
+      return { ok: true, message: ' BeYou Music AI is ready — 20 genres, trained on real drummer data.' };
     } catch (e) { return { ok: false, message: `Server offline: ${e.message}` }; }
   }
 
@@ -458,7 +458,7 @@ class AIProducer {
       if (hasBeat) { try { BeatGenerator.apply(result.beat, sequencer); } catch (e) { console.warn('BeatGenerator.apply:', e); } }
       if (hasMix)  { try { MixMaster.apply(result.mix, sequencer, audioEngine); } catch (e) { console.warn('MixMaster.apply:', e); } }
 
-      return { message: result.message || '🎵 Done!', suggestions: result.suggestions || [], hasBeat, hasMix, bpm: result.beat?.bpm };
+      return { message: result.message || ' Done!', suggestions: result.suggestions || [], hasBeat, hasMix, bpm: result.beat?.bpm };
     } finally {
       this.isProcessing = false;
     }

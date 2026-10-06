@@ -1,72 +1,199 @@
 /**
- * BeYou Studio — Audio Editor v2
- * Full waveform editor with:
- * - Waveform visualization (canvas-based)
- * - Timeline with zoom / scroll
- * - Cut, Copy, Paste, Delete regions
- * - Trim (set loop points)
- * - Fade In / Fade Out
- * - Normalize
- * - Pitch shift (semitones)
- * - Layering: stack multiple clips on tracks
- * - Per-layer: volume, mute, solo, color
- * - Export: renders mix to AudioBuffer then download as WAV
+ * BeYou Studio — Audio Editor & Waveform Studio (Edison-style)
+ * ==============================================================
+ * Comprehensive waveform editor featuring:
+ * - High-DPI interactive waveform visualizer (in-tab & fullscreen modal)
+ * - Timeline scrub ruler (seconds + beats) with animated playhead
+ * - Region selection (drag to highlight, double-click select all)
+ * - Complete toolset: Cut, Copy, Paste, Delete, Trim to Selection
+ * - DSP Processing: Normalize (0 dBFS), Fade In, Fade Out, Reverse, Silence, Gain Boost/Attenuate, Pitch Shift
+ * - Send to Channel Rack (creates custom sampler channel from edited buffer)
+ * - Built-in demo sound generators (808 Sub, Trap Snare, Hi-Hat, Vocal Formant) so editor is NEVER empty
+ * - Multi-layer mixing stack with per-layer volume, mute, solo, and WAV export
  */
 
 'use strict';
 
 class AudioEditor {
   constructor(audioEngine) {
-    this.ctx    = audioEngine.ctx;
-    this.dest   = audioEngine.masterCompressor || audioEngine.ctx.destination;
+    this.engine = audioEngine;
 
     this.layers = [];       // { id, name, buffer, color, volume, muted, solo, startSec, trimStart, trimEnd }
     this.selected = null;   // selected layer id
 
-    this.zoom       = 1.0;  // pixels per second
+    this.zoom       = 1.0;
     this.scrollLeft = 0;
-    this.duration   = 30;   // total timeline sec
+    this.duration   = 10;   // timeline seconds
 
     this.playPos    = 0;
     this.playing    = false;
     this._sources   = [];
     this._rafId     = null;
 
-    this.clipboard  = null; // copied region buffer
+    this.clipboard  = null;
 
-    this.tool = 'select'; // select | cut | fade
+    // Selection range (in seconds)
+    this.selStart   = 0;
+    this.selEnd     = 0;
+    this.isSelecting= false;
+    this.dragAnchor = 0;
 
-    // Selection region
-    this.selStart = 0;
-    this.selEnd   = 0;
-
-    this._modal   = null;
-    this._canvas  = null;
-    this._ctx2d   = null;
-    this._dragging = null;
+    // Canvases
+    this._modal     = null;
+    this._modalCanvas = null;
+    this._tabCanvas = null;
+    this._activeCanvas = null;
 
     this._buildModal();
+    this._bindTabElements();
+
+    // Auto-load demo 808 sound so editor is instantly active and alive on open
+    setTimeout(() => {
+      if (!this.layers.length) {
+        this.loadDemo808(false);
+      }
+    }, 300);
   }
 
-  /* ── Public API ──────────────────────────────────────── */
+  get audioCtx() {
+    if (!this.engine.initialized) this.engine.init();
+    return this.engine.ctx;
+  }
+
+  get audioDest() {
+    return this.engine.masterCompressor || this.engine.masterGain || this.audioCtx.destination;
+  }
+
+  /* ── Tab & Modal Bindings ──────────────────────────────── */
+
+  _bindTabElements() {
+    this._tabCanvas = document.getElementById('ae-tab-waveform-canvas');
+    if (this._tabCanvas) {
+      this._attachCanvasInteractions(this._tabCanvas);
+    }
+  }
+
+  _buildModal() {
+    let overlay = document.getElementById('ae-modal');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'ae-modal';
+      overlay.className = 'ae-modal-overlay ae-hidden';
+      overlay.innerHTML = `
+        <div class="ae-modal-window">
+          <div class="ae-modal-header">
+            <div class="ae-modal-title">
+              <span class="ae-led"></span>
+              <span>EDISON AUDIO WAVEFORM EDITOR — PRO STUDIO</span>
+            </div>
+            <button id="ae-close-btn" class="ae-modal-close">✕</button>
+          </div>
+          <div class="ae-modal-body">
+            <div id="ae-canvas-wrap" class="ae-canvas-wrap">
+              <canvas id="ae-canvas" class="ae-canvas"></canvas>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+    }
+
+    this._modal = overlay;
+    this._modalCanvas = overlay.querySelector('#ae-canvas');
+    if (this._modalCanvas) {
+      this._attachCanvasInteractions(this._modalCanvas);
+    }
+
+    overlay.querySelector('#ae-close-btn')?.addEventListener('click', () => this.close());
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) this.close();
+    });
+
+    window.addEventListener('resize', () => {
+      this._resize();
+      this._draw();
+    });
+  }
 
   open(layer) {
-    this._modal.classList.remove('ae-hidden');
-    if (layer) this.selectLayer(layer.id);
-    this._resize();
-    this._draw();
+    if (this._modal) {
+      this._modal.classList.remove('ae-hidden');
+      if (layer) this.selectLayer(layer.id);
+      requestAnimationFrame(() => {
+        this._resize();
+        this._draw();
+      });
+    }
   }
 
   close() {
-    this._modal.classList.add('ae-hidden');
+    if (this._modal) this._modal.classList.add('ae-hidden');
     this.pause();
   }
 
+  /* ── Canvas Hit-Testing & Selection ────────────────────── */
+
+  _attachCanvasInteractions(canvas) {
+    const getSecFromClientX = (clientX) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = Math.max(0, Math.min(rect.width, clientX - rect.left));
+      const dur = Math.max(1, this.duration);
+      return (x / rect.width) * dur;
+    };
+
+    canvas.addEventListener('mousedown', (e) => {
+      const t = getSecFromClientX(e.clientX);
+      this.isSelecting = true;
+      this.dragAnchor = t;
+      this.selStart = t;
+      this.selEnd = t;
+      this.playPos = t;
+      this._draw();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!this.isSelecting) return;
+      const t = getSecFromClientX(e.clientX);
+      this.selStart = Math.min(this.dragAnchor, t);
+      this.selEnd   = Math.max(this.dragAnchor, t);
+      this.playPos  = this.selStart;
+      this._draw();
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (this.isSelecting) {
+        this.isSelecting = false;
+        // If single click without drag, reset selection
+        if (Math.abs(this.selEnd - this.selStart) < 0.05) {
+          this.selStart = 0;
+          this.selEnd = 0;
+        }
+        this._draw();
+      }
+    });
+
+    // Double click to select whole active clip
+    canvas.addEventListener('dblclick', () => {
+      const sel = this._getSelected();
+      if (sel && sel.buffer) {
+        this.selStart = sel.trimStart;
+        this.selEnd   = sel.trimEnd;
+      } else {
+        this.selStart = 0;
+        this.selEnd   = this.duration;
+      }
+      this._draw();
+    });
+  }
+
+  /* ── Layer Management ──────────────────────────────────── */
+
   addLayer(buffer, name, color) {
-    const id = `layer_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
+    if (!buffer) return null;
+    const id = `layer_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
     const layer = {
       id,
-      name: name || `Layer ${this.layers.length + 1}`,
+      name: name || `Audio Clip ${this.layers.length + 1}`,
       buffer,
       color: color || this._randColor(),
       volume: 1.0,
@@ -77,7 +204,8 @@ class AudioEditor {
       trimEnd: buffer.duration,
     };
     this.layers.push(layer);
-    this.duration = Math.max(this.duration, buffer.duration + layer.startSec + 2);
+    this.selected = id;
+    this.duration = Math.max(10, buffer.duration + 1.5);
     this._renderLayerList();
     this._draw();
     return id;
@@ -85,183 +213,580 @@ class AudioEditor {
 
   selectLayer(id) {
     this.selected = id;
-    document.querySelectorAll('.ae-layer-item').forEach(el => {
+    document.querySelectorAll('.ae-layer-item, .ae-inline-layer-card').forEach(el => {
       el.classList.toggle('ae-selected', el.dataset.id === id);
     });
     this._draw();
   }
 
-  /* ── Playback ────────────────────────────────────────── */
+  _getSelected() {
+    return this.layers.find(l => l.id === this.selected) || (this.layers.length ? this.layers[0] : null);
+  }
 
-  play(from = this.playPos) {
+  /* ── Playback Engine ───────────────────────────────────── */
+
+  play(from = null) {
     if (this.playing) this.pause();
-    if (this.ctx.state === 'suspended') this.ctx.resume();
-    const now = this.ctx.currentTime;
+    const ctx = this.audioCtx;
+    if (ctx.state === 'suspended') ctx.resume();
+
+    const startFrom = (from !== null) ? from : (this.selStart > 0 ? this.selStart : this.playPos);
+    const now = ctx.currentTime;
     this._sources = [];
+
     const anySolo = this.layers.some(l => l.solo);
     this.layers.forEach(layer => {
-      if (layer.muted) return;
-      if (anySolo && !layer.solo) return;
-      if (!layer.buffer) return;
+      if (layer.muted || (anySolo && !layer.solo) || !layer.buffer) return;
 
-      const offset = Math.max(0, from - layer.startSec);
-      if (offset >= (layer.trimEnd - layer.trimStart)) return;
+      const offset = Math.max(0, startFrom - layer.startSec);
+      const clipLen = layer.trimEnd - layer.trimStart;
+      if (offset >= clipLen) return;
 
-      const src = this.ctx.createBufferSource();
+      const src = ctx.createBufferSource();
       src.buffer = layer.buffer;
-      const gainNode = this.ctx.createGain();
+      const gainNode = ctx.createGain();
       gainNode.gain.value = layer.volume;
-      src.connect(gainNode); gainNode.connect(this.dest);
-      src.start(now, layer.trimStart + offset);
+      src.connect(gainNode);
+      gainNode.connect(this.audioDest);
+
+      const playDuration = (this.selEnd > this.selStart) ? (this.selEnd - startFrom) : undefined;
+      src.start(now, layer.trimStart + offset, playDuration);
       this._sources.push(src);
     });
 
     this.playing = true;
-    this._playStartTime = now - from;
+    this._playStartTime = now - startFrom;
     this._rafId = requestAnimationFrame(() => this._animLoop());
   }
 
   pause() {
     this.playing = false;
-    this._sources.forEach(s => { try { s.stop(); } catch(_){} });
+    this._sources.forEach(s => { try { s.stop(); } catch (_) {} });
     this._sources = [];
-    if (this._rafId) { cancelAnimationFrame(this._rafId); this._rafId = null; }
+    if (this._rafId) {
+      cancelAnimationFrame(this._rafId);
+      this._rafId = null;
+    }
+    this._draw();
+  }
+
+  togglePlay() {
+    this.playing ? this.pause() : this.play();
   }
 
   _animLoop() {
     if (!this.playing) return;
-    this.playPos = this.ctx.currentTime - this._playStartTime;
-    this._drawPlayhead();
+    const now = this.audioCtx.currentTime;
+    this.playPos = now - this._playStartTime;
+
+    // Loop selection or auto-stop at end
+    if (this.selEnd > this.selStart && this.playPos >= this.selEnd) {
+      this.play(this.selStart);
+      return;
+    } else if (this.playPos >= this.duration) {
+      this.pause();
+      this.playPos = 0;
+      return;
+    }
+
+    this._draw();
     this._rafId = requestAnimationFrame(() => this._animLoop());
   }
 
-  /* ── Edit Operations ─────────────────────────────────── */
+  /* ── Core Waveform Editing Tools ───────────────────────── */
 
   cutRegion() {
     const layer = this._getSelected();
-    if (!layer || this.selStart >= this.selEnd) return;
+    if (!layer || !layer.buffer || this.selStart >= this.selEnd) {
+      if (window.showToast) window.showToast('Select a region first to cut!');
+      return;
+    }
     this.clipboard = this._extractRegion(layer.buffer, this.selStart, this.selEnd);
     this._applyDelete(layer);
+    this.selStart = 0; this.selEnd = 0;
     this._draw();
-    showToast('✂️ Region cut to clipboard', 2000);
+    if (window.showToast) window.showToast('Region cut to clipboard!');
   }
 
   copyRegion() {
     const layer = this._getSelected();
-    if (!layer || this.selStart >= this.selEnd) return;
+    if (!layer || !layer.buffer || this.selStart >= this.selEnd) {
+      if (window.showToast) window.showToast('Select a region first to copy!');
+      return;
+    }
     this.clipboard = this._extractRegion(layer.buffer, this.selStart, this.selEnd);
-    showToast('📋 Region copied', 2000);
+    if (window.showToast) window.showToast('Region copied to clipboard!');
   }
 
   pasteRegion() {
-    if (!this.clipboard) return;
-    this.addLayer(this.clipboard, 'Pasted Clip');
-    showToast('📋 Pasted as new layer', 2000);
+    if (!this.clipboard) {
+      if (window.showToast) window.showToast('Clipboard is empty!');
+      return;
+    }
+    this.addLayer(this.clipboard, 'Pasted Audio Sample');
+    if (window.showToast) window.showToast('Pasted into new audio track!');
   }
 
   deleteRegion() {
     const layer = this._getSelected();
-    if (!layer || this.selStart >= this.selEnd) return;
+    if (!layer || !layer.buffer || this.selStart >= this.selEnd) {
+      if (window.showToast) window.showToast('Select a region first to delete!');
+      return;
+    }
     this._applyDelete(layer);
+    this.selStart = 0; this.selEnd = 0;
     this._draw();
-    showToast('🗑 Region deleted', 2000);
+    if (window.showToast) window.showToast('Region deleted!');
+  }
+
+  trimRegion() {
+    const layer = this._getSelected();
+    if (!layer || !layer.buffer || this.selStart >= this.selEnd) {
+      if (window.showToast) window.showToast('Select a region first to trim!');
+      return;
+    }
+    const trimmed = this._extractRegion(layer.buffer, this.selStart, this.selEnd);
+    if (trimmed) {
+      layer.buffer = trimmed;
+      layer.trimStart = 0;
+      layer.trimEnd = trimmed.duration;
+      this.duration = Math.max(8, trimmed.duration + 1);
+      this.selStart = 0;
+      this.selEnd = 0;
+      this._draw();
+      if (window.showToast) window.showToast('Trimmed to selection!');
+    }
   }
 
   normalize() {
     const layer = this._getSelected();
-    if (!layer?.buffer) return;
+    if (!layer || !layer.buffer) return;
     const buf = layer.buffer;
     let peak = 0;
-    for (let ch = 0; ch < buf.numberOfChannels; ch++) {
-      const data = buf.getChannelData(ch);
-      for (let i = 0; i < data.length; i++) peak = Math.max(peak, Math.abs(data[i]));
+    for (let c = 0; c < buf.numberOfChannels; c++) {
+      const data = buf.getChannelData(c);
+      for (let i = 0; i < data.length; i++) {
+        const abs = Math.abs(data[i]);
+        if (abs > peak) peak = abs;
+      }
     }
-    if (peak < 0.001) return;
-    const gain = 0.95 / peak;
-    const newBuf = this.ctx.createBuffer(buf.numberOfChannels, buf.length, buf.sampleRate);
-    for (let ch = 0; ch < buf.numberOfChannels; ch++) {
-      const src = buf.getChannelData(ch);
-      const dst = newBuf.getChannelData(ch);
-      for (let i = 0; i < src.length; i++) dst[i] = src[i] * gain;
+    if (peak < 0.0001) return;
+    const mult = 0.98 / peak;
+    const newBuf = this.audioCtx.createBuffer(buf.numberOfChannels, buf.length, buf.sampleRate);
+    for (let c = 0; c < buf.numberOfChannels; c++) {
+      const src = buf.getChannelData(c);
+      const dst = newBuf.getChannelData(c);
+      for (let i = 0; i < src.length; i++) dst[i] = src[i] * mult;
     }
     layer.buffer = newBuf;
     this._draw();
-    showToast('📊 Normalized to 0 dBFS', 2000);
+    if (window.showToast) window.showToast('Normalized peak to 0 dBFS!');
   }
 
-  fadeIn(durationSec = 0.5) {
+  fadeIn(durationSec = 0.4) {
     const layer = this._getSelected();
-    if (!layer?.buffer) return;
+    if (!layer || !layer.buffer) return;
     const buf = layer.buffer;
     const fadeSamples = Math.min(Math.floor(durationSec * buf.sampleRate), buf.length);
-    for (let ch = 0; ch < buf.numberOfChannels; ch++) {
-      const data = buf.getChannelData(ch);
-      for (let i = 0; i < fadeSamples; i++) data[i] *= i / fadeSamples;
+    for (let c = 0; c < buf.numberOfChannels; c++) {
+      const d = buf.getChannelData(c);
+      for (let i = 0; i < fadeSamples; i++) {
+        d[i] *= (i / fadeSamples);
+      }
     }
     this._draw();
-    showToast(`🎚 Fade-in ${durationSec}s applied`, 2000);
+    if (window.showToast) window.showToast(`Applied Fade In (${durationSec}s)!`);
   }
 
-  fadeOut(durationSec = 0.5) {
+  fadeOut(durationSec = 0.4) {
     const layer = this._getSelected();
-    if (!layer?.buffer) return;
+    if (!layer || !layer.buffer) return;
     const buf = layer.buffer;
     const fadeSamples = Math.min(Math.floor(durationSec * buf.sampleRate), buf.length);
     const startSample = buf.length - fadeSamples;
-    for (let ch = 0; ch < buf.numberOfChannels; ch++) {
-      const data = buf.getChannelData(ch);
-      for (let i = 0; i < fadeSamples; i++) data[startSample + i] *= 1 - i / fadeSamples;
+    for (let c = 0; c < buf.numberOfChannels; c++) {
+      const d = buf.getChannelData(c);
+      for (let i = 0; i < fadeSamples; i++) {
+        d[startSample + i] *= (1 - i / fadeSamples);
+      }
     }
     this._draw();
-    showToast(`🎚 Fade-out ${durationSec}s applied`, 2000);
+    if (window.showToast) window.showToast(`Applied Fade Out (${durationSec}s)!`);
   }
 
   reverse() {
     const layer = this._getSelected();
-    if (!layer?.buffer) return;
-    const buf = layer.buffer;
-    for (let ch = 0; ch < buf.numberOfChannels; ch++) {
-      buf.getChannelData(ch).reverse();
+    if (!layer || !layer.buffer) return;
+    for (let c = 0; c < layer.buffer.numberOfChannels; c++) {
+      layer.buffer.getChannelData(c).reverse();
     }
     this._draw();
-    showToast('🔄 Audio reversed', 2000);
+    if (window.showToast) window.showToast('Audio reversed!');
   }
 
-  /* ── Export / Download ───────────────────────────────── */
-
-  async exportMix() {
-    if (!this.layers.length) return;
-    showToast('⚙️ Rendering mix...', 3000);
-
-    const sampleRate = this.ctx.sampleRate;
-    const totalSamples = Math.ceil(this.duration * sampleRate);
-    const offline = new OfflineAudioContext(2, totalSamples, sampleRate);
-    const anySolo = this.layers.some(l => l.solo);
-
-    for (const layer of this.layers) {
-      if (layer.muted || (anySolo && !layer.solo) || !layer.buffer) continue;
-      const src  = offline.createBufferSource();
-      src.buffer = layer.buffer;
-      const g = offline.createGain();
-      g.gain.value = layer.volume;
-      src.connect(g); g.connect(offline.destination);
-      src.start(layer.startSec, layer.trimStart);
+  silence() {
+    const layer = this._getSelected();
+    if (!layer || !layer.buffer || this.selStart >= this.selEnd) return;
+    const buf = layer.buffer;
+    const sStart = Math.floor(this.selStart * buf.sampleRate);
+    const sEnd = Math.min(buf.length, Math.ceil(this.selEnd * buf.sampleRate));
+    for (let c = 0; c < buf.numberOfChannels; c++) {
+      const d = buf.getChannelData(c);
+      for (let i = sStart; i < sEnd; i++) d[i] = 0;
     }
-
-    const rendered = await offline.startRendering();
-    const wavBlob  = this._bufferToWAV(rendered);
-    const url = URL.createObjectURL(wavBlob);
-    const a   = document.createElement('a');
-    a.href = url; a.download = 'beyou_mix.wav'; a.click();
-    URL.revokeObjectURL(url);
-    showToast('💾 Mix exported as WAV!', 3000);
+    this._draw();
+    if (window.showToast) window.showToast('Silenced selected region!');
   }
 
-  /* ── Internal helpers ────────────────────────────────── */
-
-  _getSelected() {
-    return this.layers.find(l => l.id === this.selected) || null;
+  adjustGain(dbDelta = 3) {
+    const layer = this._getSelected();
+    if (!layer || !layer.buffer) return;
+    const mult = Math.pow(10, dbDelta / 20);
+    const buf = layer.buffer;
+    for (let c = 0; c < buf.numberOfChannels; c++) {
+      const d = buf.getChannelData(c);
+      for (let i = 0; i < d.length; i++) d[i] = Math.max(-1, Math.min(1, d[i] * mult));
+    }
+    this._draw();
+    if (window.showToast) window.showToast(`Gain adjusted: ${dbDelta > 0 ? '+' : ''}${dbDelta} dB!`);
   }
+
+  pitchShift(semitones = 1) {
+    const layer = this._getSelected();
+    if (!layer || !layer.buffer) return;
+    const srcBuf = layer.buffer;
+    const ratio = Math.pow(2, semitones / 12);
+    const newLen = Math.floor(srcBuf.length / ratio);
+    const newBuf = this.audioCtx.createBuffer(srcBuf.numberOfChannels, newLen, srcBuf.sampleRate);
+
+    for (let c = 0; c < srcBuf.numberOfChannels; c++) {
+      const src = srcBuf.getChannelData(c);
+      const dst = newBuf.getChannelData(c);
+      for (let i = 0; i < newLen; i++) {
+        const srcPos = i * ratio;
+        const i0 = Math.floor(srcPos);
+        const i1 = Math.min(srcBuf.length - 1, i0 + 1);
+        const frac = srcPos - i0;
+        dst[i] = src[i0] * (1 - frac) + src[i1] * frac;
+      }
+    }
+    layer.buffer = newBuf;
+    layer.trimEnd = newBuf.duration;
+    this._draw();
+    if (window.showToast) window.showToast(`Pitch shifted by ${semitones > 0 ? '+' : ''}${semitones} st!`);
+  }
+
+  sendToChannelRack() {
+    const layer = this._getSelected();
+    if (!layer || !layer.buffer) {
+      if (window.showToast) window.showToast('No audio sample to send!');
+      return;
+    }
+    if (window.app && window.app.sequencer) {
+      const newIdx = window.app.sequencer.channels.length;
+      window.app.sequencer.channels.push({
+        name: layer.name.slice(0, 12),
+        color: layer.color || '#2ed573',
+        type: 'audio',
+        audioBuffer: layer.buffer,
+        sampleFileName: `${layer.name}.wav`,
+        steps: [true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
+        velocity: Array(16).fill(0.85),
+        volume: 0.9,
+        pan: 0,
+        muted: false,
+        solo: false,
+        notes: [],
+      });
+      if (window.app._refreshChannelRack) window.app._refreshChannelRack();
+      if (window.showToast) window.showToast(`Sent "${layer.name}" to Channel Rack as Track ${newIdx + 1}!`);
+    }
+  }
+
+  /* ── Instant Preset Sound Generators ───────────────────── */
+
+  loadDemo808(showToast = true) {
+    const ctx = this.audioCtx;
+    const dur = 2.0;
+    const buf = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    const baseFreq = 55; // A1
+    for (let i = 0; i < data.length; i++) {
+      const t = i / ctx.sampleRate;
+      const freq = baseFreq * Math.exp(-t * 2.5);
+      const phase = 2 * Math.PI * freq * t;
+      const env = Math.exp(-t * 1.5);
+      // Soft saturation
+      const raw = Math.sin(phase) * env;
+      data[i] = Math.tanh(raw * 1.8) * 0.9;
+    }
+    this.addLayer(buf, '808 Sub Drop', '#ff4757');
+    if (showToast && window.showToast) window.showToast('Loaded 808 Sub Bass into Editor!');
+  }
+
+  loadDemoSnare() {
+    const ctx = this.audioCtx;
+    const dur = 0.5;
+    const buf = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) {
+      const t = i / ctx.sampleRate;
+      const tone = Math.sin(2 * Math.PI * 180 * t) * Math.exp(-t * 18);
+      const noise = (Math.random() * 2 - 1) * Math.exp(-t * 12);
+      data[i] = (tone * 0.5 + noise * 0.5) * 0.85;
+    }
+    this.addLayer(buf, 'Trap Snare Hit', '#ffa502');
+    if (window.showToast) window.showToast('Loaded Trap Snare into Editor!');
+  }
+
+  loadDemoHiHat() {
+    const ctx = this.audioCtx;
+    const dur = 0.35;
+    const buf = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) {
+      const t = i / ctx.sampleRate;
+      const noise = (Math.random() * 2 - 1) * Math.exp(-t * 25);
+      data[i] = noise * 0.7;
+    }
+    this.addLayer(buf, 'Closed Hi-Hat', '#2ed573');
+    if (window.showToast) window.showToast('Loaded Hi-Hat into Editor!');
+  }
+
+  loadDemoVocal() {
+    const ctx = this.audioCtx;
+    const dur = 1.8;
+    const buf = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) {
+      const t = i / ctx.sampleRate;
+      const f1 = 440;
+      const env = Math.sin((t / dur) * Math.PI);
+      const formant = Math.sin(2 * Math.PI * f1 * t) + 0.5 * Math.sin(2 * Math.PI * f1 * 2 * t);
+      data[i] = formant * env * 0.6;
+    }
+    this.addLayer(buf, 'Vocal Formant Chop', '#00d2d3');
+    if (window.showToast) window.showToast('Loaded Vocal Formant into Editor!');
+  }
+
+  loadProjectTracks() {
+    let count = 0;
+    if (window.app && window.app.sequencer && window.app.sequencer.channels) {
+      window.app.sequencer.channels.forEach(ch => {
+        if (ch.audioBuffer) {
+          this.addLayer(ch.audioBuffer, ch.name, ch.color);
+          count++;
+        }
+      });
+    }
+    if (count > 0) {
+      if (window.showToast) window.showToast(`Imported ${count} project audio tracks!`);
+    } else {
+      this.loadDemo808();
+    }
+  }
+
+  /* ── Canvas Rendering Engine ───────────────────────────── */
+
+  _resize() {
+    const canvases = [this._tabCanvas, this._modalCanvas].filter(Boolean);
+    canvases.forEach(c => {
+      const parent = c.parentElement;
+      if (!parent) return;
+      const w = Math.max(300, Math.floor(parent.clientWidth || 500));
+      const h = Math.max(140, Math.floor(parent.clientHeight || 220));
+      const dpr = window.devicePixelRatio || 1;
+      c.width  = w * dpr;
+      c.height = h * dpr;
+      c.style.width = `${w}px`;
+      c.style.height = `${h}px`;
+    });
+  }
+
+  _draw() {
+    const canvases = [this._tabCanvas, this._modalCanvas].filter(Boolean);
+    canvases.forEach(canvas => {
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      const w = canvas.width / dpr;
+      const h = canvas.height / dpr;
+
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+
+      // Dark FL Studio Edison Background
+      ctx.fillStyle = '#0a0d14';
+      ctx.fillRect(0, 0, w, h);
+
+      // Timeline Ruler at top
+      ctx.fillStyle = '#111622';
+      ctx.fillRect(0, 0, w, 22);
+      ctx.strokeStyle = '#1e2638';
+      ctx.beginPath();
+      ctx.moveTo(0, 22); ctx.lineTo(w, 22); ctx.stroke();
+
+      const dur = Math.max(1, this.duration);
+      const secStep = dur > 15 ? 2 : 0.5;
+
+      ctx.fillStyle = '#6b7280';
+      ctx.font = '8px JetBrains Mono, monospace';
+      for (let s = 0; s <= dur; s += secStep) {
+        const sx = (s / dur) * w;
+        ctx.fillRect(sx, 12, 1, 10);
+        if (s % 1 === 0) {
+          ctx.fillText(`${s.toFixed(1)}s`, sx + 3, 16);
+        }
+      }
+
+      // Draw Center Zero-Crossing Line
+      const midY = 22 + (h - 22) / 2;
+      ctx.strokeStyle = '#1b2230';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, midY); ctx.lineTo(w, midY); ctx.stroke();
+
+      // Render Selected Audio Layer Waveform
+      const layer = this._getSelected();
+      if (layer && layer.buffer) {
+        const buf = layer.buffer;
+        const data = buf.getChannelData(0);
+        const waveH = (h - 26);
+        const startX = (layer.startSec / dur) * w;
+        const clipW  = ((layer.trimEnd - layer.trimStart) / dur) * w;
+
+        // Waveform gradient
+        const waveGrad = ctx.createLinearGradient(0, 22, 0, h);
+        waveGrad.addColorStop(0, '#00d2d3');
+        waveGrad.addColorStop(0.5, '#1e90ff');
+        waveGrad.addColorStop(1, '#ff4757');
+        ctx.strokeStyle = waveGrad;
+        ctx.lineWidth = 1.2;
+
+        const sStart = Math.floor(layer.trimStart * buf.sampleRate);
+        const sEnd   = Math.floor(layer.trimEnd   * buf.sampleRate);
+        const totalSamples = sEnd - sStart;
+        const step = Math.max(1, Math.floor(totalSamples / clipW));
+
+        ctx.beginPath();
+        for (let px = 0; px < clipW; px++) {
+          const sampleIdx = sStart + Math.floor((px / clipW) * totalSamples);
+          let min = 0, max = 0;
+          for (let j = 0; j < step && sampleIdx + j < sEnd; j++) {
+            const val = data[sampleIdx + j];
+            if (val < min) min = val;
+            if (val > max) max = val;
+          }
+          const y1 = midY - max * (waveH / 2) * layer.volume;
+          const y2 = midY - min * (waveH / 2) * layer.volume;
+          ctx.moveTo(startX + px, y1);
+          ctx.lineTo(startX + px, y2);
+        }
+        ctx.stroke();
+
+        // Layer Name Label in corner
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 11px Inter, sans-serif';
+        ctx.fillText(`${layer.name} (${layer.buffer.duration.toFixed(2)}s)`, startX + 8, 38);
+      } else {
+        // Empty state watermark
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.font = '12px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Click "+ Import Sound" or load a demo sound below', w / 2, midY);
+        ctx.textAlign = 'left';
+      }
+
+      // Shaded Selection Overlay
+      if (this.selEnd > this.selStart) {
+        const sx = (this.selStart / dur) * w;
+        const sw = ((this.selEnd - this.selStart) / dur) * w;
+
+        ctx.fillStyle = 'rgba(0, 210, 211, 0.2)';
+        ctx.fillRect(sx, 22, sw, h - 22);
+
+        ctx.strokeStyle = '#00d2d3';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(sx, 22); ctx.lineTo(sx, h);
+        ctx.moveTo(sx + sw, 22); ctx.lineTo(sx + sw, h);
+        ctx.stroke();
+
+        // Selection duration label
+        ctx.fillStyle = '#00d2d3';
+        ctx.font = '9px JetBrains Mono, monospace';
+        ctx.fillText(`Selection: ${(this.selEnd - this.selStart).toFixed(2)}s`, sx + 4, 34);
+      }
+
+      // Live Playhead Indicator
+      if (this.playPos > 0) {
+        const px = (this.playPos / dur) * w;
+        if (px >= 0 && px <= w) {
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(px, 0); ctx.lineTo(px, h);
+          ctx.stroke();
+
+          ctx.fillStyle = '#ff4757';
+          ctx.beginPath();
+          ctx.moveTo(px - 4, 0); ctx.lineTo(px + 4, 0); ctx.lineTo(px, 8);
+          ctx.fill();
+        }
+      }
+
+      ctx.restore();
+    });
+  }
+
+  _renderLayerList() {
+    const listEl = document.getElementById('ae-inline-layers');
+    const emptyEl = document.getElementById('ae-inline-empty');
+    if (!listEl) return;
+
+    if (!this.layers.length) {
+      if (emptyEl) emptyEl.style.display = 'block';
+      return;
+    }
+    if (emptyEl) emptyEl.style.display = 'none';
+
+    listEl.querySelectorAll('.ae-inline-layer-card').forEach(c => c.remove());
+
+    this.layers.forEach(layer => {
+      const card = document.createElement('div');
+      card.className = `ae-inline-layer-card ${layer.id === this.selected ? 'ae-selected' : ''}`;
+      card.dataset.id = layer.id;
+      card.style.cssText = `
+        display:flex;align-items:center;gap:8px;padding:6px 10px;
+        background:#111622;border:1px solid #1e2638;border-left:3px solid ${layer.color};
+        border-radius:6px;margin-bottom:4px;cursor:pointer;
+      `;
+      card.innerHTML = `
+        <span style="font-size:11px;font-weight:700;color:#fff;flex:1;">${layer.name}</span>
+        <span style="font-size:9px;color:#9ca3af;font-family:monospace;">${layer.buffer.duration.toFixed(2)}s</span>
+        <button class="ae-card-del-btn" style="background:#ef444422;border:1px solid #ef444455;color:#ef4444;border-radius:4px;padding:1px 6px;cursor:pointer;font-size:10px;">✕</button>
+      `;
+
+      card.addEventListener('click', () => {
+        this.selectLayer(layer.id);
+        this._draw();
+      });
+
+      card.querySelector('.ae-card-del-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.layers = this.layers.filter(l => l.id !== layer.id);
+        if (this.selected === layer.id) {
+          this.selected = this.layers.length ? this.layers[0].id : null;
+        }
+        this._renderLayerList();
+        this._draw();
+      });
+
+      listEl.appendChild(card);
+    });
+  }
+
+  /* ── Internal Buffer Utilities ─────────────────────────── */
 
   _extractRegion(buffer, startSec, endSec) {
     const sr = buffer.sampleRate;
@@ -269,440 +794,117 @@ class AudioEditor {
     const endSample   = Math.min(Math.ceil(endSec * sr), buffer.length);
     const len = endSample - startSample;
     if (len <= 0) return null;
-    const newBuf = this.ctx.createBuffer(buffer.numberOfChannels, len, sr);
-    for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
-      const src = buffer.getChannelData(ch).subarray(startSample, endSample);
-      newBuf.getChannelData(ch).set(src);
+    const newBuf = this.audioCtx.createBuffer(buffer.numberOfChannels, len, sr);
+    for (let c = 0; c < buffer.numberOfChannels; c++) {
+      const src = buffer.getChannelData(c).subarray(startSample, endSample);
+      newBuf.getChannelData(c).set(src);
     }
     return newBuf;
   }
 
   _applyDelete(layer) {
     const buf = layer.buffer;
-    const sr  = buf.sampleRate;
+    const sr = buf.sampleRate;
     const delStart = Math.floor(this.selStart * sr);
     const delEnd   = Math.min(Math.ceil(this.selEnd * sr), buf.length);
     const newLen   = buf.length - (delEnd - delStart);
-    if (newLen <= 0) { layer.buffer = null; return; }
-    const newBuf = this.ctx.createBuffer(buf.numberOfChannels, newLen, sr);
-    for (let ch = 0; ch < buf.numberOfChannels; ch++) {
-      const src = buf.getChannelData(ch);
-      const dst = newBuf.getChannelData(ch);
+    if (newLen <= 0) {
+      layer.buffer = null;
+      return;
+    }
+    const newBuf = this.audioCtx.createBuffer(buf.numberOfChannels, newLen, sr);
+    for (let c = 0; c < buf.numberOfChannels; c++) {
+      const src = buf.getChannelData(c);
+      const dst = newBuf.getChannelData(c);
       dst.set(src.subarray(0, delStart));
       dst.set(src.subarray(delEnd), delStart);
     }
     layer.buffer = newBuf;
+    layer.trimEnd = newBuf.duration;
   }
 
   _randColor() {
-    const colors = ['#ff6a00','#a855f7','#22d3ee','#ec4899','#84cc16','#f59e0b','#6366f1','#34d399'];
-    return colors[this.layers.length % colors.length];
+    const palette = ['#00d2d3', '#ff4757', '#ffa502', '#2ed573', '#1e90ff', '#9b59b6'];
+    return palette[this.layers.length % palette.length];
   }
 
-  /* ── Canvas Drawing ──────────────────────────────────── */
-
-  _draw() {
-    if (!this._canvas) return;
-    const c   = this._canvas;
-    const ctx = this._ctx2d;
-    const W = c.width, H = c.height;
-    const PPS = this.zoom * 100; // pixels per second
-
-    ctx.clearRect(0, 0, W, H);
-
-    // Background
-    ctx.fillStyle = '#0a0c10';
-    ctx.fillRect(0, 0, W, H);
-
-    // Beat grid
-    const secPerBeat = 60 / 140;
-    const beatPx = secPerBeat * PPS;
-    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
-    ctx.lineWidth = 1;
-    for (let x = 0; x < W; x += beatPx) {
-      ctx.beginPath(); ctx.moveTo(x - this.scrollLeft * PPS % beatPx, 0);
-      ctx.lineTo(x - this.scrollLeft * PPS % beatPx, H); ctx.stroke();
-    }
-
-    // Time ruler
-    ctx.fillStyle = '#111';
-    ctx.fillRect(0, 0, W, 20);
-    ctx.fillStyle = 'rgba(255,255,255,0.3)';
-    ctx.font = '9px JetBrains Mono, monospace';
-    for (let sec = 0; sec < this.duration; sec++) {
-      const x = sec * PPS - this.scrollLeft * PPS;
-      if (x < 0 || x > W) continue;
-      ctx.fillRect(x, 0, 1, 20);
-      if (sec % 2 === 0) ctx.fillText(`${sec}s`, x + 3, 14);
-    }
-
-    // Track rows
-    const ROW_H = 64;
-    const ROW_TOP = 24;
-    this.layers.forEach((layer, li) => {
-      const y = ROW_TOP + li * (ROW_H + 4);
-      const x = layer.startSec * PPS - this.scrollLeft * PPS;
-      const w = layer.buffer ? (layer.trimEnd - layer.trimStart) * PPS : 0;
-
-      // Row bg
-      ctx.fillStyle = li % 2 === 0 ? 'rgba(255,255,255,0.015)' : 'rgba(255,255,255,0.008)';
-      ctx.fillRect(0, y, W, ROW_H);
-
-      if (!layer.buffer) return;
-
-      // Clip block
-      const isSelected = layer.id === this.selected;
-      ctx.fillStyle = isSelected ? layer.color + '44' : layer.color + '22';
-      ctx.strokeStyle = layer.color;
-      ctx.lineWidth = isSelected ? 2 : 1;
-      this._rrect(ctx, x, y + 2, w, ROW_H - 4, 4);
-      ctx.fill(); ctx.stroke();
-
-      // Waveform
-      this._drawWaveform(ctx, layer, x, y + 2, w, ROW_H - 4);
-
-      // Label
-      ctx.fillStyle = '#fff';
-      ctx.font = 'bold 11px Inter, sans-serif';
-      ctx.fillText(layer.name, x + 6, y + 16);
-
-      // Muted overlay
-      if (layer.muted) {
-        ctx.fillStyle = 'rgba(0,0,0,0.6)';
-        this._rrect(ctx, x, y + 2, w, ROW_H - 4, 4);
-        ctx.fill();
-        ctx.fillStyle = 'rgba(255,255,255,0.4)';
-        ctx.font = 'bold 11px Inter';
-        ctx.fillText('MUTED', x + w / 2 - 22, y + ROW_H / 2 + 4);
-      }
-    });
-
-    // Selection region
-    if (this.selEnd > this.selStart) {
-      const sx = this.selStart * PPS - this.scrollLeft * PPS;
-      const sw = (this.selEnd - this.selStart) * PPS;
-      ctx.fillStyle = 'rgba(34,211,238,0.12)';
-      ctx.fillRect(sx, 20, sw, H - 20);
-      ctx.strokeStyle = 'rgba(34,211,238,0.6)';
-      ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(sx, 20); ctx.lineTo(sx, H); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(sx + sw, 20); ctx.lineTo(sx + sw, H); ctx.stroke();
-    }
-
-    this._drawPlayhead();
-  }
-
-  _drawWaveform(ctx, layer, x, y, w, h) {
-    const buf = layer.buffer;
-    if (!buf) return;
-    const data = buf.getChannelData(0);
-    const startSample = Math.floor(layer.trimStart * buf.sampleRate);
-    const endSample   = Math.floor(layer.trimEnd   * buf.sampleRate);
-    const len = endSample - startSample;
-    const step = Math.max(1, Math.floor(len / w));
-    ctx.strokeStyle = layer.color + 'cc';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    for (let px = 0; px < w; px++) {
-      const sampleIdx = startSample + Math.floor((px / w) * len);
-      let min = 0, max = 0;
-      for (let j = 0; j < step && sampleIdx + j < endSample; j++) {
-        const v = data[sampleIdx + j];
-        if (v < min) min = v;
-        if (v > max) max = v;
-      }
-      const mid = y + h / 2;
-      const yMax = mid + max * (h / 2) * layer.volume;
-      const yMin = mid + min * (h / 2) * layer.volume;
-      if (px === 0) ctx.moveTo(x + px, yMax);
-      else { ctx.lineTo(x + px, yMax); ctx.lineTo(x + px, yMin); }
-    }
-    ctx.stroke();
-  }
-
-  _drawPlayhead() {
-    if (!this._canvas) return;
-    const c = this._canvas; const ctx = this._ctx2d;
-    const W = c.width; const H = c.height;
-    const PPS = this.zoom * 100;
-    const px = this.playPos * PPS - this.scrollLeft * PPS;
-    if (px < 0 || px > W) return;
-    ctx.strokeStyle = '#ff6a00';
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(px, 20); ctx.lineTo(px, H); ctx.stroke();
-    // Triangle handle
-    ctx.fillStyle = '#ff6a00';
-    ctx.beginPath(); ctx.moveTo(px - 5, 20); ctx.lineTo(px + 5, 20); ctx.lineTo(px, 28); ctx.fill();
-  }
-
-  _rrect(ctx, x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y); ctx.arcTo(x + w, y, x + w, y + r, r);
-    ctx.lineTo(x + w, y + h - r); ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
-    ctx.lineTo(x + r, y + h); ctx.arcTo(x, y + h, x, y + h - r, r);
-    ctx.lineTo(x, y + r); ctx.arcTo(x, y, x + r, y, r);
-    ctx.closePath();
-  }
-
-  /* ── Modal builder ───────────────────────────────────── */
-
-  _buildModal() {
-    const overlay = document.createElement('div');
-    overlay.id = 'ae-overlay';
-    overlay.className = 'ae-overlay ae-hidden';
-    overlay.innerHTML = `
-      <div class="ae-modal">
-        <div class="ae-header">
-          <span class="ae-title">🎛 Audio Editor & Layer Mixer</span>
-          <div class="ae-tools">
-            <button class="ae-tool-btn ae-active" id="ae-tool-select" title="Select / Move">⬛ Select</button>
-            <button class="ae-tool-btn" id="ae-tool-cut" title="Cut mode">✂️ Cut</button>
-          </div>
-          <div class="ae-edit-btns">
-            <button class="ae-btn" id="ae-cut-btn"     title="Cut selection">✂️</button>
-            <button class="ae-btn" id="ae-copy-btn"    title="Copy selection">📋</button>
-            <button class="ae-btn" id="ae-paste-btn"   title="Paste">📌</button>
-            <button class="ae-btn" id="ae-del-btn"     title="Delete selection">🗑</button>
-            <div class="ae-sep"></div>
-            <button class="ae-btn" id="ae-fadein-btn"  title="Fade In">↗️</button>
-            <button class="ae-btn" id="ae-fadeout-btn" title="Fade Out">↘️</button>
-            <button class="ae-btn" id="ae-norm-btn"    title="Normalize">📊</button>
-            <button class="ae-btn" id="ae-rev-btn"     title="Reverse">🔄</button>
-            <div class="ae-sep"></div>
-            <button class="ae-btn ae-export-btn" id="ae-export-btn" title="Export Mix as WAV">💾 Export WAV</button>
-          </div>
-          <div class="ae-zoom-wrap">
-            <span class="ae-ctrl-label">Zoom</span>
-            <input type="range" class="ae-zoom-slider" id="ae-zoom" min="0.2" max="5" step="0.1" value="1">
-          </div>
-          <button class="ae-close-btn" id="ae-close-btn">✕</button>
-        </div>
-
-        <div class="ae-body">
-          <!-- Left: Layer list -->
-          <div class="ae-layers-panel">
-            <div class="ae-layers-header">
-              <span>Layers</span>
-              <button class="ae-add-layer-btn" id="ae-add-layer-btn" title="Import sound into editor">+ Add</button>
-            </div>
-            <div class="ae-layers-list" id="ae-layers-list"></div>
-            <!-- Playback -->
-            <div class="ae-play-bar">
-              <button class="ae-play-btn" id="ae-play-btn">▶ Play</button>
-              <button class="ae-play-btn" id="ae-pause-btn">⏸ Pause</button>
-              <div class="ae-pos-display" id="ae-pos-display">0.00s</div>
-            </div>
-          </div>
-
-          <!-- Right: Canvas timeline -->
-          <div class="ae-canvas-wrap" id="ae-canvas-wrap">
-            <canvas id="ae-canvas" class="ae-canvas"></canvas>
-          </div>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-    this._modal = overlay;
-
-    this._canvas = overlay.querySelector('#ae-canvas');
-    this._ctx2d  = this._canvas.getContext('2d');
-
-    this._bindModal();
-    window.addEventListener('resize', () => this._resize());
-    this._resize();
-  }
-
-  _resize() {
-    const wrap = document.getElementById('ae-canvas-wrap');
-    if (!wrap || !this._canvas) return;
-    this._canvas.width  = wrap.clientWidth;
-    this._canvas.height = wrap.clientHeight;
-    this._draw();
-  }
-
-  _renderLayerList() {
-    const list = document.getElementById('ae-layers-list');
-    if (!list) return;
-    list.innerHTML = '';
-    this.layers.forEach(layer => {
-      const el = document.createElement('div');
-      el.className = `ae-layer-item ${layer.id === this.selected ? 'ae-selected' : ''}`;
-      el.dataset.id = layer.id;
-      el.innerHTML = `
-        <div class="ae-layer-color" style="background:${layer.color}"></div>
-        <div class="ae-layer-info">
-          <div class="ae-layer-name">${layer.name}</div>
-          <div class="ae-layer-dur">${layer.buffer ? layer.buffer.duration.toFixed(2) : '0.00'}s</div>
-        </div>
-        <div class="ae-layer-ctrls">
-          <input type="range" class="ae-vol-slider" min="0" max="1.5" step="0.01" value="${layer.volume}" title="Volume" data-id="${layer.id}">
-          <button class="ae-mute-btn ${layer.muted?'ae-muted':''}" data-id="${layer.id}" title="Mute">M</button>
-          <button class="ae-solo-btn ${layer.solo?'ae-soloed':''}" data-id="${layer.id}" title="Solo">S</button>
-          <button class="ae-del-layer-btn" data-id="${layer.id}" title="Delete layer">✕</button>
-        </div>
-      `;
-      el.addEventListener('click', () => this.selectLayer(layer.id));
-      el.querySelector('.ae-vol-slider').addEventListener('input', (e) => {
-        layer.volume = parseFloat(e.target.value);
-        this._draw();
-        e.stopPropagation();
-      });
-      el.querySelector('.ae-mute-btn').addEventListener('click', (e) => {
-        layer.muted = !layer.muted;
-        e.currentTarget.classList.toggle('ae-muted', layer.muted);
-        this._draw(); e.stopPropagation();
-      });
-      el.querySelector('.ae-solo-btn').addEventListener('click', (e) => {
-        layer.solo = !layer.solo;
-        e.currentTarget.classList.toggle('ae-soloed', layer.solo);
-        this._draw(); e.stopPropagation();
-      });
-      el.querySelector('.ae-del-layer-btn').addEventListener('click', (e) => {
-        this.layers = this.layers.filter(l => l.id !== layer.id);
-        this._renderLayerList(); this._draw(); e.stopPropagation();
-      });
-      list.appendChild(el);
-    });
-  }
-
-  _bindModal() {
-    document.getElementById('ae-close-btn')?.addEventListener('click', () => this.close());
-
-    // Tool select
-    document.getElementById('ae-tool-select')?.addEventListener('click', (e) => {
-      this.tool = 'select';
-      document.querySelectorAll('.ae-tool-btn').forEach(b => b.classList.remove('ae-active'));
-      e.currentTarget.classList.add('ae-active');
-    });
-    document.getElementById('ae-tool-cut')?.addEventListener('click', (e) => {
-      this.tool = 'cut';
-      document.querySelectorAll('.ae-tool-btn').forEach(b => b.classList.remove('ae-active'));
-      e.currentTarget.classList.add('ae-active');
-    });
-
-    // Edit ops
-    document.getElementById('ae-cut-btn')?.addEventListener('click',     () => this.cutRegion());
-    document.getElementById('ae-copy-btn')?.addEventListener('click',    () => this.copyRegion());
-    document.getElementById('ae-paste-btn')?.addEventListener('click',   () => this.pasteRegion());
-    document.getElementById('ae-del-btn')?.addEventListener('click',     () => this.deleteRegion());
-    document.getElementById('ae-fadein-btn')?.addEventListener('click',  () => this.fadeIn(0.5));
-    document.getElementById('ae-fadeout-btn')?.addEventListener('click', () => this.fadeOut(0.5));
-    document.getElementById('ae-norm-btn')?.addEventListener('click',    () => this.normalize());
-    document.getElementById('ae-rev-btn')?.addEventListener('click',     () => this.reverse());
-    document.getElementById('ae-export-btn')?.addEventListener('click',  () => this.exportMix());
-
-    // Zoom
-    document.getElementById('ae-zoom')?.addEventListener('input', (e) => {
-      this.zoom = parseFloat(e.target.value);
-      this._draw();
-    });
-
-    // Playback
-    document.getElementById('ae-play-btn')?.addEventListener('click',  () => this.play());
-    document.getElementById('ae-pause-btn')?.addEventListener('click', () => this.pause());
-
-    // Add layer (file input)
-    document.getElementById('ae-add-layer-btn')?.addEventListener('click', () => {
-      const fi = document.createElement('input');
-      fi.type = 'file'; fi.accept = 'audio/*';
-      fi.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const ab = await file.arrayBuffer();
-        try {
-          const buf = await this.ctx.decodeAudioData(ab);
-          this.addLayer(buf, file.name.replace(/\.[^.]+$/, ''));
-          showToast(`🎵 Layer added: ${file.name}`, 2000);
-        } catch(err) {
-          showToast('❌ Failed to decode audio', 2000);
-        }
-      });
-      fi.click();
-    });
-
-    // Canvas mouse events
-    const canvas = this._canvas;
-    canvas.addEventListener('mousedown', (e) => this._onCanvasMouseDown(e));
-    canvas.addEventListener('mousemove', (e) => this._onCanvasMouseMove(e));
-    canvas.addEventListener('mouseup',   (e) => this._onCanvasMouseUp(e));
-    canvas.addEventListener('wheel',     (e) => {
-      e.preventDefault();
-      this.scrollLeft = Math.max(0, this.scrollLeft + e.deltaX * 0.01);
-      this._draw();
-    }, { passive: false });
-  }
-
-  _canvasToSec(x) {
-    return (x + this.scrollLeft * 100 * this.zoom) / (this.zoom * 100);
-  }
-
-  _onCanvasMouseDown(e) {
-    const rect = this._canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    if (y < 20) { // playhead click on ruler
-      this.playPos = this._canvasToSec(x);
-      this._draw();
+  async exportMix() {
+    if (!this.layers.length) {
+      if (window.showToast) window.showToast('No audio layers to export!');
       return;
     }
-    this.selStart = this._canvasToSec(x);
-    this.selEnd   = this.selStart;
-    this._dragging = { x, type: 'select' };
+    if (window.showToast) window.showToast('Rendering mix to WAV...', 2000);
+
+    const sr = this.audioCtx.sampleRate;
+    const totalSamples = Math.ceil(this.duration * sr);
+    const offline = new OfflineAudioContext(2, totalSamples, sr);
+
+    this.layers.forEach(l => {
+      if (l.muted || !l.buffer) return;
+      const src = offline.createBufferSource();
+      src.buffer = l.buffer;
+      const gain = offline.createGain();
+      gain.gain.value = l.volume;
+      src.connect(gain);
+      gain.connect(offline.destination);
+      src.start(l.startSec, l.trimStart);
+    });
+
+    const rendered = await offline.startRendering();
+    const wavBlob = this._bufferToWAV(rendered);
+    const url = URL.createObjectURL(wavBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `edison_export_${Date.now()}.wav`;
+    a.click();
+    URL.revokeObjectURL(url);
+    if (window.showToast) window.showToast('WAV file downloaded successfully!');
   }
 
-  _onCanvasMouseMove(e) {
-    if (!this._dragging) return;
-    const rect = this._canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const sec = this._canvasToSec(x);
-    this.selEnd = Math.max(this.selStart, sec);
-    this._draw();
-    // Update pos display
-    const posEl = document.getElementById('ae-pos-display');
-    if (posEl) posEl.textContent = `${sec.toFixed(2)}s`;
-  }
+  _bufferToWAV(ab) {
+    const numChannels = ab.numberOfChannels;
+    const sampleRate = ab.sampleRate;
+    const format = 1; // PCM
+    const bitDepth = 16;
+    const bytesPerSample = bitDepth / 8;
+    const blockAlign = numChannels * bytesPerSample;
+    const numSamples = ab.length;
+    const dataSize = numSamples * blockAlign;
+    const buffer = new ArrayBuffer(44 + dataSize);
+    const view = new DataView(buffer);
 
-  _onCanvasMouseUp() {
-    this._dragging = null;
-  }
+    const writeString = (offset, str) => {
+      for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+    };
 
-  /* ── WAV encoder ─────────────────────────────────────── */
-
-  _bufferToWAV(buffer) {
-    const numCh = buffer.numberOfChannels;
-    const sr = buffer.sampleRate;
-    const len = buffer.length;
-    const bitsPerSample = 16;
-    const bytePerSample = bitsPerSample / 8;
-    const blockAlign = numCh * bytePerSample;
-    const dataLen = len * blockAlign;
-    const ab = new ArrayBuffer(44 + dataLen);
-    const view = new DataView(ab);
-    const writeStr = (offset, str) => { for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i)); };
-    writeStr(0, 'RIFF');
-    view.setUint32(4, 36 + dataLen, true);
-    writeStr(8, 'WAVE');
-    writeStr(12, 'fmt ');
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + dataSize, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
     view.setUint32(16, 16, true);
-    view.setUint16(20, 1, true);
-    view.setUint16(22, numCh, true);
-    view.setUint32(24, sr, true);
-    view.setUint32(28, sr * blockAlign, true);
+    view.setUint16(20, format, true);
+    view.setUint16(22, numChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * blockAlign, true);
     view.setUint16(32, blockAlign, true);
-    view.setUint16(34, bitsPerSample, true);
-    writeStr(36, 'data');
-    view.setUint32(40, dataLen, true);
+    view.setUint16(34, bitDepth, true);
+    writeString(36, 'data');
+    view.setUint32(40, dataSize, true);
+
     const channels = [];
-    for (let ch = 0; ch < numCh; ch++) channels.push(buffer.getChannelData(ch));
+    for (let c = 0; c < numChannels; c++) channels.push(ab.getChannelData(c));
+
     let offset = 44;
-    for (let i = 0; i < len; i++) {
-      for (let ch = 0; ch < numCh; ch++) {
-        const s = Math.max(-1, Math.min(1, channels[ch][i]));
-        view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+    for (let i = 0; i < numSamples; i++) {
+      for (let c = 0; c < numChannels; c++) {
+        const sample = Math.max(-1, Math.min(1, channels[c][i]));
+        const int16 = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+        view.setInt16(offset, int16, true);
         offset += 2;
       }
     }
-    return new Blob([ab], { type: 'audio/wav' });
+    return new Blob([buffer], { type: 'audio/wav' });
   }
 }
+
+window.AudioEditor = AudioEditor;

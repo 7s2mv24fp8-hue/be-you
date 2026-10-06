@@ -223,7 +223,7 @@ class FXPanelUI {
     p.className = 'fxp-panel fxp-hidden';
     p.innerHTML = `
       <div class="fxp-header">
-        <span class="fxp-title">🎛️ Channel FX</span>
+        <span class="fxp-title"> Channel FX</span>
         <button class="fxp-close" id="fxp-close">✕</button>
       </div>
       <div class="fxp-body">
@@ -381,7 +381,7 @@ class PianoRollExtras {
       });
     });
     ch.type = 'synth';
-    if (window.showToast) showToast(`🎹 ${chordName} chord filled`);
+    if (window.showToast) showToast(` ${chordName} chord filled`);
   }
 
   /** Fill arpeggio across active steps */
@@ -408,7 +408,7 @@ class PianoRollExtras {
       });
     });
     ch.type = 'synth';
-    if (window.showToast) showToast(`🎵 ${arpName} arp applied`);
+    if (window.showToast) showToast(` ${arpName} arp applied`);
   }
 
   /** Quantise notes to nearest step boundary */
@@ -424,7 +424,7 @@ class PianoRollExtras {
   copyNotes(sequencer, channelIdx) {
     const ch = sequencer.channels[channelIdx];
     this._clipboard = ch ? ch.notes.map(n => ({...n})) : [];
-    if (window.showToast) showToast(`📋 ${this._clipboard.length} notes copied`);
+    if (window.showToast) showToast(` ${this._clipboard.length} notes copied`);
   }
 
   pasteNotes(sequencer, channelIdx, offset = 0) {
@@ -434,7 +434,7 @@ class PianoRollExtras {
       ch.notes.push({ ...n, step: (n.step + offset) % sequencer.steps });
     });
     ch.type = 'synth';
-    if (window.showToast) showToast(`📋 Notes pasted`);
+    if (window.showToast) showToast(` Notes pasted`);
   }
 
   reverseNotes(sequencer, channelIdx) {
@@ -442,7 +442,7 @@ class PianoRollExtras {
     if (!ch) return;
     const maxStep = sequencer.steps - 1;
     ch.notes = ch.notes.map(n => ({ ...n, step: maxStep - n.step }));
-    if (window.showToast) showToast(`↩️ Notes reversed`);
+    if (window.showToast) showToast(`↩ Notes reversed`);
   }
 }
 
@@ -537,8 +537,8 @@ class MidiInput {
 
   _setStatus(msg, ok) {
     if (this._statusEl) {
-      this._statusEl.textContent = `🎹 MIDI: ${msg}`;
-      this._statusEl.style.color = ok ? '#4ade80' : 'rgba(255,255,255,0.35)';
+      this._statusEl.textContent = ` MIDI: ${msg}`;
+      this._statusEl.style.color = ok ? '#ffffff' : 'rgba(255,255,255,0.35)';
     }
   }
 }
@@ -559,7 +559,7 @@ class BeatSlicer {
     const buf    = ch.audioBuffer;
     const sr     = buf.sampleRate;
     const sliceLen = Math.floor(buf.length / numSlices);
-    const COLORS = ['#ff6a00','#a855f7','#00d4aa','#ec4899','#22d3ee','#84cc16','#f59e0b','#ef4444'];
+    const COLORS = ['#ffffff','#a1a1aa','#ffffff','#52525b','#ffffff','#a1a1aa','#f59e0b','#ffffff'];
 
     const newChannels = [];
     for (let i = 0; i < numSlices; i++) {
@@ -589,7 +589,7 @@ class BeatSlicer {
     // Remove original channel and insert slices
     sequencer.channels.splice(channelIdx, 1, ...newChannels);
     if (window.app) window.app._buildChannelRack();
-    if (window.showToast) showToast(`✂️ Sliced into ${numSlices} parts`);
+    if (window.showToast) showToast(` Sliced into ${numSlices} parts`);
   }
 }
 
@@ -779,11 +779,11 @@ class FLPanel {
     panel.innerHTML = `
       <div class="flp-header">
         <div class="flp-tabs" id="flp-tabs">
-          <button class="flp-tab active" data-tab="tools">🎛 Tools</button>
-          <button class="flp-tab" data-tab="midi">🎹 MIDI</button>
-          <button class="flp-tab" data-tab="chord">🎵 Chords</button>
-          <button class="flp-tab" data-tab="master">🔊 Master</button>
-          <button class="flp-tab" data-tab="shortcuts">⌨️ Keys</button>
+          <button class="flp-tab active" data-tab="tools"> Tools</button>
+          <button class="flp-tab" data-tab="midi"> MIDI</button>
+          <button class="flp-tab" data-tab="chord"> Chords</button>
+          <button class="flp-tab" data-tab="master"> Master</button>
+          <button class="flp-tab" data-tab="shortcuts"> Keys</button>
         </div>
         <button class="flp-close" id="flp-close">✕</button>
       </div>
@@ -812,27 +812,27 @@ class FLPanel {
             <option value="8" selected>8 slices</option>
             <option value="16">16 slices</option>
           </select>
-          <button class="flp-btn" id="slicer-btn">✂️ Slice</button>
+          <button class="flp-btn" id="slicer-btn"> Slice</button>
         </div>
 
         <div class="flp-sep"></div>
         <div class="flp-row-label">Channel FX</div>
         <div class="flp-row-ctrl">
-          <button class="flp-btn flp-btn-accent" id="open-fx-btn">🎛️ Open FX Panel</button>
+          <button class="flp-btn flp-btn-accent" id="open-fx-btn"> Open FX Panel</button>
         </div>
 
         <div class="flp-sep"></div>
         <div class="flp-row-label">Notes — Piano Roll</div>
         <div class="flp-row-ctrl">
-          <button class="flp-btn" id="pr-copy-btn">📋 Copy Notes</button>
-          <button class="flp-btn" id="pr-paste-btn">📋 Paste</button>
+          <button class="flp-btn" id="pr-copy-btn"> Copy Notes</button>
+          <button class="flp-btn" id="pr-paste-btn"> Paste</button>
           <button class="flp-btn" id="pr-reverse-btn">↩ Reverse</button>
         </div>
       </div>
 
       <!-- MIDI TAB -->
       <div class="flp-body flp-hidden" id="flp-tab-midi">
-        <div class="flp-midi-status" id="midi-status">🎹 MIDI: Not connected</div>
+        <div class="flp-midi-status" id="midi-status"> MIDI: Not connected</div>
         <button class="flp-btn flp-btn-accent" id="midi-connect-btn">Connect MIDI Device</button>
         <div class="flp-sep"></div>
         <div class="flp-row-label">On-screen keyboard</div>
@@ -853,14 +853,14 @@ class FLPanel {
             ${Object.keys(window._PRExtras?.CHORDS || {Major:[],Minor:[],'Maj7':[],'Min7':[],'Dom7':[],'Dim':[],'Aug':[],'Sus4':[],'Add9':[],'1-5':[]}).map(c=>`<option>${c}</option>`).join('')}
           </select>
         </div>
-        <button class="flp-btn flp-btn-accent" id="chord-fill-btn">🎹 Fill Chord on Active Steps</button>
+        <button class="flp-btn flp-btn-accent" id="chord-fill-btn"> Fill Chord on Active Steps</button>
         <div class="flp-sep"></div>
         <div class="flp-row-label">Arpeggiator</div>
         <div class="flp-row-ctrl">
           <select id="arp-type" class="flp-select">
             <option>Up</option><option>Down</option><option>Up-Down</option><option>Random</option>
           </select>
-          <button class="flp-btn" id="arp-fill-btn">🎵 Apply Arp</button>
+          <button class="flp-btn" id="arp-fill-btn"> Apply Arp</button>
         </div>
         <div class="flp-sep"></div>
         <div class="flp-row-label">Quantise Notes</div>
@@ -870,7 +870,7 @@ class FLPanel {
             <option value="2">1/8</option>
             <option value="4">1/4</option>
           </select>
-          <button class="flp-btn" id="quantise-btn">⌚ Quantise</button>
+          <button class="flp-btn" id="quantise-btn"> Quantise</button>
         </div>
       </div>
 
@@ -1142,8 +1142,8 @@ class FLFeaturePack {
 
     this._injectStyles();
 
-    console.log('[FLFeaturePack] All FL Studio features loaded ✓');
-    if (window.showToast) showToast('🎛️ FL Studio features loaded!');
+    console.log('[FLFeaturePack] All FL Studio features loaded ');
+    if (window.showToast) showToast('FL Studio features loaded!');
   }
 
   _addToolbarButton() {
@@ -1154,8 +1154,8 @@ class FLFeaturePack {
     btn.id = 'fl-tools-btn';
     btn.className = 'tb-cloud-btn';
     btn.title = 'FL Studio Tools Panel';
-    btn.innerHTML = '<span>🎛️</span> FL Tools';
-    btn.style.cssText = 'border-color:rgba(168,85,247,0.4);color:#c084fc;';
+    btn.innerHTML = '<span></span> FL Tools';
+    btn.style.cssText = 'border-color:rgba(255, 255, 255,0.4);color:#a1a1aa;';
     btn.addEventListener('click', () => this.panel.toggle());
 
     // Insert before the first separator
@@ -1186,7 +1186,7 @@ class FLFeaturePack {
   background: #0f1117;
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 12px;
-  box-shadow: 0 24px 60px rgba(0,0,0,0.85), 0 0 0 1px rgba(168,85,247,0.15);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.85), 0 0 0 1px rgba(255, 255, 255,0.15);
   overflow: hidden; display: flex; flex-direction: column;
   animation: flp-pop 0.2s cubic-bezier(0.16,1,0.3,1);
 }
@@ -1210,7 +1210,7 @@ class FLFeaturePack {
   white-space: nowrap; transition: all 0.15s; border-bottom: 2px solid transparent;
 }
 .flp-tab:hover { color: #fff; }
-.flp-tab.active { color: #c084fc; border-bottom-color: #c084fc; }
+.flp-tab.active { color: #a1a1aa; border-bottom-color: #a1a1aa; }
 .flp-close {
   background: none; border: none; color: rgba(255,255,255,0.35);
   font-size: 14px; padding: 6px 10px; cursor: pointer; transition: all 0.15s;
@@ -1230,7 +1230,7 @@ class FLFeaturePack {
 
 .flp-slider {
   flex: 1; height: 4px; background: rgba(255,255,255,0.1);
-  border-radius: 2px; cursor: pointer; accent-color: #a855f7;
+  border-radius: 2px; cursor: pointer; accent-color: #a1a1aa;
 }
 .flp-val { font-size: 10px; color: rgba(255,255,255,0.5); min-width: 36px; text-align: right; font-family: monospace; }
 .flp-select {
@@ -1246,23 +1246,23 @@ class FLFeaturePack {
 }
 .flp-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
 .flp-btn-accent {
-  background: rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.35); color: #c084fc;
+  background: rgba(255, 255, 255,0.15); border-color: rgba(255, 255, 255,0.35); color: #a1a1aa;
   width: 100%; justify-content: center; margin-top: 4px;
 }
-.flp-btn-accent:hover { background: rgba(168,85,247,0.28); color: #fff; }
+.flp-btn-accent:hover { background: rgba(255, 255, 255,0.28); color: #fff; }
 
 .flp-step-btn {
   background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
   color: rgba(255,255,255,0.5); font-size: 12px; font-weight: 700;
   padding: 5px 14px; border-radius: 6px; cursor: pointer; transition: all 0.15s;
 }
-.flp-step-btn.active { background: rgba(168,85,247,0.2); border-color: rgba(168,85,247,0.5); color: #c084fc; }
+.flp-step-btn.active { background: rgba(255, 255, 255,0.2); border-color: rgba(255, 255, 255,0.5); color: #a1a1aa; }
 
 .flp-midi-status { font-size: 12px; color: rgba(255,255,255,0.4); padding: 8px 0; }
 
 .flp-shortcut-table { width: 100%; border-collapse: collapse; font-size: 11px; }
 .flp-shortcut-table td { padding: 5px 6px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-.flp-shortcut-table td:first-child { color: #c084fc; font-weight: 700; font-family: monospace; width: 80px; }
+.flp-shortcut-table td:first-child { color: #a1a1aa; font-weight: 700; font-family: monospace; width: 80px; }
 .flp-shortcut-table td:last-child { color: rgba(255,255,255,0.6); }
 
 /* ── On-screen keyboard ───────────────────────────────────────────── */
@@ -1272,7 +1272,7 @@ class FLFeaturePack {
 .osk-black { width: 12px; background: #222; border: 1px solid #000; height: 38px; margin: 0 -6px; z-index: 1; position: relative; }
 .osk-white:hover { background: #fff; }
 .osk-black:hover { background: #444; }
-.osk-pressed, .midi-active { background: #a855f7 !important; }
+.osk-pressed, .midi-active { background: #a1a1aa !important; }
 
 /* ── FX Panel ──────────────────────────────────────────────────────── */
 #fx-panel {
@@ -1281,7 +1281,7 @@ class FLFeaturePack {
   background: #0f1117;
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 12px;
-  box-shadow: 0 24px 60px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,106,0,0.12);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.85), 0 0 0 1px rgba(255, 255, 255,0.12);
   overflow: hidden;
 }
 .fxp-hidden { display: none !important; }
@@ -1298,7 +1298,7 @@ class FLFeaturePack {
 .fxp-sec-title { font-size: 9px; font-weight: 800; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
 .fxp-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .fxp-knob-wrap { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 54px; }
-.fxp-knob { width: 54px; height: 4px; cursor: pointer; accent-color: #ff6a00; }
+.fxp-knob { width: 54px; height: 4px; cursor: pointer; accent-color: #ffffff; }
 .fxp-knob-label { font-size: 9px; color: rgba(255,255,255,0.4); font-weight: 700; text-transform: uppercase; }
 .fxp-knob-val { font-size: 9px; color: rgba(255,255,255,0.6); font-family: monospace; }
 

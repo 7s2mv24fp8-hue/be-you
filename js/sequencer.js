@@ -25,6 +25,7 @@ class Sequencer {
 
     // Pattern name
     this.patternName = 'Pattern 1';
+    this.metronomeEnabled = false;
 
     // Callbacks
     this.onStep = null;       // (stepIndex) => void
@@ -44,14 +45,14 @@ class Sequencer {
     };
 
     return [
-      make('Kick',     '#ef4444', 'drum',  [0, 4, 8, 12]),
-      make('Clap',     '#f97316', 'drum',  [4, 12]),
-      make('Hi-Hat C', '#facc15', 'drum',  [0,2,4,6,8,10,12,14]),
-      make('Hi-Hat O', '#84cc16', 'drum',  [6, 14]),
-      make('Snare',    '#06b6d4', 'drum',  [4, 12]),
-      make('Tom',      '#a855f7', 'drum',  [10, 15]),
-      make('Bass',     '#ec4899', 'synth', [0, 4, 8]),
-      make('Lead',     '#00d4aa', 'synth', [0, 2, 5, 9, 12]),
+      make('Kick',     '#ff4757', 'drum',  [0, 4, 8, 12]),
+      make('Clap',     '#ffa502', 'drum',  [4, 12]),
+      make('Hi-Hat C', '#2ed573', 'drum',  [0,2,4,6,8,10,12,14]),
+      make('Hi-Hat O', '#1e90ff', 'drum',  [6, 14]),
+      make('Snare',    '#ff6b81', 'drum',  [4, 12]),
+      make('Tom',      '#9b59b6', 'drum',  [10, 15]),
+      make('Bass',     '#00d2d3', 'synth', [0, 4, 8]),
+      make('Lead',     '#ff9f43', 'synth', [0, 2, 5, 9, 12]),
     ];
   }
 
@@ -94,6 +95,11 @@ class Sequencer {
   }
 
   _scheduleStep(step, time) {
+    // FL Studio Metronome: click on beats 1, 2, 3, 4 (steps 0, 4, 8, 12)
+    if (this.metronomeEnabled && step % 4 === 0 && this.engine.playMetronome) {
+      this.engine.playMetronome(step, time);
+    }
+
     const hasSolo = this.channels.some(c => c.solo);
 
     this.channels.forEach((ch, idx) => {
@@ -258,7 +264,7 @@ class Sequencer {
   addChannel(channelData) {
     const defaults = {
       name: 'New Track',
-      color: '#22d3ee',
+      color: '#ffffff',
       type: 'audio',
       steps: new Array(this.steps).fill(false),
       velocity: new Array(this.steps).fill(1.0),

@@ -182,18 +182,18 @@ class Playlist {
     if (this.isLooping) {
       const lx = this.loopStart * cellW;
       const lw = (this.loopEnd - this.loopStart) * cellW;
-      ctx.fillStyle = 'rgba(255,106,0,0.07)';
+      ctx.fillStyle = 'rgba(255,255,255,0.05)';
       ctx.fillRect(lx, 0, lw, h);
-      ctx.strokeStyle = 'rgba(255,106,0,0.4)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
       ctx.lineWidth = 1;
       ctx.strokeRect(lx, 0, lw, h);
     }
 
     // Playhead
     const px = this.playPosition * cellW;
-    ctx.strokeStyle = '#ff6a00';
+    ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 2;
-    ctx.shadowColor = 'rgba(255,106,0,0.5)';
+    ctx.shadowColor = 'rgba(255,255,255,0.4)';
     ctx.shadowBlur = 6;
     ctx.beginPath();
     ctx.moveTo(px, 0);
@@ -202,7 +202,7 @@ class Playlist {
     ctx.shadowBlur = 0;
 
     // Playhead triangle
-    ctx.fillStyle = '#ff6a00';
+    ctx.fillStyle = '#ffffff';
     ctx.beginPath();
     ctx.moveTo(px - 5, 0);
     ctx.lineTo(px + 5, 0);

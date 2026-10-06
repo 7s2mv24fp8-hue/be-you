@@ -14,7 +14,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 const CHANNEL_NAMES = ['Kick', 'Clap', 'Hi-Hat C', 'Hi-Hat O', 'Snare', 'Tom', 'Bass', 'Lead'];
-const CHANNEL_COLORS = ['#ff6a00', '#a855f7', '#06b6d4', '#22c55e', '#ef4444', '#f59e0b', '#3b82f6', '#ec4899'];
+const CHANNEL_COLORS = ['#ffffff', '#a1a1aa', '#8d8d95', '#ffffff', '#ffffff', '#f59e0b', '#3b82f6', '#52525b'];
 
 const GENRE_PRESETS = {
   'Hip-Hop':    { kickBias: 0.7, snareBias: 0.5, hihatDensity: 0.6, bpmRange: [82, 96] },

@@ -60,7 +60,7 @@ class FLStudioApp {
     // Init position display
     this._updatePositionDisplay(0);
 
-    showToast('🎵 BeYou Studio loaded — Press Space to play!', 3000);
+    showToast('BeYou Studio loaded — Press Space to play!', 3000);
   }
 
   // ── Channel Rack ───────────────────────────────────────────────
@@ -189,8 +189,8 @@ class FLStudioApp {
           { label: `Velocity: Med (65%)`,    action: () => { this.sequencer.setStepVelocity(ci, si, 0.65); this._updateStepBtn(btn, ch, si); } },
           { label: `Velocity: Low (35%)`,    action: () => { this.sequencer.setStepVelocity(ci, si, 0.35); this._updateStepBtn(btn, ch, si); } },
           'separator',
-          { label: '🎲 Randomize channel',   action: () => { this.sequencer.randomizeChannel(ci); this._refreshChannelRack(); } },
-          { label: '🗑 Clear channel',        action: () => { this.sequencer.clearChannel(ci); this._refreshChannelRack(); } },
+          { label: ' Randomize channel',   action: () => { this.sequencer.randomizeChannel(ci); this._refreshChannelRack(); } },
+          { label: ' Clear channel',        action: () => { this.sequencer.clearChannel(ci); this._refreshChannelRack(); } },
         ], e.clientX, e.clientY);
       });
 
@@ -207,19 +207,19 @@ class FLStudioApp {
       if (e.target === row || e.target === label) {
         e.preventDefault();
         showContextMenu([
-          { label: '🎲 Randomize', action: () => { this.sequencer.randomizeChannel(ci); this._refreshChannelRack(); } },
-          { label: '🗑 Clear',     action: () => { this.sequencer.clearChannel(ci); this._refreshChannelRack(); } },
-          { label: '🎹 Piano Roll', action: () => { this._selectPianoRollChannel(ci); this._switchTab('piano-roll'); } },
+          { label: ' Randomize', action: () => { this.sequencer.randomizeChannel(ci); this._refreshChannelRack(); } },
+          { label: ' Clear',     action: () => { this.sequencer.clearChannel(ci); this._refreshChannelRack(); } },
+          { label: ' Piano Roll', action: () => { this._selectPianoRollChannel(ci); this._switchTab('piano-roll'); } },
           'separator',
-          { label: '🎛️ Channel FX (Reverb · Delay · EQ…)', action: () => {
+          { label: ' Channel FX (Reverb · Delay · EQ…)', action: () => {
             if (window.flFeatures) { window.flFeatures.channelFX.getChainInput(ci); window.flFeatures.fxUI.open(ci, row); }
             else showToast('Loading FL features…');
           }},
-          { label: '✂️ Slice Sample (8 parts)', action: () => {
+          { label: ' Slice Sample (8 parts)', action: () => {
             if (window.flFeatures) window.flFeatures.slicer.slice(this.sequencer, ci, 8, this.audioEngine);
             else showToast('Loading FL features…');
           }},
-          { label: '📐 Set 16 Steps', action: () => {
+          { label: ' Set 16 Steps', action: () => {
             const ch2 = this.sequencer.channels[ci];
             if (!ch2) return;
             const d = 16 - ch2.steps.length;
@@ -227,7 +227,7 @@ class FLStudioApp {
             ch2.velocity = d > 0 ? [...ch2.velocity, ...Array(d).fill(0.8)]   : ch2.velocity.slice(0,16);
             this._buildChannelRack(); showToast('16 steps');
           }},
-          { label: '📐 Set 32 Steps', action: () => {
+          { label: ' Set 32 Steps', action: () => {
             const ch2 = this.sequencer.channels[ci];
             if (!ch2) return;
             const d = 32 - ch2.steps.length;
@@ -236,7 +236,7 @@ class FLStudioApp {
             this._buildChannelRack(); showToast('32 steps');
           }},
           'separator',
-          { label: '🎵 Import Sound to this slot', action: () => {
+          { label: ' Import Sound to this slot', action: () => {
             if (window.soundImporter) window.soundImporter.open();
             else showToast('Sound importer not ready');
           }},
@@ -504,7 +504,7 @@ class FLStudioApp {
     const pitchCanvas = document.getElementById('master-pitch-knob');
 
     if (volCanvas) {
-      makeInteractiveKnob(volCanvas, 85, 0, 130, '#ff6a00', val => {
+      makeInteractiveKnob(volCanvas, 85, 0, 130, '#ffffff', val => {
         if (this.audioEngine.masterGain) {
           this.audioEngine.setMasterVolume(val / 100);
         }
@@ -513,7 +513,7 @@ class FLStudioApp {
     }
 
     if (pitchCanvas) {
-      makeInteractiveKnob(pitchCanvas, 0, -24, 24, '#00d4aa', val => {
+      makeInteractiveKnob(pitchCanvas, 0, -24, 24, '#ffffff', val => {
         document.getElementById('master-pitch-val').textContent = `${val > 0 ? '+' : ''}${Math.round(val)} st`;
       });
     }
@@ -536,6 +536,31 @@ class FLStudioApp {
     // Re-render active panel
     if (tabId === 'piano-roll' && this.pianoRoll) this.pianoRoll.render();
     if (tabId === 'playlist'   && this.playlist)  this.playlist.render();
+    if (tabId === 'mixer'      && this.mixer)     this.mixer.syncChannels();
+    if (tabId === 'record')                       this._onSwitchToRecordTab();
+    if (tabId === 'audio-editor')                 this._onSwitchToAudioEditorTab();
+  }
+
+  _onSwitchToRecordTab() {
+    this._ensureRecordingEngines().then(() => {
+      this._renderClipList();
+      if (this.recorder && this.recorder.isArmed) {
+        this._startMicLevelMeter();
+      }
+    });
+  }
+
+  _onSwitchToAudioEditorTab() {
+    if (this.audioEditor) {
+      if (!this.audioEditor.layers.length) {
+        this.audioEditor.loadDemo808(false);
+      }
+      this.audioEditor._renderLayerList();
+      requestAnimationFrame(() => {
+        this.audioEditor._resize();
+        this.audioEditor._draw();
+      });
+    }
   }
 
   // ── Keyboard shortcuts ────────────────────────────────────────
@@ -641,7 +666,7 @@ class FLStudioApp {
           document.getElementById('btn-arm').classList.add('armed');
           document.getElementById('btn-rec').disabled = false;
           this._startMicLevelMeter();
-          showToast('🎙️ Microphone armed! Click Record to start singing/speaking.');
+          showToast('Microphone armed! Click Record to start singing/speaking.');
         }
       } else {
         // Dis-arm
@@ -667,9 +692,9 @@ class FLStudioApp {
 
     // ── MONITOR button ──
     document.getElementById('btn-monitor').addEventListener('click', async () => {
-      await ensureEngines();
+      await this._ensureRecordingEngines();
       if (!this.recorder.isArmed) {
-        showToast('Arm the mic first 🎙');
+        showToast('Arm the mic first ');
         return;
       }
       if (this.recorder.isMonitoring) {
@@ -722,14 +747,14 @@ class FLStudioApp {
       const btn  = document.getElementById('btn-export');
       btn.classList.add('exporting');
       btn.disabled = true;
-      showToast(`⏳ Rendering ${bars} bars…`, 5000);
+      showToast(` Rendering ${bars} bars…`, 5000);
       try {
         const eng = this.recorder || new RecorderEngine(this.audioEngine,
           this.autoTune || new AutoTuneEngine(this.audioEngine.ctx));
         await eng.exportMix(this.sequencer, bars);
-        showToast('✅ fl-studio-mix.wav downloaded!', 3000);
+        showToast('fl-studio-mix.wav downloaded!', 3000);
       } catch (e) {
-        showToast('❌ Export failed: ' + e.message, 4000);
+        showToast('Export failed: ' + e.message, 4000);
         console.error(e);
       } finally {
         btn.classList.remove('exporting');
@@ -743,7 +768,7 @@ class FLStudioApp {
     const badge = document.getElementById('rec-status');
     if (!badge) return;
     badge.className = `rec-status-badge ${state}`;
-    const labels = { idle:'● Idle', armed:'● Armed', monitoring:'● Monitoring', recording:'● Recording', error:'✕ Error' };
+    const labels = { idle:'● Idle', armed:'● Armed', monitoring:'● Monitoring', recording:'● Recording', error:' Error' };
     badge.textContent = labels[state] || state;
   }
 
@@ -777,7 +802,7 @@ class FLStudioApp {
     if (needle) {
       const pct = Math.max(5, Math.min(95, 50 + cents * 0.4));
       needle.style.left = `${pct}%`;
-      needle.style.background = Math.abs(cents) < 5 ? '#22c55e' : Math.abs(cents) < 20 ? '#facc15' : '#ef4444';
+      needle.style.background = Math.abs(cents) < 5 ? '#ffffff' : Math.abs(cents) < 20 ? '#e4e4e7' : '#ffffff';
     }
 
     // Pitch graph
@@ -838,7 +863,7 @@ class FLStudioApp {
         <div class="clip-header">
           <span class="clip-name">${clip.name}</span>
           <span class="clip-duration">${dur}s</span>
-          <span class="at-badge ${atDone ? '' : 'raw'}">${atDone ? '✦ Auto-Tune' : clip.processing ? '⟳ Processing…' : 'Raw'}</span>
+          <span class="at-badge ${atDone ? '' : 'raw'}">${atDone ? ' Auto-Tune' : clip.processing ? '⟳ Processing…' : 'Raw'}</span>
           <span class="clip-time">${clip.timestamp}</span>
         </div>
         ${clip.processing ? '<div class="clip-processing"><span class="spin-icon">⟳</span> Applying auto-tune…</div>' : ''}
@@ -846,9 +871,9 @@ class FLStudioApp {
         <div class="clip-controls">
           <button class="clip-btn play-btn" data-clip-id="${clip.id}">▶ Play</button>
           <button class="clip-btn play-btn" data-clip-id="${clip.id}" data-raw="1">▶ Raw</button>
-          <button class="clip-btn add-to-rack-btn" data-clip-id="${clip.id}" style="color:#00d4aa;font-weight:600;">➕ Add to Rack</button>
-          <button class="clip-btn add-to-pl-btn" data-clip-id="${clip.id}" style="color:#38bdf8;font-weight:600;">➕ Playlist</button>
-          <button class="clip-btn delete-btn" data-clip-id="${clip.id}" data-delete="1">✕</button>
+          <button class="clip-btn add-to-rack-btn" data-clip-id="${clip.id}" style="color:#ffffff;font-weight:600;">+ Add to Rack</button>
+          <button class="clip-btn add-to-pl-btn" data-clip-id="${clip.id}" style="color:#ffffff;font-weight:600;">+ Playlist</button>
+          <button class="clip-btn delete-btn" data-clip-id="${clip.id}" data-delete="1" title="Delete Clip">✕</button>
         </div>
       `;
 
@@ -859,7 +884,7 @@ class FLStudioApp {
         const canvas = card.querySelector(`.clip-waveform[data-clip-id="${clip.id}"]`);
         if (canvas && this.recorder) {
           const ch = this.sequencer.channels[7]; // Lead color for vocals
-          this.recorder.drawWaveform(canvas, clip, '#00d4aa');
+          this.recorder.drawWaveform(canvas, clip, '#ffffff');
         }
       }, 50);
 
@@ -995,7 +1020,7 @@ class FLStudioApp {
       this.musicAI.setProvider('local');
       updateAudioKeyUI();
       keyPanel?.classList.add('hidden');
-      showToast('💻 Local music server selected');
+      showToast('Local music server selected');
     });
 
     keyToggle?.addEventListener('click', () => {
@@ -1009,7 +1034,7 @@ class FLStudioApp {
         this.musicAI.setProvider('hf');
         updateAudioKeyUI();
         keyPanel?.classList.add('hidden');
-        showToast('🔑 Hugging Face API key saved!');
+        showToast('Hugging Face API key saved!');
       }
     });
 
@@ -1084,7 +1109,7 @@ class FLStudioApp {
         promptArea.value = prompt;
         promptArea.dispatchEvent(new Event('input'));
       }
-      showToast('✨ Smart prompt generated from your pattern!');
+      showToast('Smart prompt generated from your pattern!');
     });
 
     // ── Status helpers ──
@@ -1117,9 +1142,9 @@ class FLStudioApp {
           ctx.fillRect(0, 0, w, h);
 
           const gradient = ctx.createLinearGradient(0, 0, w, 0);
-          gradient.addColorStop(0, '#a855f7');
+          gradient.addColorStop(0, '#a1a1aa');
           gradient.addColorStop(0.5, '#6366f1');
-          gradient.addColorStop(1, '#ec4899');
+          gradient.addColorStop(1, '#52525b');
           ctx.strokeStyle = gradient;
           ctx.lineWidth = 1.5;
           ctx.beginPath();
@@ -1142,7 +1167,7 @@ class FLStudioApp {
           // Fallback: draw placeholder bars
           ctx.fillStyle = '#1a1a2e';
           ctx.fillRect(0, 0, w, h);
-          ctx.fillStyle = '#a855f7';
+          ctx.fillStyle = '#a1a1aa';
           for (let i = 0; i < w; i += 3) {
             const barH = Math.random() * h * 0.6 + h * 0.1;
             ctx.fillRect(i, (h - barH) / 2, 2, barH);
@@ -1192,7 +1217,7 @@ class FLStudioApp {
         if (resultTimeEl) resultTimeEl.textContent = new Date().toLocaleTimeString();
         drawWaveform(currentResult.url);
         this._renderAIHistory();
-        showStatus('✓ Music generated successfully!', 'success');
+        showStatus(' Music generated successfully!', 'success');
 
       } catch (err) {
         loadingEl?.classList.add('hidden');
@@ -1259,7 +1284,7 @@ class FLStudioApp {
     // ── Import to Playlist ──
     importBtn?.addEventListener('click', () => {
       if (!currentResult) return;
-      showToast('📥 Audio imported! Use it in your playlist.');
+      showToast('Audio imported! Use it in your playlist.');
     });
 
     // ── History ──
@@ -1314,7 +1339,7 @@ class FLStudioApp {
     historyClear?.addEventListener('click', () => {
       this.musicAI.history.clear();
       this._renderAIHistory();
-      showToast('🗑 History cleared');
+      showToast('History cleared');
     });
   }
 
@@ -1452,10 +1477,10 @@ class FLStudioApp {
               models.map(m => `<option value="${escapeHTML(m)}">${escapeHTML(m)}</option>`).join('');
             ollamaModelSelect.classList.remove('hidden');
           }
-          showFeedback(`✓ Found ${models.length} installed model(s): ${models.slice(0, 4).join(', ')}${models.length > 4 ? '...' : ''}`, 'success');
+          showFeedback(` Found ${models.length} installed model(s): ${models.slice(0, 4).join(', ')}${models.length > 4 ? '...' : ''}`, 'success');
         }
       } catch (err) {
-        showFeedback(`✗ ${err.message}`, 'error');
+        showFeedback(` ${err.message}`, 'error');
       }
     });
 
@@ -1486,7 +1511,7 @@ class FLStudioApp {
       this.aiProducer.ollama.setConfig(url, model);
       this.aiProducer.setProvider('ollama');
       updateKeyUI();
-      showToast(`🦙 Ollama active: ${model}`);
+      showToast(` Ollama active: ${model}`);
       keyPanel?.classList.add('hidden');
     });
 
@@ -1507,7 +1532,7 @@ class FLStudioApp {
       this.aiProducer.localOpenAI.setConfig(url, model);
       this.aiProducer.setProvider('local-openai');
       updateKeyUI();
-      showToast(`🖥️ Local LLM active: ${model}`);
+      showToast(` Local LLM active: ${model}`);
       keyPanel?.classList.add('hidden');
     });
 
@@ -1532,7 +1557,7 @@ class FLStudioApp {
         this.aiProducer.setProvider('gemini');
         updateKeyUI();
         keyPanel?.classList.add('hidden');
-        showToast('🔑 Gemini API key saved!');
+        showToast('Gemini API key saved!');
       }
     });
 
@@ -1563,7 +1588,7 @@ class FLStudioApp {
       const starters = (typeof PROMPT_STARTERS !== 'undefined') ? PROMPT_STARTERS : [];
       messagesEl.innerHTML = `
         <div class="aip-welcome">
-          <div class="aip-welcome-avatar">🎧</div>
+          <div class="aip-welcome-avatar"></div>
           <div class="aip-welcome-name">Max the Producer</div>
           <div class="aip-welcome-tagline">Tell me what kind of beat you're after — genre, mood, BPM — and I'll build it. Or tap one of these:</div>
           <div class="aip-starters">${starters.map(s =>
@@ -1648,14 +1673,14 @@ class FLStudioApp {
 
       if (role === 'user') {
         el.innerHTML = `
-          <div class="aip-msg-avatar-img">👤</div>
+          <div class="aip-msg-avatar-img"></div>
           <div class="aip-msg-bubble">${escapeHTML(text)}</div>`;
       } else {
         // Build badges
         let badges = '';
-        if (result?.hasBeat) badges += '<span class="aip-badge beat">🥁 Beat</span>';
-        if (result?.hasMix)  badges += '<span class="aip-badge mix">🎚 Mix</span>';
-        if (result?.bpm)     badges += `<span class="aip-badge bpm">♩ ${result.bpm}</span>`;
+        if (result?.hasBeat) badges += '<span class="aip-badge beat"> Beat</span>';
+        if (result?.hasMix)  badges += '<span class="aip-badge mix"> Mix</span>';
+        if (result?.bpm)     badges += `<span class="aip-badge bpm"> ${result.bpm}</span>`;
 
         let sugsHTML = '';
         if (result?.suggestions?.length > 0) {
@@ -1665,7 +1690,7 @@ class FLStudioApp {
         }
 
         el.innerHTML = `
-          <div class="aip-msg-avatar-img">🎧</div>
+          <div class="aip-msg-avatar-img"></div>
           <div class="aip-msg-bubble">
             ${escapeHTML(text)}
             ${badges ? '<div class="aip-msg-badges">' + badges + '</div>' : ''}
@@ -1709,11 +1734,11 @@ class FLStudioApp {
         const result = await this.aiProducer.produce(text, this.sequencer, this.audioEngine, {
           onStatus: (status) => {
             const msgs = {
-              thinking:   '🧠 AI is thinking...',
-              composing:  '🎵 BeYou AI is composing...',
-              generating: '🎶 Generating your beat...',
-              done:       '✅ Done!',
-              error:      '❌ Error',
+              thinking:   ' AI is thinking...',
+              composing:  ' BeYou AI is composing...',
+              generating: ' Generating your beat...',
+              done:       ' Done!',
+              error:      ' Error',
               cancelled:  'Cancelled',
             };
             // No label needed — just dots in bubble
@@ -1751,7 +1776,7 @@ class FLStudioApp {
 
       // Show action as user message
       const actionLabel = AI_PRODUCER_ACTIONS.find(a => a.id === actionId)?.label || actionId;
-      addAIMsg('user', `⚡ ${actionLabel}`, {});
+      addAIMsg('user', ` ${actionLabel}`, {});
 
       try {
         let result;
@@ -1831,10 +1856,10 @@ class FLStudioApp {
   async _startVoiceRecording() {
     await this._ensureRecordingEngines();
     if (!this.recorder.isArmed) {
-      showToast('🎙️ Requesting microphone access...');
+      showToast('Requesting microphone access...');
       const ok = await this.recorder.requestMic();
       if (!ok) {
-        showToast('❌ Microphone permission denied');
+        showToast('Microphone permission denied');
         return;
       }
       document.getElementById('btn-arm')?.classList.add('armed');
@@ -1868,7 +1893,7 @@ class FLStudioApp {
       if (recTimeTab) { recTimeTab.textContent = str; recTimeTab.classList.add('recording'); }
     }, 250);
 
-    showToast('🔴 Recording voice... Click Record or Stop when done!');
+    showToast('Recording voice... Click Record or Stop when done!');
   }
 
   _stopVoiceRecording() {
@@ -1904,8 +1929,8 @@ class FLStudioApp {
     steps[0] = true; // Play on step 1
 
     const newChannel = {
-      name: `🎤 ${clip.name}`,
-      color: '#00d4aa',
+      name: ` ${clip.name}`,
+      color: '#ffffff',
       type: 'audio',
       audioBuffer: buf,
       clipId: clip.id,
@@ -1926,7 +1951,7 @@ class FLStudioApp {
       this.playlist.syncWithChannels();
     }
 
-    showToast(`🎙️ Recorded voice ("${clip.name}") added to Channel Rack & Playlist!`, 4000);
+    showToast(` Recorded voice ("${clip.name}") added to Channel Rack & Playlist!`, 4000);
   }
 
   // ── Project Name Binding ──────────────────────────────────────────
@@ -1949,11 +1974,11 @@ class FLStudioApp {
 
     titlebarInput?.addEventListener('change', (e) => {
       updateTitle(e.target.value);
-      showToast(`📝 Project renamed: "${this.currentProjectTitle}"`);
+      showToast(` Project renamed: "${this.currentProjectTitle}"`);
     });
     tbInput?.addEventListener('change', (e) => {
       updateTitle(e.target.value);
-      showToast(`📝 Project renamed: "${this.currentProjectTitle}"`);
+      showToast(` Project renamed: "${this.currentProjectTitle}"`);
     });
   }
 
@@ -1996,7 +2021,7 @@ class FLStudioApp {
         state = JSON.parse(state);
       } catch (e) {
         console.error('Failed to parse project JSON:', e);
-        showToast('❌ Invalid project state file');
+        showToast('Invalid project state file');
         return;
       }
     }
@@ -2048,7 +2073,7 @@ class FLStudioApp {
       this.mixer.render();
     }
 
-    showToast(`✨ Loaded project: "${this.currentProjectTitle || 'Project'}"`, 3000);
+    showToast(` Loaded project: "${this.currentProjectTitle || 'Project'}"`, 3000);
   }
 
   // ── Backend API & Admin Integration ──────────────────────────────
@@ -2090,7 +2115,7 @@ class FLStudioApp {
     backendAPI.initSession().then(user => {
       this._updateUserUI(user);
       if (user) {
-        showToast(`👑 Welcome back, ${user.full_name}! (Role: ${user.role})`, 3500);
+        showToast(` Welcome back, ${user.full_name}! (Role: ${user.role})`, 3500);
       }
     });
 
@@ -2119,7 +2144,7 @@ class FLStudioApp {
     saveBtn?.addEventListener('click', () => {
       if (!backendAPI.currentUser) {
         document.getElementById('modal-auth')?.classList.remove('hidden');
-        showToast('⚠️ Please sign in to save projects to the database.');
+        showToast('Please sign in to save projects to the database.');
         return;
       }
       if (saveTitleInput) saveTitleInput.value = this.currentProjectTitle || 'My Track';
@@ -2145,9 +2170,9 @@ class FLStudioApp {
         if (titleInput) titleInput.value = title;
         if (tbInput) tbInput.value = title;
         saveModal?.classList.add('hidden');
-        showToast(`💾 Saved project "${title}" to database!`, 3000);
+        showToast(` Saved project "${title}" to database!`, 3000);
       } catch (err) {
-        showToast(`❌ Save error: ${err.message}`, 4000);
+        showToast(` Save error: ${err.message}`, 4000);
       } finally {
         saveConfirmBtn.disabled = false;
         saveConfirmBtn.textContent = 'Save to Cloud';
@@ -2175,7 +2200,7 @@ class FLStudioApp {
           projContainer.innerHTML = `
             <div style="text-align:center;padding:36px;color:var(--text-muted);font-size:12px;">
               No saved projects yet in database.<br>
-              <button onclick="document.getElementById('btn-cloud-save').click(); document.getElementById('modal-cloud-projects').classList.add('hidden');" class="fl-btn-primary" style="margin-top:10px;font-size:11px;">💾 Save Current DAW State</button>
+              <button onclick="document.getElementById('btn-cloud-save').click(); document.getElementById('modal-cloud-projects').classList.add('hidden');" class="fl-btn-primary" style="margin-top:10px;font-size:11px;"> Save Current DAW State</button>
             </div>`;
           return;
         }
@@ -2193,7 +2218,7 @@ class FLStudioApp {
               </div>
               <div style="display:flex;gap:6px;">
                 <button class="fl-btn-primary btn-load-proj" data-proj-id="${p.id}" style="padding:4px 12px;font-size:11px;">Load</button>
-                <button class="admin-act-btn danger btn-delete-proj" data-proj-id="${p.id}">🗑</button>
+                <button class="admin-act-btn danger btn-delete-proj" data-proj-id="${p.id}">Delete</button>
               </div>
             </div>
           `).join('');
@@ -2208,7 +2233,7 @@ class FLStudioApp {
                 this.currentProjectTitle = data.title;
                 openModal?.classList.add('hidden');
               } catch (e) {
-                showToast(`❌ Failed to load project: ${e.message}`);
+                showToast(` Failed to load project: ${e.message}`);
               }
             });
           });
@@ -2220,10 +2245,10 @@ class FLStudioApp {
               if (confirm('Delete this project from database?')) {
                 try {
                   await backendAPI.deleteProject(pid);
-                  showToast('🗑 Project deleted');
+                  showToast('Project deleted');
                   loadProjectsList();
                 } catch (e) {
-                  showToast(`❌ Delete failed: ${e.message}`);
+                  showToast(` Delete failed: ${e.message}`);
                 }
               }
             });
@@ -2239,14 +2264,14 @@ class FLStudioApp {
         });
 
       } catch (err) {
-        projContainer.innerHTML = `<div style="text-align:center;padding:20px;color:#ef4444;font-size:12px;">Failed to load: ${err.message}</div>`;
+        projContainer.innerHTML = `<div style="text-align:center;padding:20px;color:#ffffff;font-size:12px;">Failed to load: ${err.message}</div>`;
       }
     };
 
     openBtn?.addEventListener('click', () => {
       if (!backendAPI.currentUser) {
         document.getElementById('modal-auth')?.classList.remove('hidden');
-        showToast('⚠️ Please sign in to access your saved projects.');
+        showToast('Please sign in to access your saved projects.');
         return;
       }
       openModal?.classList.remove('hidden');
@@ -2360,7 +2385,7 @@ class FLStudioApp {
           logsTbody.innerHTML = logs.map(l => `
             <tr>
               <td style="font-family:var(--font-mono);font-size:10px;">${new Date(l.timestamp).toLocaleTimeString()}</td>
-              <td style="color:#a855f7;font-weight:600;">${l.username || 'System'}</td>
+              <td style="color:#a1a1aa;font-weight:600;">${l.username || 'System'}</td>
               <td><span style="font-family:var(--font-mono);font-size:10px;color:var(--accent);">${l.action}</span></td>
               <td style="color:var(--text-muted);font-size:10px;">${l.details || '—'}</td>
             </tr>
@@ -2407,7 +2432,7 @@ class FLStudioApp {
       const fullName = document.getElementById('adm-new-fullname').value.trim();
 
       if (!username || !email || !password) {
-        showToast('❌ Please fill in required fields');
+        showToast('Please fill in required fields');
         return;
       }
 
@@ -2419,7 +2444,7 @@ class FLStudioApp {
           full_name: fullName,
           role: 'user'
         });
-        showToast(`✓ Created user: ${username}`);
+        showToast(` Created user: ${username}`);
         addUserForm?.classList.add('hidden');
         loadAdminData();
       } catch (e) {
@@ -2461,7 +2486,7 @@ class FLStudioApp {
         const user = await backendAPI.login('rahul', 'password123');
         this._updateUserUI(user);
         authModal?.classList.add('hidden');
-        showToast(`👑 Signed in as Super Admin: ${backendAPI.escapeHtml(user.full_name)}!`, 3500);
+        showToast(` Signed in as Super Admin: ${backendAPI.escapeHtml(user.full_name)}!`, 3500);
       } catch (e) {
         showToast(`Login failed: ${backendAPI.escapeHtml(e.message)}`);
       }
@@ -2508,10 +2533,6 @@ class FLStudioApp {
 
 }
 
-// ── Bootstrap ─────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', () => {
-  window.app = new FLStudioApp();
-});
 
 // ── Drum Machine Initializer (added to FLStudioApp prototype) ──
 FLStudioApp.prototype._initDrumMachine = function() {
@@ -2529,16 +2550,44 @@ FLStudioApp.prototype._initAudioEditor = function() {
   if (typeof AudioEditor === 'undefined') return;
   this.audioEditor = new AudioEditor(this.audioEngine);
 
-  // QIB editor button
-  document.getElementById('qib-editor-btn')?.addEventListener('click', () => {
-    this._switchTab('audio-editor');
+  // Playback & loop controls
+  document.getElementById('ae-play-btn')?.addEventListener('click', () => this.audioEditor.play());
+  document.getElementById('ae-loop-btn')?.addEventListener('click', () => {
+    if (this.audioEditor.selEnd > this.audioEditor.selStart) {
+      this.audioEditor.play(this.audioEditor.selStart);
+    } else {
+      this.audioEditor.play(0);
+    }
   });
+  document.getElementById('ae-pause-btn')?.addEventListener('click', () => this.audioEditor.pause());
 
-  // Inline editor buttons
-  document.getElementById('ae-open-fullscreen')?.addEventListener('click', () => {
-    this.audioEditor.open();
-  });
+  // Editing & trimming tools
+  document.getElementById('ae-cut-btn')?.addEventListener('click',   () => this.audioEditor.cutRegion());
+  document.getElementById('ae-copy-btn')?.addEventListener('click',  () => this.audioEditor.copyRegion());
+  document.getElementById('ae-paste-btn')?.addEventListener('click', () => this.audioEditor.pasteRegion());
+  document.getElementById('ae-trim-btn')?.addEventListener('click',  () => this.audioEditor.trimRegion());
+  document.getElementById('ae-del-btn')?.addEventListener('click',   () => this.audioEditor.deleteRegion());
 
+  // DSP processing tools
+  document.getElementById('ae-norm-btn')?.addEventListener('click',       () => this.audioEditor.normalize());
+  document.getElementById('ae-fadein-btn')?.addEventListener('click',     () => this.audioEditor.fadeIn(0.5));
+  document.getElementById('ae-fadeout-btn')?.addEventListener('click',    () => this.audioEditor.fadeOut(0.5));
+  document.getElementById('ae-reverse-btn')?.addEventListener('click',    () => this.audioEditor.reverse());
+  document.getElementById('ae-silence-btn')?.addEventListener('click',    () => this.audioEditor.silence());
+  document.getElementById('ae-gain-up-btn')?.addEventListener('click',    () => this.audioEditor.adjustGain(3));
+  document.getElementById('ae-gain-down-btn')?.addEventListener('click',  () => this.audioEditor.adjustGain(-3));
+  document.getElementById('ae-pitch-up-btn')?.addEventListener('click',   () => this.audioEditor.pitchShift(1));
+  document.getElementById('ae-pitch-down-btn')?.addEventListener('click', () => this.audioEditor.pitchShift(-1));
+  document.getElementById('ae-send-channel-btn')?.addEventListener('click', () => this.audioEditor.sendToChannelRack());
+
+  // Instant demo sound generators
+  document.getElementById('ae-demo-808-btn')?.addEventListener('click',   () => this.audioEditor.loadDemo808());
+  document.getElementById('ae-demo-snare-btn')?.addEventListener('click', () => this.audioEditor.loadDemoSnare());
+  document.getElementById('ae-demo-hihat-btn')?.addEventListener('click', () => this.audioEditor.loadDemoHiHat());
+  document.getElementById('ae-demo-vocal-btn')?.addEventListener('click', () => this.audioEditor.loadDemoVocal());
+  document.getElementById('ae-load-project-channels')?.addEventListener('click', () => this.audioEditor.loadProjectTracks());
+
+  // Import custom sound file
   document.getElementById('ae-main-add-layer')?.addEventListener('click', () => {
     const fi = document.createElement('input');
     fi.type = 'file'; fi.accept = 'audio/*';
@@ -2550,12 +2599,9 @@ FLStudioApp.prototype._initAudioEditor = function() {
         if (this.audioEngine.ctx.state === 'suspended') await this.audioEngine.ctx.resume();
         const buf = await this.audioEngine.ctx.decodeAudioData(ab);
         this.audioEditor.addLayer(buf, file.name.replace(/\.[^.]+$/, ''));
-        this._updateInlineLayerList();
-        showToast(`🎵 Imported: ${file.name}`, 2000);
-        const emptyEl = document.getElementById('ae-inline-empty');
-        if (emptyEl) emptyEl.style.display = 'none';
+        showToast(` Imported: ${file.name}`, 2000);
       } catch(err) {
-        showToast('❌ Could not decode audio file', 2000);
+        showToast('Could not decode audio file', 2000);
       }
     });
     fi.click();
@@ -2565,16 +2611,54 @@ FLStudioApp.prototype._initAudioEditor = function() {
     this.audioEditor.exportMix();
   });
 
-  // Inline controls
-  document.getElementById('ae-inline-play')?.addEventListener('click',    () => this.audioEditor.play());
-  document.getElementById('ae-inline-pause')?.addEventListener('click',   () => this.audioEditor.pause());
-  document.getElementById('ae-inline-norm')?.addEventListener('click',    () => { this.audioEditor.normalize(); this._updateInlineLayerList(); });
-  document.getElementById('ae-inline-fadein')?.addEventListener('click',  () => this.audioEditor.fadeIn(0.5));
-  document.getElementById('ae-inline-fadeout')?.addEventListener('click', () => this.audioEditor.fadeOut(0.5));
-  document.getElementById('ae-inline-reverse')?.addEventListener('click', () => { this.audioEditor.reverse(); this._updateInlineLayerList(); });
+  document.getElementById('ae-open-fullscreen')?.addEventListener('click', () => {
+    this.audioEditor.open();
+  });
 
-  // Mini canvas redraw
-  this._redrawMiniCanvas();
+  // Tap tempo button
+  let tapTimes = [];
+  document.getElementById('btn-tap-tempo')?.addEventListener('click', () => {
+    const now = performance.now();
+    tapTimes.push(now);
+    if (tapTimes.length > 5) tapTimes.shift();
+    if (tapTimes.length >= 2) {
+      const intervals = [];
+      for (let i = 1; i < tapTimes.length; i++) {
+        const diff = tapTimes[i] - tapTimes[i - 1];
+        if (diff > 250 && diff < 2000) intervals.push(diff);
+      }
+      if (intervals.length) {
+        const avg = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+        const calculatedBpm = Math.round(60000 / avg);
+        if (calculatedBpm >= 40 && calculatedBpm <= 280) {
+          this.sequencer.bpm = calculatedBpm;
+          const disp = document.getElementById('bpm-display');
+          if (disp) disp.value = calculatedBpm;
+          showToast(`Tap Tempo: ${calculatedBpm} BPM`, 1000);
+        }
+      }
+    }
+  });
+
+  // Metronome toggle button
+  const metroBtn = document.getElementById('btn-metronome');
+  if (metroBtn) {
+    metroBtn.addEventListener('click', () => {
+      this.sequencer.metronomeEnabled = !this.sequencer.metronomeEnabled;
+      metroBtn.classList.toggle('active', this.sequencer.metronomeEnabled);
+      showToast(this.sequencer.metronomeEnabled ? 'Metronome ON' : 'Metronome OFF', 1000);
+    });
+  }
+
+  // Soundgoodizer launcher
+  document.getElementById('tb-btn-soundgoodizer')?.addEventListener('click', () => {
+    if (window.flSoundgoodizer) window.flSoundgoodizer.toggle();
+  });
+
+  // Parametric EQ 2 launcher
+  document.getElementById('tb-btn-param-eq')?.addEventListener('click', () => {
+    if (window.flParametricEQ) window.flParametricEQ.openFloating();
+  });
 };
 
 FLStudioApp.prototype._updateInlineLayerList = function() {
@@ -2605,8 +2689,8 @@ FLStudioApp.prototype._updateInlineLayerList = function() {
       <div style="font-size:11px;font-weight:700;color:#fff;flex:1;">${layer.name}</div>
       <div style="font-size:9px;color:rgba(255,255,255,0.35);font-family:monospace;">${dur}s</div>
       <button style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);border-radius:4px;
-                     color:#f87171;font-size:9px;padding:2px 6px;cursor:pointer;font-family:inherit;"
-              data-id="${layer.id}">✕</button>
+                     color:#ffffff;font-size:10px;padding:2px 7px;cursor:pointer;font-family:inherit;"
+              data-id="${layer.id}" title="Delete layer">✕</button>
     `;
     card.querySelector('button').addEventListener('click', (e) => {
       e.stopPropagation();
@@ -2676,7 +2760,7 @@ FLStudioApp.prototype._initGlobalDropZone = function() {
       dropZone?.classList.remove('gdz-hidden');
       dropZone?.classList.add('gdz-active');
       qib?.classList.add('qib-dragging');
-      if (qibLabel) qibLabel.textContent = '🎵 Drop to import...';
+      if (qibLabel) qibLabel.textContent = ' Drop to import...';
     }
   });
 
@@ -2717,7 +2801,7 @@ FLStudioApp.prototype._initGlobalDropZone = function() {
     const files = Array.from(e.dataTransfer?.files || []);
     const audioFiles = files.filter(f => f.type.startsWith('audio/') || /\.(wav|mp3|ogg|flac|aiff|aif|m4a)$/i.test(f.name));
     if (!audioFiles.length) {
-      showToast('⚠️ No supported audio files dropped', 2000);
+      showToast('No supported audio files dropped', 2000);
       return;
     }
     for (const file of audioFiles) {
@@ -2740,7 +2824,7 @@ FLStudioApp.prototype._importFileToApp = async function(file) {
     }
 
     // Also add to sequencer as audio channel (existing behavior)
-    const colors = ['#22d3ee','#a855f7','#84cc16','#f59e0b','#ec4899','#6366f1'];
+    const colors = ['#ffffff','#a1a1aa','#a1a1aa','#f59e0b','#52525b','#6366f1'];
     const color  = colors[this.sequencer.channels.length % colors.length];
     this.sequencer.addChannel({
       type: 'audio',
@@ -2755,14 +2839,35 @@ FLStudioApp.prototype._importFileToApp = async function(file) {
       muted: false,
     });
     this._refreshChannelRack();
-    showToast(`🎵 Imported: ${file.name}`, 2500);
+    showToast(` Imported: ${file.name}`, 2500);
 
     // Switch to audio editor to show the imported file
     this._switchTab('audio-editor');
     this._redrawMiniCanvas();
   } catch(err) {
     console.error('Import error:', err);
-    showToast(`❌ Could not import: ${file.name}`, 2500);
+    showToast(` Could not import: ${file.name}`, 2500);
   }
 };
+
+// ── Global App Bootstrap (safe readyState execution) ───────────
+function bootstrapFLStudioApp() {
+  if (!window.app) {
+    try {
+      window.app = new FLStudioApp();
+    } catch (err) {
+      console.error('Failed to initialize FLStudioApp:', err);
+    }
+  }
+  return window.app;
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootstrapFLStudioApp);
+} else {
+  // DOM is already parsed / interactive / complete
+  bootstrapFLStudioApp();
+}
+
+window.bootstrapFLStudioApp = bootstrapFLStudioApp;
 

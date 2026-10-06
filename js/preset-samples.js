@@ -44,31 +44,31 @@ class PresetSampleLibrary {
   _buildCatalog() {
     return {
       'Flutes & Winds': [
-        { name: 'Acoustic Flute', color: '#38bdf8', fn: (ctx) => this._synthAcousticFlute(ctx) },
-        { name: 'Jazz Flute',     color: '#0284c7', fn: (ctx) => this._synthJazzFlute(ctx) },
-        { name: 'Pan Flute',      color: '#0369a1', fn: (ctx) => this._synthPanFlute(ctx) },
-        { name: 'Piccolo',        color: '#075985', fn: (ctx) => this._synthPiccolo(ctx) },
+        { name: 'Acoustic Flute', color: '#ffffff', fn: (ctx) => this._synthAcousticFlute(ctx) },
+        { name: 'Jazz Flute',     color: '#e4e4e7', fn: (ctx) => this._synthJazzFlute(ctx) },
+        { name: 'Pan Flute',      color: '#d4d4d8', fn: (ctx) => this._synthPanFlute(ctx) },
+        { name: 'Piccolo',        color: '#a1a1aa', fn: (ctx) => this._synthPiccolo(ctx) },
       ],
       'Guitars & Strings': [
-        { name: 'Acoustic Guitar', color: '#eab308', fn: (ctx) => this._synthAcousticGuitar(ctx) },
-        { name: 'Electric Guitar', color: '#ca8a04', fn: (ctx) => this._synthElectricGuitar(ctx) },
-        { name: 'Spanish Guitar',  color: '#a16207', fn: (ctx) => this._synthSpanishGuitar(ctx) },
-        { name: 'Violin / Strings',color: '#854d0e', fn: (ctx) => this._synthStrings(ctx) },
+        { name: 'Acoustic Guitar', color: '#e4e4e7', fn: (ctx) => this._synthAcousticGuitar(ctx) },
+        { name: 'Electric Guitar', color: '#d4d4d8', fn: (ctx) => this._synthElectricGuitar(ctx) },
+        { name: 'Spanish Guitar',  color: '#a1a1aa', fn: (ctx) => this._synthSpanishGuitar(ctx) },
+        { name: 'Violin / Strings',color: '#71717a', fn: (ctx) => this._synthStrings(ctx) },
       ],
       'Pianos & Keys': [
-        { name: 'Grand Piano',    color: '#a855f7', fn: (ctx) => this._synthGrandPiano(ctx) },
-        { name: 'Rhodes EP',      color: '#7e22ce', fn: (ctx) => this._synthRhodesEP(ctx) },
+        { name: 'Grand Piano',    color: '#a1a1aa', fn: (ctx) => this._synthGrandPiano(ctx) },
+        { name: 'Rhodes EP',      color: '#71717a', fn: (ctx) => this._synthRhodesEP(ctx) },
       ],
       'Kicks': [
-        { name: '808 Kick',       color: '#ff6a00', fn: (ctx) => this._synth808Kick(ctx) },
-        { name: 'Acoustic Kick',  color: '#fb923c', fn: (ctx) => this._synthAcousticKick(ctx) },
-        { name: 'Punchy Kick',    color: '#f97316', fn: (ctx) => this._synthPunchyKick(ctx) },
+        { name: '808 Kick',       color: '#ffffff', fn: (ctx) => this._synth808Kick(ctx) },
+        { name: 'Acoustic Kick',  color: '#e4e4e7', fn: (ctx) => this._synthAcousticKick(ctx) },
+        { name: 'Punchy Kick',    color: '#ffffff', fn: (ctx) => this._synthPunchyKick(ctx) },
         { name: 'Sub Kick',       color: '#ea580c', fn: (ctx) => this._synthSubKick(ctx) },
         { name: 'Clicky Kick',    color: '#c2410c', fn: (ctx) => this._synthClickKick(ctx) },
         { name: 'Distorted Kick', color: '#9a3412', fn: (ctx) => this._synthDistortedKick(ctx) },
       ],
       'Snares': [
-        { name: 'Crisp Snare',    color: '#a855f7', fn: (ctx) => this._synthCrispSnare(ctx) },
+        { name: 'Crisp Snare',    color: '#a1a1aa', fn: (ctx) => this._synthCrispSnare(ctx) },
         { name: 'Fat Snare',      color: '#9333ea', fn: (ctx) => this._synthFatSnare(ctx) },
         { name: 'Electronic Snare', color: '#7c3aed', fn: (ctx) => this._synthElecSnare(ctx) },
         { name: 'Clap',           color: '#6d28d9', fn: (ctx) => this._synthClap(ctx) },
@@ -76,21 +76,21 @@ class PresetSampleLibrary {
         { name: 'Snare Roll Hit', color: '#4c1d95', fn: (ctx) => this._synthSnareRoll(ctx) },
       ],
       'Hi-Hats': [
-        { name: 'Closed HH',      color: '#22d3ee', fn: (ctx) => this._synthClosedHH(ctx) },
-        { name: 'Open HH',        color: '#06b6d4', fn: (ctx) => this._synthOpenHH(ctx) },
+        { name: 'Closed HH',      color: '#ffffff', fn: (ctx) => this._synthClosedHH(ctx) },
+        { name: 'Open HH',        color: '#8d8d95', fn: (ctx) => this._synthOpenHH(ctx) },
         { name: 'Pedal HH',       color: '#0891b2', fn: (ctx) => this._synthPedalHH(ctx) },
         { name: 'Shaker',         color: '#0e7490', fn: (ctx) => this._synthShaker(ctx) },
         { name: 'Tambourine',     color: '#155e75', fn: (ctx) => this._synthTambourine(ctx) },
       ],
       'Bass': [
-        { name: '808 Bass',       color: '#ec4899', fn: (ctx) => this._synth808Bass(ctx) },
+        { name: '808 Bass',       color: '#52525b', fn: (ctx) => this._synth808Bass(ctx) },
         { name: 'Sub Bass',       color: '#db2777', fn: (ctx) => this._synthSubBass(ctx) },
         { name: 'Reese Bass',     color: '#be185d', fn: (ctx) => this._synthReeseBass(ctx) },
         { name: 'Pluck Bass',     color: '#9d174d', fn: (ctx) => this._synthPluckBass(ctx) },
         { name: 'Sine Bass',      color: '#831843', fn: (ctx) => this._synthSineBass(ctx) },
       ],
       'Leads': [
-        { name: 'Saw Lead',       color: '#84cc16', fn: (ctx) => this._synthSawLead(ctx) },
+        { name: 'Saw Lead',       color: '#a1a1aa', fn: (ctx) => this._synthSawLead(ctx) },
         { name: 'Square Lead',    color: '#65a30d', fn: (ctx) => this._synthSquareLead(ctx) },
         { name: 'Pluck Synth',    color: '#4d7c0f', fn: (ctx) => this._synthPluck(ctx) },
         { name: 'Bell',           color: '#3f6212', fn: (ctx) => this._synthBell(ctx) },
@@ -132,7 +132,7 @@ class PresetSampleLibrary {
       <div class="psl-modal" style="width: 780px; max-width: 95vw;">
         <div class="psl-header">
           <div class="psl-title">
-            <span class="psl-icon">🎵</span>
+            <span class="psl-icon"></span>
             <div>
               <div class="psl-title-text">Import Sounds & Instrument Library</div>
               <div class="psl-subtitle">Import local audio files or drag instrument presets (Flutes, Guitars, Pianos, Drums, Bass) into DAW</div>
@@ -144,15 +144,15 @@ class PresetSampleLibrary {
         <div class="psl-body">
           <!-- Sidebar: File import + categories -->
           <div class="psl-sidebar">
-            <div class="psl-file-dropzone" id="psl-file-dropzone" style="margin: 10px 8px 4px 8px; padding: 10px 6px; border: 1px dashed rgba(34,211,238,0.4); background: rgba(34,211,238,0.06); border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.2s;">
-              <div style="font-size: 18px;">📁</div>
-              <div style="font-size: 11px; font-weight: 700; color: #67e8f9; margin-top: 2px;">Import Audio File</div>
+            <div class="psl-file-dropzone" id="psl-file-dropzone" style="margin: 10px 8px 4px 8px; padding: 10px 6px; border: 1px dashed rgba(255, 255, 255,0.4); background: rgba(255, 255, 255,0.06); border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.2s;">
+              <div style="font-size: 18px;"></div>
+              <div style="font-size: 11px; font-weight: 700; color: #e4e4e7; margin-top: 2px;">Import Audio File</div>
               <div style="font-size: 9px; color: #a1a1aa;">(MP3, WAV, FLAC, OGG)</div>
               <input type="file" id="psl-file-input" accept="audio/*" style="display:none;">
             </div>
 
             <div class="psl-search-wrap">
-              <input class="psl-search" id="psl-search" placeholder="🔍 Search samples…" autocomplete="off">
+              <input class="psl-search" id="psl-search" placeholder=" Search samples…" autocomplete="off">
             </div>
             <div class="psl-cat-list">
               <button class="psl-cat-btn active" data-cat="all">All Presets</button>
@@ -346,8 +346,8 @@ class PresetSampleLibrary {
     const step = Math.ceil(data.length / 200);
     ctx.clearRect(0, 0, 200, 28);
     const grad = ctx.createLinearGradient(0, 0, 200, 0);
-    grad.addColorStop(0, this._selectedSample?.color || '#ff6a00');
-    grad.addColorStop(1, '#a855f7');
+    grad.addColorStop(0, this._selectedSample?.color || '#ffffff');
+    grad.addColorStop(1, '#a1a1aa');
     ctx.strokeStyle = grad;
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -383,7 +383,7 @@ class PresetSampleLibrary {
     const buf = await this._getBuffer(sample);
     if (!buf) { if (window.showToast) showToast('Could not synthesize sample'); return; }
 
-    const COLORS = ['#ff6a00','#a855f7','#00d4aa','#ec4899','#22d3ee','#84cc16','#f59e0b','#ef4444'];
+    const COLORS = ['#ffffff','#a1a1aa','#ffffff','#52525b','#ffffff','#a1a1aa','#f59e0b','#ffffff'];
     const newCh = {
       name: sample.name,
       color: sample.color || COLORS[this.sequencer.channels.length % COLORS.length],
@@ -400,7 +400,7 @@ class PresetSampleLibrary {
 
     this.sequencer.channels.push(newCh);
     if (this.onChannelAdded) this.onChannelAdded();
-    if (window.showToast) showToast(`🎵 "${sample.name}" added to rack!`);
+    if (window.showToast) showToast(` "${sample.name}" added to rack!`);
   }
 
   /* ════════════════════════════════════════════════════════════════
@@ -873,6 +873,9 @@ class PresetSampleLibrary {
         const env  = Math.exp(-t * 8);
         ch[i] = Math.sin(2*Math.PI*freq*t) * env * 0.85;
       }
+    });
+  }
+
   // ── FLUTES & WINDS ───────────────────────────────────────────
   _synthAcousticFlute(ctx, freq = 440.0) {
     return this._makeBuffer(ctx, 1.2, (ch, sr, len) => {
@@ -1028,7 +1031,7 @@ class PresetSampleLibrary {
   background: #0f1117;
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 16px;
-  box-shadow: 0 40px 100px rgba(0,0,0,0.95), 0 0 0 1px rgba(34,211,238,0.1);
+  box-shadow: 0 40px 100px rgba(0,0,0,0.95), 0 0 0 1px rgba(255, 255, 255,0.1);
   width: 100%; max-width: 760px;
   height: min(85vh, 600px);
   display: flex; flex-direction: column;
@@ -1077,7 +1080,7 @@ class PresetSampleLibrary {
   outline: none; font-family: inherit;
 }
 .psl-search::placeholder { color: rgba(255,255,255,0.25); }
-.psl-search:focus { border-color: rgba(34,211,238,0.4); }
+.psl-search:focus { border-color: rgba(255, 255, 255,0.4); }
 
 .psl-cat-list {
   display: flex; flex-direction: column; gap: 2px;
@@ -1090,7 +1093,7 @@ class PresetSampleLibrary {
   cursor: pointer; text-align: left; transition: all .15s;
 }
 .psl-cat-btn:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8); }
-.psl-cat-btn.active { background: rgba(34,211,238,0.1); color: #67e8f9; }
+.psl-cat-btn.active { background: rgba(255, 255, 255,0.1); color: #e4e4e7; }
 
 /* Content */
 .psl-content {
@@ -1122,9 +1125,9 @@ class PresetSampleLibrary {
 }
 .psl-card:hover { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.15); }
 .psl-card.selected {
-  background: rgba(34,211,238,0.08);
-  border-color: rgba(34,211,238,0.35);
-  box-shadow: 0 0 12px rgba(34,211,238,0.1);
+  background: rgba(255, 255, 255,0.08);
+  border-color: rgba(255, 255, 255,0.35);
+  box-shadow: 0 0 12px rgba(255, 255, 255,0.1);
 }
 
 .psl-card-icon {
@@ -1158,17 +1161,17 @@ class PresetSampleLibrary {
 .psl-prev-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
 
 .psl-add-btn {
-  background: linear-gradient(135deg, #22d3ee, #0891b2);
+  background: linear-gradient(135deg, #ffffff, #0891b2);
   border: none; color: #fff; font-size: 12px; font-weight: 800;
   padding: 6px 16px; border-radius: 6px; cursor: pointer; transition: all .18s;
 }
-.psl-add-btn:hover:not(:disabled) { filter: brightness(1.15); box-shadow: 0 0 14px rgba(34,211,238,0.35); }
+.psl-add-btn:hover:not(:disabled) { filter: brightness(1.15); box-shadow: 0 0 14px rgba(255, 255, 255,0.35); }
 .psl-add-btn:disabled { opacity: 0.35; cursor: not-allowed; filter: none; }
 
 /* Toolbar / rack button */
 #btn-preset-library {
-  border-color: rgba(34,211,238,0.35) !important;
-  color: #67e8f9 !important;
+  border-color: rgba(255, 255, 255,0.35) !important;
+  color: #e4e4e7 !important;
 }
 `;
     document.head.appendChild(style);
