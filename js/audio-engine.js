@@ -5,7 +5,7 @@
 
 class AudioEngine {
   constructor() {
-    this.ctx = null;
+    this._ctx = null;
     this.masterGain = null;
     this.masterCompressor = null;
     this.channelGains = {};
@@ -13,9 +13,20 @@ class AudioEngine {
     window.audioEngine = this;
   }
 
+  get ctx() {
+    if (!this.initialized) {
+      this.init();
+    }
+    return this._ctx;
+  }
+
+  set ctx(val) {
+    this._ctx = val;
+  }
+
   init() {
     if (this.initialized) return;
-    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    this._ctx = new (window.AudioContext || window.webkitAudioContext)();
 
     // Master compressor (Fruity Limiter / Master Compressor)
     this.masterCompressor = this.ctx.createDynamicsCompressor();
@@ -672,3 +683,6 @@ class AudioEngine {
 }
 
 window.AudioEngine = AudioEngine;
+if (!window.audioEngine) {
+  window.audioEngine = new AudioEngine();
+}

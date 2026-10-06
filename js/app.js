@@ -6,7 +6,7 @@
 class FLStudioApp {
   constructor() {
     // Core modules
-    this.audioEngine = new AudioEngine();
+    this.audioEngine = window.audioEngine || new AudioEngine();
     this.sequencer   = new Sequencer(this.audioEngine);
     this.pianoRoll   = null;
     this.mixer       = null;
