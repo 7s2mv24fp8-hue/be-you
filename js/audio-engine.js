@@ -825,7 +825,14 @@ class AudioEngine {
     try {
       return await _decodeWithContext(this.ctx, arrayBuffer.slice(0));
     } catch (tier1Err) {
-      console.warn('[AudioEngine] Tier 1 decode failed, attempting ID3/MPEG stripping...', tier1Err);
+      console.warn('[AudioEngine] Tier 1 decode failed, attempting raw decode...', tier1Err);
+      // Fallback: try decoding the original arrayBuffer without slicing (in case slicing caused issues)
+      try {
+        return await _decodeWithContext(this.ctx, arrayBuffer);
+      } catch (rawErr) {
+        console.warn('[AudioEngine] Raw decode also failed:', rawErr);
+        console.warn('[AudioEngine] Tier 1 decode failed, attempting ID3/MPEG stripping...');
+      }
     }
 
     // Tier 2: Parse and strip ID3v2 metadata
@@ -858,7 +865,7 @@ class AudioEngine {
     // Tier 3: Scan for valid MPEG audio frame sync word (0xFF + top 3 bits 111)
     try {
       const u8 = new Uint8Array(arrayBuffer);
-      const scanLimit = Math.min(u8.length - 4, 1024 * 1024); // scan first 1 MB
+      const scanLimit = u8.length - 4; // scan full file
       for (let i = 0; i < scanLimit; i++) {
         if (u8[i] === 0xFF && (u8[i + 1] & 0xE0) === 0xE0) {
           const mpegVer = (u8[i + 1] >> 3) & 0x03; // not 01 (reserved)
@@ -886,9 +893,22 @@ class AudioEngine {
     // Tier 4: Fallback with a fresh isolated AudioContext instance (bypasses device hardware sample rate mismatch)
     try {
       const altCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const buf = await _decodeWithContext(altCtx, arrayBuffer.slice(0));
+      // First attempt using our helper (Promise based)
+      let buf = await _decodeWithContext(altCtx, arrayBuffer.slice(0));
       if (buf) {
-        console.log('[AudioEngine] Decoded audio via isolated AudioContext fallback');
+        console.log('[AudioEngine] Decoded audio via isolated AudioContext fallback (Promise)');
+        return buf;
+      }
+      // If that fails, fall back to the older callback API
+      buf = await new Promise((resolve, reject) => {
+        altCtx.decodeAudioData(
+          arrayBuffer.slice(0),
+          decoded => resolve(decoded),
+          err => reject(err)
+        );
+      });
+      if (buf) {
+        console.log('[AudioEngine] Decoded audio via isolated AudioContext fallback (callback)');
         return buf;
       }
     } catch (t4Err) {
