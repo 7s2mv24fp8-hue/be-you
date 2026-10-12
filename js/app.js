@@ -1947,6 +1947,7 @@ class FLStudioApp {
     this.sequencer.channels.push(newChannel);
     this._buildChannelRack();
 
+    if (this.mixer)    this.mixer.syncChannels();
     if (this.playlist) {
       this.playlist.syncWithChannels();
     }
@@ -2846,7 +2847,7 @@ FLStudioApp.prototype._importFileToApp = async function(file) {
 
 // ── Global App Bootstrap (safe readyState execution) ───────────
 function bootstrapFLStudioApp() {
-  if (!window.app) {
+  if (!window.app || window.app instanceof HTMLElement) {
     try {
       window.app = new FLStudioApp();
     } catch (err) {

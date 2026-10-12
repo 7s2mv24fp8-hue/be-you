@@ -27,6 +27,7 @@ class AudioEngine {
 
   init() {
     if (this.initialized) return;
+    this.initialized = true;
     this._ctx = new (window.AudioContext || window.webkitAudioContext)();
 
     // Master compressor (Fruity Limiter / Master Compressor)
@@ -67,8 +68,6 @@ class AudioEngine {
 
     this.masterGain.connect(this.analyser);
     this.analyser.connect(this.ctx.destination);
-
-    this.initialized = true;
   }
 
   _initEQChain() {
@@ -90,7 +89,9 @@ class AudioEngine {
       { type: 'lowpass',  freq: 18500, gain: 0, q: 0.707 },
     ];
 
-    this.eqNodes = bandDefs.map((def, idx) => {
+    this.eqNodes = [];
+    for (let idx = 0; idx < bandDefs.length; idx++) {
+      const def = bandDefs[idx];
       const f = this.ctx.createBiquadFilter();
       f.type = def.type;
       f.frequency.value = def.freq;
@@ -99,8 +100,8 @@ class AudioEngine {
       if (idx > 0) {
         this.eqNodes[idx - 1].connect(f);
       }
-      return f;
-    });
+      this.eqNodes.push(f);
+    }
   }
 
   setEQBand(idx, type, freq, gain, q) {
@@ -791,7 +792,17 @@ class AudioEngine {
       const resp = await fetch(source);
       arrayBuffer = await resp.arrayBuffer();
     } else if (source instanceof Blob || (typeof File !== 'undefined' && source instanceof File)) {
-      arrayBuffer = await source.arrayBuffer();
+      if (typeof source.arrayBuffer === 'function') {
+        arrayBuffer = await source.arrayBuffer();
+      } else {
+        // Fallback for older browsers
+        arrayBuffer = await new Promise((res, rej) => {
+          const reader = new FileReader();
+          reader.onload = () => res(reader.result);
+          reader.onerror = () => rej(new Error('FileReader failed'));
+          reader.readAsArrayBuffer(source);
+        });
+      }
     } else if (source instanceof ArrayBuffer) {
       arrayBuffer = source;
     } else if (ArrayBuffer.isView(source)) {
@@ -828,20 +839,13 @@ class AudioEngine {
     try {
       return await _decodeWithContext(this.ctx, arrayBuffer.slice(0));
     } catch (tier1Err) {
-      console.warn('[AudioEngine] Tier 1 decode failed, attempting raw decode...', tier1Err);
-      // Fallback: try decoding the original arrayBuffer without slicing (in case slicing caused issues)
-      try {
-        return await _decodeWithContext(this.ctx, arrayBuffer);
-      } catch (rawErr) {
-        console.warn('[AudioEngine] Raw decode also failed:', rawErr);
-        console.warn('[AudioEngine] Tier 1 decode failed, attempting ID3/MPEG stripping...');
-      }
+      console.warn('[AudioEngine] Tier 1 decode failed:', tier1Err);
     }
 
     // Tier 2: Parse and strip ID3v2 metadata
-    // Many MP3s include large ID3v2 tags (with JPEG/PNG artwork) that choke Web Audio's MPEG demuxer.
+    // Many MP3s include large ID3v2 tags that choke Web Audio's MPEG demuxer.
     try {
-      const u8 = new Uint8Array(arrayBuffer);
+      const u8 = new Uint8Array(arrayBuffer.slice(0));
       if (u8.length > 10 && u8[0] === 0x49 && u8[1] === 0x44 && u8[2] === 0x33) { // 'ID3'
         const flags = u8[5];
         const hasFooter = (flags & 0x10) !== 0;
@@ -850,7 +854,7 @@ class AudioEngine {
                         ((u8[8] & 0x7F) << 7)  |
                         (u8[9] & 0x7F);
         const headerOffset = 10 + tagSize + (hasFooter ? 10 : 0);
-        if (headerOffset > 0 && headerOffset < arrayBuffer.byteLength - 16) {
+        if (headerOffset > 0 && headerOffset < u8.length - 16) {
           const stripped = arrayBuffer.slice(headerOffset);
           try {
             const buf = await _decodeWithContext(this.ctx, stripped);
@@ -867,8 +871,9 @@ class AudioEngine {
 
     // Tier 3: Scan for valid MPEG audio frame sync word (0xFF + top 3 bits 111)
     try {
-      const u8 = new Uint8Array(arrayBuffer);
-      const scanLimit = u8.length - 4; // scan full file
+      const u8 = new Uint8Array(arrayBuffer.slice(0));
+      const scanLimit = Math.min(u8.length - 4, 256000); // scan first 256KB max
+      let attempts = 0;
       for (let i = 0; i < scanLimit; i++) {
         if (u8[i] === 0xFF && (u8[i + 1] & 0xE0) === 0xE0) {
           const mpegVer = (u8[i + 1] >> 3) & 0x03; // not 01 (reserved)
@@ -877,13 +882,17 @@ class AudioEngine {
           const srate   = (u8[i + 2] >> 2) & 0x03; // not 11 (0x03)
           if (mpegVer !== 1 && layer !== 0 && bitrate !== 15 && srate !== 3) {
             if (i > 0) {
+              attempts++;
               const sliced = arrayBuffer.slice(i);
               try {
                 const buf = await _decodeWithContext(this.ctx, sliced);
                 console.log(`[AudioEngine] Successfully decoded MP3 from MPEG frame sync offset +${i}`);
                 return buf;
               } catch (_) {
-                // False positive sync, continue search
+                if (attempts >= 5) {
+                   console.warn('[AudioEngine] Tier 3: Too many false positive sync words, aborting scan.');
+                   break;
+                }
               }
             }
           }
@@ -902,77 +911,36 @@ class AudioEngine {
         console.log('[AudioEngine] Decoded audio via isolated AudioContext fallback (Promise)');
         return buf;
       }
-      // If that fails, fall back to the older callback API
-      buf = await new Promise((resolve, reject) => {
-        altCtx.decodeAudioData(
-          arrayBuffer.slice(0),
-          decoded => resolve(decoded),
-          err => reject(err)
-        );
-      });
-      if (buf) {
-        console.log('[AudioEngine] Decoded audio via isolated AudioContext fallback (callback)');
-        return buf;
-      }
     } catch (t4Err) {
       console.warn('[AudioEngine] Tier 4 isolated AudioContext fallback failed:', t4Err);
     }
 
-    // Tier 5: Use a hidden <audio> element to let the browser's native media stack
-    // decode the file (covers codecs that decodeAudioData rejects).
-    try {
-      console.log('[AudioEngine] Attempting Tier 5: Hidden <audio> element decode…');
-      const blob = new Blob([arrayBuffer], { type: 'audio/mpeg' });
-      const url  = URL.createObjectURL(blob);
-      const audio = document.createElement('audio');
-      audio.preload = 'auto';
-      audio.src = url;
-      audio.muted = true;
-
-      const buf = await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error('Tier 5 timeout')), 15000);
-
-        audio.addEventListener('canplaythrough', async () => {
-          clearTimeout(timeout);
-          try {
-            const duration = audio.duration;
-            if (!duration || !isFinite(duration) || duration <= 0) {
-              reject(new Error('Could not determine audio duration'));
-              return;
+    // Tier 5: Pure WASM mpg123-decoder (Ultimate MP3 Fallback)
+    if (window['mpg123-decoder'] && window['mpg123-decoder'].MPEGDecoder) {
+      try {
+        const decoder = new window['mpg123-decoder'].MPEGDecoder();
+        await decoder.ready;
+        const u8 = new Uint8Array(arrayBuffer.slice(0));
+        const { channelData, samplesDecoded, sampleRate } = decoder.decode(u8);
+        
+        if (samplesDecoded > 0 && channelData && channelData.length > 0) {
+          const numChannels = channelData.length;
+          const audioBuf = this.ctx.createBuffer(numChannels, samplesDecoded, sampleRate);
+          for (let c = 0; c < numChannels; c++) {
+            if (audioBuf.copyToChannel) {
+              audioBuf.copyToChannel(channelData[c], c, 0);
+            } else {
+              audioBuf.getChannelData(c).set(channelData[c]);
             }
-            const sampleRate = this.ctx.sampleRate || 44100;
-            const offlineCtx = new OfflineAudioContext(2, Math.ceil(sampleRate * duration), sampleRate);
-            const source = offlineCtx.createMediaElementSource(audio);
-            source.connect(offlineCtx.destination);
-            audio.muted = false;
-            audio.currentTime = 0;
-            await audio.play();
-            const rendered = await offlineCtx.startRendering();
-            audio.pause();
-            URL.revokeObjectURL(url);
-            resolve(rendered);
-          } catch (innerErr) {
-            URL.revokeObjectURL(url);
-            reject(innerErr);
           }
-        }, { once: true });
-
-        audio.addEventListener('error', () => {
-          clearTimeout(timeout);
-          URL.revokeObjectURL(url);
-          reject(new Error('Audio element could not load the file'));
-        }, { once: true });
-
-        // Kick off loading
-        audio.load();
-      });
-
-      if (buf) {
-        console.log('[AudioEngine] Tier 5 <audio> element decode succeeded!');
-        return buf;
+          console.log('[AudioEngine] Successfully decoded MP3 using WASM mpg123-decoder!');
+          decoder.free();
+          return audioBuf;
+        }
+        decoder.free();
+      } catch (t5Err) {
+        console.warn('[AudioEngine] Tier 5 WASM decoder failed:', t5Err);
       }
-    } catch (t5Err) {
-      console.warn('[AudioEngine] Tier 5 <audio> element fallback failed:', t5Err);
     }
 
     throw new Error('Unable to decode audio data. The file may be corrupted or in an unsupported format. Supported: WAV, MP3, OGG, FLAC, AIFF, M4A.');
