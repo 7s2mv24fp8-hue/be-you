@@ -355,7 +355,6 @@ class SoundImporter {
     };
 
     this.sequencer.channels.push(newChannel);
-    if (this.onChannelAdded) this.onChannelAdded();
 
     const idx = this.sequencer.channels.length - 1;
     // Auto-activate step 0 so user hears it immediately
@@ -613,7 +612,11 @@ document.addEventListener('DOMContentLoaded', () => {
     window.soundImporter = new SoundImporter(
       window.app.audioEngine,
       window.app.sequencer,
-      () => window.app._buildChannelRack()
+      () => {
+        window.app._buildChannelRack();
+        if (window.app.mixer)    window.app.mixer.syncChannels();
+        if (window.app.playlist) window.app.playlist.syncWithChannels();
+      }
     );
 
     const openImporter = () => window.soundImporter.open();

@@ -806,17 +806,20 @@ class AudioEngine {
 
     const _decodeWithContext = (ctxInstance, rawBuf) => {
       return new Promise((resolve, reject) => {
+        let settled = false;
+        const _resolve = (v) => { if (!settled) { settled = true; resolve(v); } };
+        const _reject  = (e) => { if (!settled) { settled = true; reject(e); } };
         try {
           const res = ctxInstance.decodeAudioData(
             rawBuf,
-            decoded => resolve(decoded),
-            err => reject(err || new Error('decodeAudioData rejected'))
+            decoded => _resolve(decoded),
+            err => _reject(err || new Error('decodeAudioData rejected'))
           );
           if (res && typeof res.then === 'function') {
-            res.then(resolve).catch(reject);
+            res.then(_resolve).catch(_reject);
           }
         } catch (err) {
-          reject(err);
+          _reject(err);
         }
       });
     };
@@ -915,7 +918,64 @@ class AudioEngine {
       console.warn('[AudioEngine] Tier 4 isolated AudioContext fallback failed:', t4Err);
     }
 
-    throw new Error('Unable to decode audio data. Please ensure the MP3 or audio file is valid and uncorrupted.');
+    // Tier 5: Use a hidden <audio> element to let the browser's native media stack
+    // decode the file (covers codecs that decodeAudioData rejects).
+    try {
+      console.log('[AudioEngine] Attempting Tier 5: Hidden <audio> element decode…');
+      const blob = new Blob([arrayBuffer], { type: 'audio/mpeg' });
+      const url  = URL.createObjectURL(blob);
+      const audio = document.createElement('audio');
+      audio.preload = 'auto';
+      audio.src = url;
+      audio.muted = true;
+
+      const buf = await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error('Tier 5 timeout')), 15000);
+
+        audio.addEventListener('canplaythrough', async () => {
+          clearTimeout(timeout);
+          try {
+            const duration = audio.duration;
+            if (!duration || !isFinite(duration) || duration <= 0) {
+              reject(new Error('Could not determine audio duration'));
+              return;
+            }
+            const sampleRate = this.ctx.sampleRate || 44100;
+            const offlineCtx = new OfflineAudioContext(2, Math.ceil(sampleRate * duration), sampleRate);
+            const source = offlineCtx.createMediaElementSource(audio);
+            source.connect(offlineCtx.destination);
+            audio.muted = false;
+            audio.currentTime = 0;
+            await audio.play();
+            const rendered = await offlineCtx.startRendering();
+            audio.pause();
+            URL.revokeObjectURL(url);
+            resolve(rendered);
+          } catch (innerErr) {
+            URL.revokeObjectURL(url);
+            reject(innerErr);
+          }
+        }, { once: true });
+
+        audio.addEventListener('error', () => {
+          clearTimeout(timeout);
+          URL.revokeObjectURL(url);
+          reject(new Error('Audio element could not load the file'));
+        }, { once: true });
+
+        // Kick off loading
+        audio.load();
+      });
+
+      if (buf) {
+        console.log('[AudioEngine] Tier 5 <audio> element decode succeeded!');
+        return buf;
+      }
+    } catch (t5Err) {
+      console.warn('[AudioEngine] Tier 5 <audio> element fallback failed:', t5Err);
+    }
+
+    throw new Error('Unable to decode audio data. The file may be corrupted or in an unsupported format. Supported: WAV, MP3, OGG, FLAC, AIFF, M4A.');
   }
 }
 

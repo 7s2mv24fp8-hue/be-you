@@ -2830,7 +2830,9 @@ FLStudioApp.prototype._importFileToApp = async function(file) {
       pan: 0,
       muted: false,
     });
-    this._refreshChannelRack();
+    this._buildChannelRack();
+    if (this.mixer)    this.mixer.syncChannels();
+    if (this.playlist) this.playlist.syncWithChannels();
     showToast(` Imported: ${file.name}`, 2500);
 
     // Switch to audio editor to show the imported file
