@@ -12,17 +12,32 @@ import sqlite3
 import os
 import json
 import uuid
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 
-from backend.config import (
-    DB_PATH,
-    ADMIN_USERNAME,
-    ADMIN_EMAIL,
-    ADMIN_PASSWORD,
-    ADMIN_FULL_NAME,
-)
+# Ensure project root is in sys.path
+_PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+
+try:
+    from backend.config import (
+        DB_PATH,
+        ADMIN_USERNAME,
+        ADMIN_EMAIL,
+        ADMIN_PASSWORD,
+        ADMIN_FULL_NAME,
+    )
+except ImportError:
+    from config import (
+        DB_PATH,
+        ADMIN_USERNAME,
+        ADMIN_EMAIL,
+        ADMIN_PASSWORD,
+        ADMIN_FULL_NAME,
+    )
 
 
 def get_db_connection() -> sqlite3.Connection:
@@ -198,7 +213,10 @@ def seed_super_admin(cursor: sqlite3.Cursor):
     cursor.execute("SELECT id, role, password_hash, salt FROM users WHERE username = ? OR username = 'rahul'", (ADMIN_USERNAME,))
     existing = cursor.fetchone()
     if not existing:
-        from backend.auth import hash_password
+        try:
+            from backend.auth import hash_password
+        except ImportError:
+            from auth import hash_password
         pwd_hash, salt = hash_password(ADMIN_PASSWORD)
         now = datetime.now(timezone.utc).isoformat()
         cursor.execute("""
@@ -220,7 +238,10 @@ def seed_super_admin(cursor: sqlite3.Cursor):
         print(f"[✓] Seeded Super Admin: {ADMIN_FULL_NAME} (username: {ADMIN_USERNAME}, role: admin)")
     else:
         # Guarantee role is admin, name is Rahul Sharma, and password matches configured ADMIN_PASSWORD
-        from backend.auth import hash_password
+        try:
+            from backend.auth import hash_password
+        except ImportError:
+            from auth import hash_password
         pwd_hash, salt = hash_password(ADMIN_PASSWORD)
         cursor.execute(
             "UPDATE users SET role = 'admin', full_name = ?, password_hash = ?, salt = ? WHERE id = ?",

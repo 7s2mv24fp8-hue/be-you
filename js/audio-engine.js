@@ -903,9 +903,9 @@ class AudioEngine {
     }
 
     // Tier 4: Fallback with a fresh isolated AudioContext instance (bypasses device hardware sample rate mismatch)
+    let altCtx = null;
     try {
-      const altCtx = new (window.AudioContext || window.webkitAudioContext)();
-      // First attempt using our helper (Promise based)
+      altCtx = new (window.AudioContext || window.webkitAudioContext)();
       let buf = await _decodeWithContext(altCtx, arrayBuffer.slice(0));
       if (buf) {
         console.log('[AudioEngine] Decoded audio via isolated AudioContext fallback (Promise)');
@@ -913,6 +913,10 @@ class AudioEngine {
       }
     } catch (t4Err) {
       console.warn('[AudioEngine] Tier 4 isolated AudioContext fallback failed:', t4Err);
+    } finally {
+      if (altCtx && typeof altCtx.close === 'function') {
+        try { altCtx.close(); } catch (_) {}
+      }
     }
 
     // Tier 5: Pure WASM mpg123-decoder (Ultimate MP3 Fallback)

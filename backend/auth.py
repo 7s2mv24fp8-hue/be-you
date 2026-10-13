@@ -19,10 +19,23 @@ from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
+import sys
+from pathlib import Path
+
+# Ensure project root is in sys.path
+_PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+
 from fastapi import HTTPException, Security, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from backend.config import TOKEN_VALID_DAYS, SECRET_KEY, ADMIN_USERNAME, ADMIN_PASSWORD
-from backend.db import get_db_connection, get_user_by_id
+
+try:
+    from backend.config import TOKEN_VALID_DAYS, SECRET_KEY, ADMIN_USERNAME, ADMIN_PASSWORD
+    from backend.db import get_db_connection, get_user_by_id
+except ImportError:
+    from config import TOKEN_VALID_DAYS, SECRET_KEY, ADMIN_USERNAME, ADMIN_PASSWORD
+    from db import get_db_connection, get_user_by_id
 
 security = HTTPBearer(auto_error=False)
 
@@ -161,7 +174,10 @@ def safe_user_dict(user_row) -> Optional[dict]:
 
 def authenticate_user(username: str, password: str):
     """Authenticates username/email & password and returns trimmed safe user dict or None."""
-    from backend.db import get_user_by_username
+    try:
+        from backend.db import get_user_by_username
+    except ImportError:
+        from db import get_user_by_username
     user = get_user_by_username(username)
     if not user:
         return None

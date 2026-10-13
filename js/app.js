@@ -1282,9 +1282,26 @@ class FLStudioApp {
     });
 
     // ── Import to Playlist ──
-    importBtn?.addEventListener('click', () => {
+    importBtn?.addEventListener('click', async () => {
       if (!currentResult) return;
-      showToast('Audio imported! Use it in your playlist.');
+      try {
+        let blob = currentResult.blob;
+        if (!blob && currentResult.url) {
+          const resp = await fetch(currentResult.url);
+          blob = await resp.blob();
+        }
+        if (blob) {
+          const timestamp = new Date().toISOString().slice(11, 19).replace(/:/g, '');
+          const file = blob instanceof File
+            ? blob
+            : new File([blob], `AI_Music_${timestamp}.wav`, { type: 'audio/wav' });
+          await this._importFileToApp(file);
+          showToast(' AI track imported into DAW & Playlist!', 2500);
+        }
+      } catch (err) {
+        console.error('Failed to import AI track:', err);
+        showToast(`Import failed: ${err.message}`, 3000);
+      }
     });
 
     // ── History ──

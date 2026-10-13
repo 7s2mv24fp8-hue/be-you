@@ -13,15 +13,29 @@
 
 class SoundImporter {
   constructor(audioEngine, sequencer, onChannelAdded) {
-    this.audioEngine   = audioEngine;
-    this.sequencer     = sequencer;
-    this.onChannelAdded = onChannelAdded;   // callback → app._refreshChannelRack()
+    this._audioEngine    = audioEngine;
+    this._sequencer      = sequencer;
+    this.onChannelAdded  = onChannelAdded;   // callback → app._refreshChannelRack()
 
     this._modal     = null;
     this._fileInput = null;
 
     this._buildModal();
     this._injectStyles();
+  }
+
+  get audioEngine() {
+    return this._audioEngine || (window.app && !(window.app instanceof HTMLElement) && window.app.audioEngine) || window.audioEngine;
+  }
+  set audioEngine(engine) {
+    this._audioEngine = engine;
+  }
+
+  get sequencer() {
+    return this._sequencer || (window.app && !(window.app instanceof HTMLElement) && window.app.sequencer) || window.sequencer;
+  }
+  set sequencer(seq) {
+    this._sequencer = seq;
   }
 
   /* ── Public ──────────────────────────────────────────────────── */
@@ -332,15 +346,22 @@ class SoundImporter {
   _addToRack() {
     if (!this._loadedBuffer) return;
 
+    const sequencer = this.sequencer;
+    if (!sequencer) {
+      console.error('[SoundImporter] Sequencer not available');
+      return;
+    }
+
     const name  = (this._modal.querySelector('#si-channel-name').value.trim() || 'Sample').slice(0, 32);
     const color = this._selectedColor;
 
     // Add channel to sequencer
+    const numSteps = sequencer.steps || 16;
     const newChannel = {
       name,
       color,
-      steps:    new Array(this.sequencer.steps).fill(false),
-      velocity: new Array(this.sequencer.steps).fill(0.8),
+      steps:    new Array(numSteps).fill(false),
+      velocity: new Array(numSteps).fill(0.8),
       volume:   1,
       pan:      0,
       muted:    false,
@@ -354,12 +375,33 @@ class SoundImporter {
       uploadedFileId:  this._uploadedFileId || null,
     };
 
-    this.sequencer.channels.push(newChannel);
+    if (typeof sequencer.addChannel === 'function') {
+      sequencer.addChannel(newChannel);
+    } else {
+      sequencer.channels.push(newChannel);
+    }
 
-    const idx = this.sequencer.channels.length - 1;
+    const idx = sequencer.channels.length - 1;
     // Auto-activate step 0 so user hears it immediately
-    this.sequencer.channels[idx].steps[0] = true;
-    if (this.onChannelAdded) this.onChannelAdded();
+    if (sequencer.channels[idx] && sequencer.channels[idx].steps) {
+      sequencer.channels[idx].steps[0] = true;
+    }
+
+    if (this.onChannelAdded) {
+      this.onChannelAdded();
+    } else if (window.app && !(window.app instanceof HTMLElement)) {
+      window.app._buildChannelRack();
+      if (window.app.mixer)    window.app.mixer.syncChannels();
+      if (window.app.playlist) window.app.playlist.syncWithChannels();
+    }
+
+    // Also populate into Audio Editor layers
+    if (window.app && !(window.app instanceof HTMLElement) && window.app.audioEditor) {
+      window.app.audioEditor.addLayer(this._loadedBuffer, name);
+      if (typeof window.app._updateInlineLayerList === 'function') {
+        window.app._updateInlineLayerList();
+      }
+    }
 
     this.close();
     this._resetState();
@@ -405,9 +447,11 @@ class SoundImporter {
   }
 
   async _resumeAudio() {
-    if (!this.audioEngine.initialized) this.audioEngine.init();
-    if (this.audioEngine.ctx && this.audioEngine.ctx.state === 'suspended') {
-      await this.audioEngine.ctx.resume();
+    const engine = this.audioEngine;
+    if (!engine) return;
+    if (!engine.initialized && typeof engine.init === 'function') engine.init();
+    if (engine.ctx && engine.ctx.state === 'suspended') {
+      try { await engine.ctx.resume(); } catch (_) {}
     }
   }
 
@@ -607,7 +651,10 @@ class SoundImporter {
 /* ── Bootstrap: create importer + wire button after DOM loads ────────── */
 document.addEventListener('DOMContentLoaded', () => {
   const waitForApp = () => {
-    if (!window.app) { setTimeout(waitForApp, 150); return; }
+    if (!window.app || window.app instanceof HTMLElement || !window.app.audioEngine) {
+      setTimeout(waitForApp, 100);
+      return;
+    }
 
     window.soundImporter = new SoundImporter(
       window.app.audioEngine,
