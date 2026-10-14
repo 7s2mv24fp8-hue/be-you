@@ -37,6 +37,17 @@ class FLPianoExtras {
         <option value="Pentatonic">Pentatonic</option>
         <option value="Blues">Blues</option>
       </select>
+      <span style="font-size:10px;color:var(--text-muted);margin-left:4px;">Chord:</span>
+      <select id="pr-chord-stamp-select" class="pr-quantize-select" style="width:75px;">
+        <option value="none">Single</option>
+        <option value="major">Major</option>
+        <option value="minor">Minor</option>
+        <option value="maj7">Maj 7th</option>
+        <option value="min7">Min 7th</option>
+        <option value="dom7">Dom 7th</option>
+        <option value="sus4">Sus4</option>
+        <option value="power">Power</option>
+      </select>
       <button id="pr-btn-strum" class="pr-tool-btn" title="Strummer (Alt+S)">Strum</button>
       <button id="pr-btn-roll" class="pr-tool-btn" title="Roll Generator (Alt+A)">Roll</button>
     `;
@@ -57,6 +68,12 @@ class FLPianoExtras {
     document.getElementById('pr-scale-type').addEventListener('change', (e) => {
       this.scaleType = e.target.value;
       if (window.app && window.app.pianoRoll) window.app.pianoRoll.render();
+    });
+    document.getElementById('pr-chord-stamp-select')?.addEventListener('change', (e) => {
+      if (window.app && window.app.pianoRoll) {
+        window.app.pianoRoll.setChordStamp(e.target.value);
+        if (window.showToast) window.showToast(`Chord Stamp: ${e.target.options[e.target.selectedIndex].text}`);
+      }
     });
     document.getElementById('pr-btn-strum').addEventListener('click', () => this.openStrummerModal());
     document.getElementById('pr-btn-roll').addEventListener('click', () => this.openRollModal());
@@ -115,8 +132,9 @@ class FLPianoExtras {
     notesByStep.forEach((chord) => {
       if (chord.length < 2) return;
       // Sort by pitch ascending
-      chord.sort((a, b) => a.note - b.note);
+      chord.sort((a, b) => ((a.midi ?? a.note ?? 60) - (b.midi ?? b.note ?? 60)));
       chord.forEach((n, idx) => {
+        n.step = Math.min(15.9, n.step + idx * 0.06);
         n.offsetMs = idx * strumTimeMs;
         n.velocity = Math.max(0.2, Math.min(1.0, (n.velocity || 0.8) + idx * velocitySlope));
       });
@@ -139,12 +157,14 @@ class FLPianoExtras {
     // Subdivide notes by 4x roll
     const newNotes = [];
     channel.notes.forEach(n => {
+      const midiVal = n.midi !== undefined ? n.midi : (n.note !== undefined ? n.note : 60);
       const duration = n.length || 1;
-      const subLength = duration / 4;
+      const subLength = Math.max(0.25, duration / 4);
       for (let k = 0; k < 4; k++) {
         newNotes.push({
           step: n.step + k * subLength,
-          note: n.note,
+          midi: midiVal,
+          note: midiVal,
           length: subLength,
           velocity: Math.max(0.3, (n.velocity || 0.8) * (1 - k * 0.1)),
         });

@@ -32,6 +32,7 @@ class FLStudioApp {
 
 
   _init() {
+    this._renderStepHeaders(this.sequencer.steps);
     this._buildChannelRack();
     this._buildPianoRoll();
     this._buildMixer();
@@ -61,6 +62,91 @@ class FLStudioApp {
     this._updatePositionDisplay(0);
 
     showToast('BeYou Studio loaded — Press Space to play!', 3000);
+  }
+
+  // ── Step Headers & Pattern Length ──────────────────────────────
+  _renderStepHeaders(numSteps) {
+    const container = document.getElementById('rack-step-headers');
+    if (!container) return;
+    numSteps = numSteps || (this.sequencer ? this.sequencer.steps : 16);
+    container.innerHTML = '';
+    for (let i = 1; i <= numSteps; i++) {
+      const d = document.createElement('div');
+      const isBeatStart = (i % 4 === 1);
+      d.style.cssText = `flex:1;min-width:18px;text-align:center;font-size:8px;font-family:JetBrains Mono,monospace;color:${isBeatStart ? '#ff7700' : '#555'};`;
+      d.textContent = i;
+      container.appendChild(d);
+    }
+  }
+
+  setPatternLength(newSteps) {
+    newSteps = parseInt(newSteps, 10) || 16;
+    this.sequencer.setStepCount(newSteps);
+    this._renderStepHeaders(newSteps);
+    this._buildChannelRack();
+    if (this.pianoRoll && typeof this.pianoRoll.setSteps === 'function') {
+      this.pianoRoll.setSteps(newSteps);
+    }
+    const select = document.getElementById('rack-step-length-select');
+    if (select && select.value !== String(newSteps)) {
+      select.value = String(newSteps);
+    }
+    showToast(`Pattern: ${newSteps} steps (${newSteps / 16} bars)`);
+  }
+
+  cloneChannel(ci) {
+    const orig = this.sequencer.channels[ci];
+    if (!orig) return;
+    const cloned = {
+      name: `${orig.name} (Copy)`,
+      color: orig.color,
+      type: orig.type,
+      sampleFileName: orig.sampleFileName,
+      audioBuffer: orig.audioBuffer,
+      soundType: orig.soundType,
+      preset: orig.preset,
+      volume: orig.volume !== undefined ? orig.volume : 0.8,
+      pan: orig.pan !== undefined ? orig.pan : 0,
+      pitch: orig.pitch || 0,
+      cutoff: orig.cutoff || 2000,
+      muted: false,
+      solo: false,
+      steps: [...(orig.steps || new Array(this.sequencer.steps).fill(false))],
+      velocity: [...(orig.velocity || new Array(this.sequencer.steps).fill(0.8))],
+      stepPitch: orig.stepPitch ? [...orig.stepPitch] : new Array(this.sequencer.steps).fill(0),
+      stepPan: orig.stepPan ? [...orig.stepPan] : new Array(this.sequencer.steps).fill(0),
+      stepCutoff: orig.stepCutoff ? [...orig.stepCutoff] : new Array(this.sequencer.steps).fill(2000),
+      notes: orig.notes ? JSON.parse(JSON.stringify(orig.notes)) : []
+    };
+    this.sequencer.channels.splice(ci + 1, 0, cloned);
+    this._buildChannelRack();
+    if (this.mixer) this.mixer.syncChannels(this.sequencer.channels);
+    if (this.playlist) this.playlist.syncWithChannels(this.sequencer.channels);
+    showToast(`Cloned channel: ${cloned.name}`);
+  }
+
+  async exportAllStems() {
+    if (!this.audioEngine.initialized) this.audioEngine.init();
+    const btn = document.getElementById('tb-btn-export-stems');
+    if (btn) {
+      btn.disabled = true;
+      btn.style.opacity = '0.5';
+    }
+    showToast('Rendering multi-track stems (WAV)…', 4000);
+    try {
+      const eng = this.recorder || new RecorderEngine(this.audioEngine,
+        this.autoTune || new AutoTuneEngine(this.audioEngine.ctx));
+      const count = await eng.exportStems(this.sequencer, 4);
+      showToast(`Exported ${count} track stems to Downloads!`, 4000);
+    } catch (e) {
+      showToast('Stem export failed: ' + e.message, 4000);
+      console.error(e);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.style.opacity = '';
+      }
+    }
   }
 
   // ── Channel Rack ───────────────────────────────────────────────
@@ -164,8 +250,18 @@ class FLStudioApp {
     });
     soloBtn.dataset.action = 'solo';
 
+    const cloneBtn = document.createElement('button');
+    cloneBtn.className = 'ch-btn';
+    cloneBtn.textContent = 'C';
+    cloneBtn.title = 'Clone Channel';
+    cloneBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.cloneChannel(ci);
+    });
+
     miniCtrl.appendChild(muteBtn);
     miniCtrl.appendChild(soloBtn);
+    miniCtrl.appendChild(cloneBtn);
     row.appendChild(miniCtrl);
 
     // Step buttons
@@ -191,6 +287,7 @@ class FLStudioApp {
           'separator',
           { label: ' Randomize channel',   action: () => { this.sequencer.randomizeChannel(ci); this._refreshChannelRack(); } },
           { label: ' Clear channel',        action: () => { this.sequencer.clearChannel(ci); this._refreshChannelRack(); } },
+          { label: ' Clone channel',        action: () => { this.cloneChannel(ci); } },
         ], e.clientX, e.clientY);
       });
 
@@ -207,34 +304,24 @@ class FLStudioApp {
       if (e.target === row || e.target === label) {
         e.preventDefault();
         showContextMenu([
+          { label: ' Duplicate / Clone Channel', action: () => this.cloneChannel(ci) },
           { label: ' Randomize', action: () => { this.sequencer.randomizeChannel(ci); this._refreshChannelRack(); } },
           { label: ' Clear',     action: () => { this.sequencer.clearChannel(ci); this._refreshChannelRack(); } },
           { label: ' Piano Roll', action: () => { this._selectPianoRollChannel(ci); this._switchTab('piano-roll'); } },
           'separator',
           { label: ' Channel FX (Reverb · Delay · EQ…)', action: () => {
             if (window.flFeatures) { window.flFeatures.channelFX.getChainInput(ci); window.flFeatures.fxUI.open(ci, row); }
-            else showToast('Loading FL features…');
+            else showToast('Loading Studio tools…');
           }},
           { label: ' Slice Sample (8 parts)', action: () => {
             if (window.flFeatures) window.flFeatures.slicer.slice(this.sequencer, ci, 8, this.audioEngine);
-            else showToast('Loading FL features…');
+            else showToast('Loading Studio tools…');
           }},
-          { label: ' Set 16 Steps', action: () => {
-            const ch2 = this.sequencer.channels[ci];
-            if (!ch2) return;
-            const d = 16 - ch2.steps.length;
-            ch2.steps    = d > 0 ? [...ch2.steps, ...Array(d).fill(false)]    : ch2.steps.slice(0,16);
-            ch2.velocity = d > 0 ? [...ch2.velocity, ...Array(d).fill(0.8)]   : ch2.velocity.slice(0,16);
-            this._buildChannelRack(); showToast('16 steps');
-          }},
-          { label: ' Set 32 Steps', action: () => {
-            const ch2 = this.sequencer.channels[ci];
-            if (!ch2) return;
-            const d = 32 - ch2.steps.length;
-            ch2.steps    = d > 0 ? [...ch2.steps, ...Array(d).fill(false)]    : ch2.steps.slice(0,32);
-            ch2.velocity = d > 0 ? [...ch2.velocity, ...Array(d).fill(0.8)]   : ch2.velocity.slice(0,32);
-            this._buildChannelRack(); showToast('32 steps');
-          }},
+          'separator',
+          { label: ' Set Pattern: 16 Steps (1 Bar)', action: () => this.setPatternLength(16) },
+          { label: ' Set Pattern: 32 Steps (2 Bars)', action: () => this.setPatternLength(32) },
+          { label: ' Set Pattern: 48 Steps (3 Bars)', action: () => this.setPatternLength(48) },
+          { label: ' Set Pattern: 64 Steps (4 Bars)', action: () => this.setPatternLength(64) },
           'separator',
           { label: ' Import Sound to this slot', action: () => {
             if (window.soundImporter) window.soundImporter.open();
@@ -416,9 +503,14 @@ class FLStudioApp {
       this._stopVoiceRecording();
     });
 
-    // Pattern selector
-    document.getElementById('rack-pattern-select').addEventListener('change', e => {
-      showToast(`Pattern: ${e.target.options[e.target.selectedIndex].text}`);
+    // Step length selector
+    document.getElementById('rack-step-length-select')?.addEventListener('change', e => {
+      this.setPatternLength(parseInt(e.target.value, 10));
+    });
+
+    // Stems export button
+    document.getElementById('tb-btn-export-stems')?.addEventListener('click', () => {
+      this.exportAllStems();
     });
   }
 
@@ -517,6 +609,16 @@ class FLStudioApp {
         document.getElementById('master-pitch-val').textContent = `${val > 0 ? '+' : ''}${Math.round(val)} st`;
       });
     }
+
+    const swingSlider = document.getElementById('tb-swing-slider');
+    const swingVal = document.getElementById('tb-swing-val');
+    if (swingSlider) {
+      swingSlider.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value, 10) || 0;
+        this.sequencer.setSwing(val / 100);
+        if (swingVal) swingVal.textContent = `${val}%`;
+      });
+    }
   }
 
   // ── Tab switching ─────────────────────────────────────────────
@@ -568,6 +670,49 @@ class FLStudioApp {
     document.addEventListener('keydown', e => {
       // Ignore if typing in an input
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+      // If in Audio Editor tab, spacebar & edit keys control AudioEditor
+      if (this.activeTab === 'audio-editor' && this.audioEditor) {
+        if (e.code === 'Space') {
+          e.preventDefault();
+          this.audioEditor.togglePlay();
+          return;
+        }
+        if (e.code === 'Escape') {
+          e.preventDefault();
+          this.audioEditor.pause();
+          return;
+        }
+        if ((e.ctrlKey || e.metaKey) && e.code === 'KeyC') {
+          e.preventDefault();
+          this.audioEditor.copyRegion();
+          return;
+        }
+        if ((e.ctrlKey || e.metaKey) && e.code === 'KeyV') {
+          e.preventDefault();
+          this.audioEditor.pasteRegion();
+          return;
+        }
+        if ((e.ctrlKey || e.metaKey) && e.code === 'KeyX') {
+          e.preventDefault();
+          this.audioEditor.cutRegion();
+          return;
+        }
+        if (e.code === 'Delete' || e.code === 'Backspace') {
+          if (this.audioEditor.selEnd > this.audioEditor.selStart) {
+            e.preventDefault();
+            this.audioEditor.deleteRegion();
+            return;
+          }
+        }
+        if ((e.ctrlKey || e.metaKey) && e.code === 'KeyA') {
+          e.preventDefault();
+          this.audioEditor.selStart = 0;
+          this.audioEditor.selEnd = this.audioEditor.duration;
+          this.audioEditor._draw();
+          return;
+        }
+      }
 
       switch (e.code) {
         case 'Space':
@@ -2622,8 +2767,20 @@ FLStudioApp.prototype._initAudioEditor = function() {
     this.audioEditor.exportMix();
   });
 
+  document.getElementById('ae-zoom-in-btn')?.addEventListener('click', () => {
+    this.audioEditor.zoomIn();
+  });
+
+  document.getElementById('ae-zoom-out-btn')?.addEventListener('click', () => {
+    this.audioEditor.zoomOut();
+  });
+
+  document.getElementById('ae-zoom-fit-btn')?.addEventListener('click', () => {
+    this.audioEditor.zoomFit();
+  });
+
   document.getElementById('ae-open-fullscreen')?.addEventListener('click', () => {
-    this.audioEditor.open();
+    this.audioEditor.toggleFullscreen();
   });
 
   // Tap tempo button

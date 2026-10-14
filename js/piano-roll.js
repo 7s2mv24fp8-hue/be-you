@@ -25,6 +25,7 @@ class PianoRoll {
     // State
     this.tool = 'draw'; // 'draw' | 'erase' | 'select'
     this.quantize = 1;  // steps per note (1=1 step)
+    this.chordStamp = 'none';
     this.isDragging = false;
     this.dragNote = null;
     this.playhead = 0; // current step playback position
@@ -123,21 +124,34 @@ class PianoRoll {
     const noteNames = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
     const isBlack = [false,true,false,true,false,false,true,false,true,false,true,false];
 
+    // Check active scale highlighting from FLPianoExtras
+    const scalePitches = (window.flPianoExtras && typeof window.flPianoExtras.getScalePitchClasses === 'function')
+      ? window.flPianoExtras.getScalePitchClasses()
+      : null;
+
     // Draw rows
     for (let i = 0; i < totalNotes; i++) {
       const noteIdx = totalNotes - 1 - i;
-      const isB = isBlack[noteIdx % 12];
+      const pitchClass = noteIdx % 12;
+      const isB = isBlack[pitchClass];
+      const inScale = scalePitches ? scalePitches.includes(pitchClass) : true;
       const y = i * cellH;
 
-      // Row background
-      ctx.fillStyle = isB ? '#161616' : '#1a1a1a';
+      // Row background with scale highlighting
+      if (scalePitches) {
+        ctx.fillStyle = inScale
+          ? (isB ? '#1a2233' : '#202a3f')
+          : (isB ? '#101216' : '#14161a');
+      } else {
+        ctx.fillStyle = isB ? '#161616' : '#1a1a1a';
+      }
       ctx.fillRect(0, y, totalW, cellH);
 
       // C note highlight
-      if (noteIdx % 12 === 0) {
-        ctx.fillStyle = 'rgba(255, 255, 255,0.04)';
+      if (pitchClass === 0) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
         ctx.fillRect(0, y, totalW, cellH);
-        ctx.strokeStyle = '#2a2a2a';
+        ctx.strokeStyle = '#3b4252';
         ctx.lineWidth = 0.5;
         ctx.beginPath();
         ctx.moveTo(0, y);
@@ -260,21 +274,67 @@ class PianoRoll {
     if (pos.midi < 0 || pos.midi >= this.totalNotes) return;
 
     if (this.tool === 'draw') {
-      // Check if note exists at this pos
       const ch = this.sequencer.channels[this.channelIdx];
-      const existing = ch.notes.find(n => n.step === pos.step && n.midi === pos.midi);
-      if (existing) {
-        this.sequencer.removeNote(this.channelIdx, pos.step, pos.midi);
-      } else {
-        this.sequencer.addNote(this.channelIdx, pos.step, pos.midi, this.quantize, 0.8);
-        this.dragNote = { step: pos.step, midi: pos.midi };
-        // Play preview
-        if (this.sequencer.engine.initialized) {
-          const freq = this.sequencer._midiToFreq(pos.midi);
-          const ch = this.sequencer.channels[this.channelIdx];
-          if (ch.name === 'Bass') this.sequencer.engine.playBass(0, { freq, gain: 0.3, duration: 0.3 });
-          else this.sequencer.engine.playSynth(0, { freq, gain: 0.25, duration: 0.3 });
+      
+      // Determine offsets for single note or chord stamp
+      const chordOffsets = {
+        none: [0],
+        major: [0, 4, 7],
+        minor: [0, 3, 7],
+        maj7: [0, 4, 7, 11],
+        min7: [0, 3, 7, 10],
+        dom7: [0, 4, 7, 10],
+        sus4: [0, 5, 7],
+        power: [0, 7]
+      };
+      const offsets = chordOffsets[this.chordStamp] || [0];
+
+      // If single note and already exists, toggle off
+      if (this.chordStamp === 'none') {
+        const existing = ch.notes.find(n => n.step === pos.step && n.midi === pos.midi);
+        if (existing) {
+          this.sequencer.removeNote(this.channelIdx, pos.step, pos.midi);
+          this.render();
+          return;
         }
+      }
+
+      offsets.forEach(offset => {
+        const noteMidi = pos.midi + offset;
+        if (noteMidi >= 0 && noteMidi < this.totalNotes) {
+          this.sequencer.addNote(this.channelIdx, pos.step, noteMidi, this.quantize, 0.8);
+        }
+      });
+      this.dragNote = { step: pos.step, midi: pos.midi };
+
+      // Play preview
+      if (this.sequencer.engine) {
+        if (!this.sequencer.engine.initialized) this.sequencer.engine.init();
+        offsets.forEach(offset => {
+          const noteMidi = pos.midi + offset;
+          if (noteMidi < 0 || noteMidi >= this.totalNotes) return;
+          const freq = this.sequencer._midiToFreq(noteMidi);
+          if (ch) {
+            if (ch.type === 'audio' && ch.audioBuffer) {
+              try {
+                const src = this.sequencer.engine.ctx.createBufferSource();
+                src.buffer = ch.audioBuffer;
+                src.playbackRate.value = Math.pow(2, (noteMidi - 60) / 12);
+                const g = this.sequencer.engine.ctx.createGain();
+                g.gain.value = 0.6 * (ch.volume || 1);
+                src.connect(g);
+                g.connect(this.sequencer.engine.masterCompressor || this.sequencer.engine.ctx.destination);
+                src.start(0);
+              } catch (_) {}
+            } else if (ch.type === 'drum') {
+              this.sequencer.engine.triggerChannel(ch.name, 0, 0.8, { freq });
+            } else if (ch.name === 'Bass') {
+              this.sequencer.engine.playBass(0, { freq, gain: 0.35, duration: 0.3 });
+            } else {
+              this.sequencer.engine.playSynth(0, { freq, gain: 0.25, duration: 0.3 });
+            }
+          }
+        });
       }
     } else if (this.tool === 'erase') {
       this._eraseAt(e);
@@ -321,6 +381,26 @@ class PianoRoll {
 
   updatePlayhead(step) {
     this.playhead = step;
+    this.render();
+  }
+
+  setSteps(newSteps) {
+    this.steps = Math.max(8, parseInt(newSteps, 10) || 16);
+    this.totalW = this.cellW * this.steps;
+    if (this.canvas) {
+      this.canvas.width = this.totalW;
+    }
+    this.render();
+  }
+
+  setChordStamp(stamp) {
+    this.chordStamp = stamp || 'none';
+  }
+
+  setScale(scaleKey) {
+    if (window.flPianoExtras && typeof window.flPianoExtras.setScale === 'function') {
+      window.flPianoExtras.setScale(scaleKey);
+    }
     this.render();
   }
 

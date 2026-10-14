@@ -35,6 +35,8 @@ class FLGraphEditor {
     geWrap.innerHTML = `
       <div class="fl-ge-header">
         <span class="fl-ge-title">Graph Editor</span>
+        <select id="fl-ge-channel-select" class="fl-ge-channel-select" style="background:#18181b;color:#e4e4e7;border:1px solid #3f3f46;border-radius:4px;font-size:10px;padding:2px 6px;margin-left:6px;cursor:pointer;">
+        </select>
         <div class="fl-ge-tabs">
           <button class="fl-ge-tab active" data-mode="velocity">Velocity</button>
           <button class="fl-ge-tab" data-mode="pitch">Pitch</button>
@@ -83,6 +85,15 @@ class FLGraphEditor {
     // Close button
     const closeBtn = document.getElementById('fl-ge-close-btn');
     if (closeBtn) closeBtn.addEventListener('click', () => this.toggle());
+
+    // Channel dropdown
+    const chSelect = document.getElementById('fl-ge-channel-select');
+    if (chSelect) {
+      chSelect.addEventListener('change', (e) => {
+        this.selectedChannel = parseInt(e.target.value, 10) || 0;
+        this.render();
+      });
+    }
 
     // Mode tabs
     const tabs = this.container.querySelectorAll('.fl-ge-tab');
@@ -185,6 +196,22 @@ class FLGraphEditor {
     // Background
     ctx.fillStyle = '#09090b';
     ctx.fillRect(0, 0, w, h);
+
+    // Update channel select dropdown
+    const chSelect = document.getElementById('fl-ge-channel-select');
+    if (chSelect && window.app.sequencer && window.app.sequencer.channels) {
+      const channels = window.app.sequencer.channels;
+      if (chSelect.options.length !== channels.length) {
+        chSelect.innerHTML = '';
+        channels.forEach((c, idx) => {
+          const opt = document.createElement('option');
+          opt.value = idx;
+          opt.textContent = `${idx + 1}. ${c.name}`;
+          chSelect.appendChild(opt);
+        });
+      }
+      chSelect.value = this.selectedChannel;
+    }
 
     const channel = window.app.sequencer.channels[this.selectedChannel] || window.app.sequencer.channels[0];
     if (!channel) return;

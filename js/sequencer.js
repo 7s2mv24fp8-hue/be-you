@@ -1,6 +1,6 @@
 /**
- * FL Studio Clone — Sequencer
- * BPM step sequencer with Web Audio lookahead scheduling
+ * BeYou Studio — Sequencer
+ * BPM step sequencer with Web Audio lookahead scheduling, dynamic pattern length & swing
  */
 
 class Sequencer {
@@ -11,6 +11,7 @@ class Sequencer {
     this.isPlaying = false;
     this.bpm = 140;
     this.steps = 16;
+    this.swing = 0; // 0.0 to 0.75 groove swing
     this.currentStep = 0;
 
     // Scheduling config
@@ -38,9 +39,9 @@ class Sequencer {
 
   _buildDefaultChannels() {
     const make = (name, color, type = 'drum', defaults = []) => {
-      const steps = Array(16).fill(false);
-      const velocity = Array(16).fill(0.8);
-      defaults.forEach(i => { steps[i] = true; });
+      const steps = Array(this.steps || 16).fill(false);
+      const velocity = Array(this.steps || 16).fill(0.8);
+      defaults.forEach(i => { if (i < steps.length) steps[i] = true; });
       return { name, color, steps, velocity, volume: 1, pan: 0, muted: false, solo: false, type, notes: [], filterFreq: 2000, filterRes: 1 };
     };
 
@@ -59,6 +60,56 @@ class Sequencer {
   // ── Step time calculation ──────────────────────────────────────
   get stepDuration() {
     return (60 / this.bpm) / 4; // 16th note duration in seconds
+  }
+
+  setSwing(val) {
+    this.swing = Math.max(0, Math.min(0.75, parseFloat(val) || 0));
+  }
+
+  setStepCount(newSteps) {
+    newSteps = Math.max(8, Math.min(128, parseInt(newSteps, 10) || 16));
+    this.steps = newSteps;
+
+    this.channels.forEach(ch => {
+      const oldSteps = ch.steps || [];
+      const oldVel = ch.velocity || [];
+      const oldPitch = ch.stepPitch || [];
+      const oldPan = ch.stepPan || [];
+      const oldCutoff = ch.stepCutoff || [];
+
+      ch.steps = new Array(newSteps).fill(false);
+      ch.velocity = new Array(newSteps).fill(0.8);
+      ch.stepPitch = new Array(newSteps).fill(0);
+      ch.stepPan = new Array(newSteps).fill(0);
+      ch.stepCutoff = new Array(newSteps).fill(2000);
+
+      for (let i = 0; i < Math.min(oldSteps.length, newSteps); i++) {
+        ch.steps[i] = oldSteps[i];
+        ch.velocity[i] = oldVel[i] !== undefined ? oldVel[i] : 0.8;
+        ch.stepPitch[i] = oldPitch[i] !== undefined ? oldPitch[i] : 0;
+        ch.stepPan[i] = oldPan[i] !== undefined ? oldPan[i] : 0;
+        ch.stepCutoff[i] = oldCutoff[i] !== undefined ? oldCutoff[i] : 2000;
+      }
+    });
+
+    if (this.currentStep >= newSteps) {
+      this.currentStep = 0;
+    }
+
+    if (window.app) {
+      if (typeof window.app._renderStepHeaders === 'function') {
+        window.app._renderStepHeaders(newSteps);
+      }
+      if (typeof window.app._buildChannelRack === 'function') {
+        window.app._buildChannelRack();
+      }
+      if (window.app.pianoRoll && typeof window.app.pianoRoll.setSteps === 'function') {
+        window.app.pianoRoll.setSteps(newSteps);
+      }
+      if (window.flGraphEditor && window.flGraphEditor.visible) {
+        window.flGraphEditor.render();
+      }
+    }
   }
 
   // ── Playback control ───────────────────────────────────────────
@@ -95,7 +146,11 @@ class Sequencer {
   }
 
   _scheduleStep(step, time) {
-    // FL Studio Metronome: click on beats 1, 2, 3, 4 (steps 0, 4, 8, 12)
+    // Humanized groove swing offset for 16th offbeats (odd steps)
+    const swingDelay = (step % 2 === 1) ? (this.swing * this.stepDuration * 0.55) : 0;
+    const playTime = time + swingDelay;
+
+    // Metronome click on beats 1, 2, 3, 4 (steps 0, 4, 8, 12, 16...)
     if (this.metronomeEnabled && step % 4 === 0 && this.engine.playMetronome) {
       this.engine.playMetronome(step, time);
     }
@@ -107,45 +162,62 @@ class Sequencer {
       if (hasSolo && !ch.solo) return;
       if (!ch.steps[step]) return;
 
-      const vel = ch.velocity[step] * ch.volume;
+      const vel = (ch.velocity[step] !== undefined ? ch.velocity[step] : 0.8) * ch.volume;
+
+      const stepPitch = (ch.stepPitch && ch.stepPitch[step] !== undefined) ? ch.stepPitch[step] : 0;
+      const stepPan   = (ch.stepPan && ch.stepPan[step] !== undefined) ? ch.stepPan[step] : (ch.pan || 0);
+      const stepCutoff = (ch.stepCutoff && ch.stepCutoff[step] !== undefined) ? ch.stepCutoff[step] : (ch.filterFreq || 2000);
 
       if (ch.type === 'drum') {
-        this.engine.triggerChannel(ch.name, time, vel);
+        this.engine.triggerChannel(ch.name, playTime, vel, { pitchOffset: stepPitch, pan: stepPan, cutoff: stepCutoff });
       } else if (ch.type === 'audio' && ch.audioBuffer) {
-        // Play recorded vocal / audio clip
+        // Play recorded vocal / audio clip with pitch & pan
         try {
           const src = this.engine.ctx.createBufferSource();
           src.buffer = ch.audioBuffer;
+          if (stepPitch !== 0) {
+            src.playbackRate.value = Math.pow(2, stepPitch / 12);
+          }
           const gainNode = this.engine.ctx.createGain();
-          gainNode.gain.setValueAtTime(vel * (ch.volume || 1), time);
+          gainNode.gain.setValueAtTime(vel * (ch.volume || 1), playTime);
+
+          let lastNode = gainNode;
+          if (stepPan !== 0 && this.engine.ctx.createStereoPanner) {
+            const panner = this.engine.ctx.createStereoPanner();
+            panner.pan.value = stepPan;
+            gainNode.connect(panner);
+            lastNode = panner;
+          }
+
           src.connect(gainNode);
-          gainNode.connect(this.engine.masterCompressor);
-          src.start(time);
+          lastNode.connect(this.engine.masterCompressor || this.engine.ctx.destination);
+          src.start(playTime);
         } catch (e) {
           console.warn('Audio clip playback failed:', e);
         }
       } else {
         // Synth: find notes for this step from piano roll
-        const stepNotes = ch.notes.filter(n => n.step === step);
+        const stepNotes = ch.notes.filter(n => Math.floor(n.step) === step);
         if (stepNotes.length > 0) {
           stepNotes.forEach(n => {
-            const freq = this._midiToFreq(n.midi);
-            const dur = n.length * this.stepDuration;
+            let freq = this._midiToFreq(n.midi);
+            if (stepPitch !== 0) freq *= Math.pow(2, stepPitch / 12);
+            const dur = (n.length || 1) * this.stepDuration;
             if (ch.name === 'Bass') {
-              this.engine.playBass(time, { freq, gain: vel * 0.5, duration: dur, filterFreq: ch.filterFreq || 800 });
+              this.engine.playBass(playTime, { freq, gain: vel * 0.5, duration: dur, filterFreq: stepCutoff });
             } else {
-              this.engine.playSynth(time, { freq, gain: vel * 0.35, duration: dur, filterFreq: ch.filterFreq || 2000 });
+              this.engine.playSynth(playTime, { freq, gain: vel * 0.35, duration: dur, filterFreq: stepCutoff });
             }
           });
         } else {
           // Default synth note if no piano roll notes
           const defaultFreqs = { 'Bass': 110, 'Lead': 440 };
-          const freq = defaultFreqs[ch.name] || 220;
+          let freq = (defaultFreqs[ch.name] || 220) * Math.pow(2, stepPitch / 12);
           const dur = this.stepDuration;
           if (ch.name === 'Bass') {
-            this.engine.playBass(time, { freq, gain: vel * 0.4, duration: dur });
+            this.engine.playBass(playTime, { freq, gain: vel * 0.4, duration: dur, filterFreq: stepCutoff });
           } else {
-            this.engine.playSynth(time, { freq, gain: vel * 0.25, duration: dur });
+            this.engine.playSynth(playTime, { freq, gain: vel * 0.25, duration: dur, filterFreq: stepCutoff });
           }
         }
       }

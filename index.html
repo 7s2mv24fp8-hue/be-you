@@ -9,6 +9,7 @@
  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
  <link rel="stylesheet" href="css/main.css">
+ <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ff7700'><rect x='1' y='6' width='2' height='5'/><rect x='4' y='3' width='2' height='10'/><rect x='7' y='1' width='2' height='14'/><rect x='10' y='4' width='2' height='9'/><rect x='13' y='7' width='2' height='4'/></svg>">
 </head>
 <body>
 <div id="app">
@@ -44,7 +45,10 @@
  <svg viewBox="0 0 16 16" width="12" fill="currentColor"><circle cx="8" cy="8" r="5"/></svg>
  </button>
  <button id="btn-metronome" class="transport-btn metro" title="Metronome Click (Ctrl+T)" data-tooltip="Metronome">
- ⏱
+  <svg viewBox="0 0 16 16" width="13" fill="currentColor">
+    <path d="M7 1h2l3.5 13H3.5L7 1zm.5 2.5L5.2 13h5.6L8.5 3.5h-1z"/>
+    <line x1="8" y1="9" x2="13" y2="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+  </svg>
  </button>
  </div>
 
@@ -90,50 +94,31 @@
 
  <div class="toolbar-separator"></div>
 
- <!-- View toggles -->
+ <!-- Plugin & Tool Launchers -->
  <div class="view-btns">
- <button class="view-btn" onclick="app._switchTab('piano-roll')" title="Piano Roll (Ctrl+P)">
+ <button class="view-btn plugin-launch-btn" id="tb-btn-param-eq" title="Parametric EQ 2">
  <svg viewBox="0 0 16 16" width="13" fill="currentColor">
- <rect x="1" y="3" width="14" height="10" rx="1" fill="none" stroke="currentColor" stroke-width="1"/>
- <rect x="2" y="4" width="1" height="4" fill="currentColor"/>
- <rect x="4" y="4" width="1" height="6" fill="currentColor"/>
- <rect x="6" y="4" width="1" height="4" fill="currentColor"/>
- <rect x="8" y="4" width="1" height="8" fill="currentColor"/>
- <rect x="10" y="4" width="1" height="4" fill="currentColor"/>
- <rect x="12" y="4" width="1" height="6" fill="currentColor"/>
+ <path d="M2 13h12v1H2z"/>
+ <path d="M3 11c2-1 3-7 5-7s3 6 5 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
  </svg>
- Piano Roll
- </button>
- <button class="view-btn" onclick="app._switchTab('mixer')" title="Mixer (Ctrl+M / F9)">
- <svg viewBox="0 0 16 16" width="13" fill="currentColor">
- <rect x="1" y="2" width="2" height="12" rx="1"/>
- <rect x="4" y="4" width="2" height="10" rx="1"/>
- <rect x="7" y="1" width="2" height="13" rx="1"/>
- <rect x="10" y="3" width="2" height="11" rx="1"/>
- <rect x="13" y="5" width="2" height="9" rx="1"/>
- </svg>
- Mixer
- </button>
- <button class="view-btn" onclick="app._switchTab('playlist')" title="Playlist">
- <svg viewBox="0 0 16 16" width="13" fill="currentColor">
- <rect x="1" y="2" width="8" height="3" rx="1"/>
- <rect x="1" y="7" width="11" height="3" rx="1"/>
- <rect x="1" y="12" width="5" height="3" rx="1"/>
- </svg>
- Playlist
- </button>
- <button class="view-btn" onclick="app._switchTab('audio-editor')" title="Edison Audio Editor">
- 🎛 Editor
+ EQ 2
  </button>
  <button class="view-btn plugin-launch-btn" id="tb-btn-soundgoodizer" title="Soundgoodizer Maximus Plugin">
- ✨ Soundgoodizer
+ <svg viewBox="0 0 16 16" width="13" fill="currentColor">
+ <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+ <line x1="8" y1="8" x2="11" y2="5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+ </svg>
+ Soundgoodizer
  </button>
- <button class="view-btn plugin-launch-btn" id="tb-btn-param-eq" title="Fruity Parametric EQ 2">
- 📈 EQ 2
+ <button class="view-btn plugin-launch-btn" id="tb-btn-export-stems" title="Export Track Stems (WAV)">
+ <svg viewBox="0 0 16 16" width="13" fill="currentColor">
+ <path d="M8 2v8m-4-4l4 4 4-4M2 14h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+ </svg>
+ Stems
  </button>
  </div>
 
- <!-- Master knobs -->
+ <!-- Master knobs & Groove Swing -->
  <div class="master-group">
  <div class="knob-wrap" data-tooltip="Master Volume">
  <span class="master-knob-label">VOL</span>
@@ -144,6 +129,11 @@
  <span class="master-knob-label">PITCH</span>
  <canvas id="master-pitch-knob" width="36" height="36" title="Master Pitch (drag)"></canvas>
  <span id="master-pitch-val" class="knob-value">0 st</span>
+ </div>
+ <div class="knob-wrap" data-tooltip="Swing / Groove (0-75%)">
+ <span class="master-knob-label">SWING</span>
+ <input type="range" id="tb-swing-slider" min="0" max="75" value="0" style="width:48px;height:6px;accent-color:#ff7700;cursor:pointer;" title="Swing Shuffle">
+ <span id="tb-swing-val" class="knob-value">0%</span>
  </div>
  </div>
 
@@ -865,6 +855,13 @@
        <button class="edison-btn" id="ae-play-btn" title="Play (Space)">▶ Play</button>
        <button class="edison-btn" id="ae-loop-btn" title="Loop Selection">🔁 Loop</button>
        <button class="edison-btn" id="ae-pause-btn" title="Pause / Stop">⏸ Stop</button>
+     </div>
+
+     <!-- Zoom & View Controls -->
+     <div class="edison-btn-group">
+       <button class="edison-btn" id="ae-zoom-in-btn" title="Zoom In (+ / Wheel Up)">🔍+</button>
+       <button class="edison-btn" id="ae-zoom-out-btn" title="Zoom Out (- / Wheel Down)">🔍−</button>
+       <button class="edison-btn" id="ae-zoom-fit-btn" title="Fit to Window (100%)">⇲ Fit</button>
      </div>
 
      <!-- Edit Tools -->

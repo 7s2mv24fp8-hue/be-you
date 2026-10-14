@@ -444,8 +444,66 @@ class RecorderEngine {
 
     // Encode to WAV and download
     const wavBuffer = this._encodeWAV(rendered);
-    this._downloadWAV(wavBuffer, 'fl-studio-mix.wav');
+    this._downloadWAV(wavBuffer, 'studio-mix.wav');
     return rendered;
+  }
+
+  /**
+   * Export all active channels as individual stem WAV files
+   */
+  async exportStems(sequencer, durationBars = 4) {
+    const bpm = sequencer.bpm || 140;
+    const stepDur = 60 / bpm / 4;
+    const barDur = stepDur * sequencer.steps;
+    const totalDuration = durationBars * barDur;
+    const sampleRate = 44100;
+    const channelsToExport = sequencer.channels.filter(ch => (ch.steps && ch.steps.some(Boolean)) || ch.audioBuffer || (ch.notes && ch.notes.length));
+
+    if (channelsToExport.length === 0) {
+      throw new Error('No active channels with notes or audio found to export as stems.');
+    }
+
+    let exported = 0;
+    for (let i = 0; i < channelsToExport.length; i++) {
+      const ch = channelsToExport[i];
+      const offlineCtx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(
+        2,
+        Math.max(1, Math.ceil(sampleRate * totalDuration)),
+        sampleRate
+      );
+
+      const trackGain = offlineCtx.createGain();
+      trackGain.gain.value = ch.volume !== undefined ? ch.volume : 0.85;
+      trackGain.connect(offlineCtx.destination);
+
+      for (let bar = 0; bar < durationBars; bar++) {
+        for (let step = 0; step < sequencer.steps; step++) {
+          if (!ch.steps[step]) continue;
+          const time = bar * barDur + step * stepDur;
+          const vel = (ch.velocity[step] !== undefined ? ch.velocity[step] : 0.8) * (ch.volume !== undefined ? ch.volume : 0.85);
+          this._scheduleOfflineDrum(offlineCtx, trackGain, ch.name, time, vel, sampleRate);
+        }
+      }
+
+      if (ch.type === 'audio' && ch.audioBuffer) {
+        const src = offlineCtx.createBufferSource();
+        src.buffer = ch.audioBuffer;
+        src.connect(trackGain);
+        src.start(0);
+      }
+
+      try {
+        const rendered = await offlineCtx.startRendering();
+        const wav = this._encodeWAV(rendered);
+        const safeName = (ch.name || `track_${i+1}`).toLowerCase().replace(/[^a-z0-9]/g, '_');
+        this._downloadWAV(wav, `stem_${i + 1}_${safeName}.wav`);
+        exported++;
+        await new Promise(r => setTimeout(r, 220));
+      } catch (err) {
+        console.error(`Failed to export stem for ${ch.name}:`, err);
+      }
+    }
+    return exported;
   }
 
   _scheduleOfflineDrum(ctx, dest, name, time, vel, sampleRate) {
