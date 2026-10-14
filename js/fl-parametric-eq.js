@@ -55,7 +55,7 @@ class FLParametricEQ {
         <div class="fl-eq-header">
           <div class="fl-eq-title-wrap">
             <span class="fl-eq-led"></span>
-            <span class="fl-eq-title">Fruity Parametric EQ 2</span>
+            <span class="fl-eq-title">Parametric EQ 2</span>
           </div>
           <div class="fl-eq-header-actions">
             <select id="fl-eq-preset-select" class="fl-eq-preset-select" title="EQ Presets">
@@ -104,7 +104,7 @@ class FLParametricEQ {
           <div class="fl-eq-win-header">
             <div class="fl-eq-win-title">
               <span class="fl-eq-led"></span>
-              <span>FRUITY PARAMETRIC EQ 2 — MASTER INSERT</span>
+              <span>PARAMETRIC EQ 2 — MASTER INSERT</span>
             </div>
             <button id="fl-eq-win-close" class="fl-eq-win-close">✕</button>
           </div>

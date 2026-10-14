@@ -196,7 +196,7 @@ class FLStudioApp {
             src.buffer = ch.audioBuffer;
             src.connect(this.audioEngine.masterCompressor);
             src.start();
-            showToast(`▶ Playing ${ch.name}`);
+            showToast(`Playing ${ch.name}`);
           } catch(err) {
             console.error(err);
           }
@@ -475,7 +475,7 @@ class FLStudioApp {
       this.sequencer.play();
       playBtn.classList.add('active', 'playing-glow');
       stopBtn.classList.remove('active');
-      showToast('▶ Playing');
+      showToast('Playing');
     });
 
     stopBtn.addEventListener('click', () => {
@@ -892,12 +892,12 @@ class FLStudioApp {
       const btn  = document.getElementById('btn-export');
       btn.classList.add('exporting');
       btn.disabled = true;
-      showToast(` Rendering ${bars} bars…`, 5000);
+      showToast(`Rendering ${bars} bars…`, 5000);
       try {
         const eng = this.recorder || new RecorderEngine(this.audioEngine,
           this.autoTune || new AutoTuneEngine(this.audioEngine.ctx));
         await eng.exportMix(this.sequencer, bars);
-        showToast('fl-studio-mix.wav downloaded!', 3000);
+        showToast('studio-mix.wav downloaded!', 3000);
       } catch (e) {
         showToast('Export failed: ' + e.message, 4000);
         console.error(e);
@@ -1423,7 +1423,7 @@ class FLStudioApp {
       if (!currentResult) return;
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
       this.musicAI.download(currentResult.url, `ai-music-${timestamp}.wav`);
-      showToast('⬇ Download started!');
+      showToast('Download started!');
     });
 
     // ── Import to Playlist ──

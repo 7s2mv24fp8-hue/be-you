@@ -637,7 +637,7 @@ class DrumMachine {
           <div class="dm-transport">
             <button class="dm-btn dm-play" id="dm-play-btn" title="Play">▶</button>
             <button class="dm-btn dm-stop" id="dm-stop-btn" title="Stop">■</button>
-            <button class="dm-btn dm-rand" id="dm-rand-btn" title="Randomize">🎲</button>
+            <button class="dm-btn dm-rand" id="dm-rand-btn" title="Randomize">Rand</button>
             <button class="dm-btn dm-clear" id="dm-clr-btn" title="Clear">✕</button>
             <button class="dm-btn dm-human" id="dm-human-btn" title="Humanize">Groove</button>
           </div>

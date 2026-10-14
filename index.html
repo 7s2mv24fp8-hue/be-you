@@ -215,25 +215,26 @@
  </div>
  </div>
  <div class="rack-controls">
- <span style="font-size:10px;color:var(--text-muted);">Steps:</span>
- <span class="rack-step-count" style="color:var(--text-secondary);font-weight:700;">16</span>
+ <label style="font-size:10px;color:var(--text-muted);display:flex;align-items:center;gap:4px;">
+ <span>Length:</span>
+ <select id="rack-step-length-select" class="rack-pattern-select" style="padding:1px 4px;font-size:10px;height:20px;border-color:rgba(255,255,255,0.15);">
+ <option value="16">16 Steps (1 Bar)</option>
+ <option value="32">32 Steps (2 Bars)</option>
+ <option value="48">48 Steps (3 Bars)</option>
+ <option value="64">64 Steps (4 Bars)</option>
+ </select>
+ </label>
  <div style="margin-left:auto;display:flex;gap:4px;">
- <button class="ch-btn" title="Randomize All" onclick="sequencerRandomizeAll()" style="width:auto;padding:0 6px;font-size:9px;"> Rand</button>
- <button class="ch-btn" title="Clear All" onclick="sequencerClearAll()" style="width:auto;padding:0 6px;font-size:9px;"> Clear</button>
+ <button class="ch-btn" title="Randomize All" onclick="sequencerRandomizeAll()" style="width:auto;padding:0 6px;font-size:9px;">Rand</button>
+ <button class="ch-btn" title="Clear All" onclick="sequencerClearAll()" style="width:auto;padding:0 6px;font-size:9px;">Clear</button>
  </div>
  </div>
 
  <!-- Step headers -->
  <div style="display:flex;align-items:center;height:20px;background:#111;border-bottom:1px solid var(--border);padding:0 4px;">
  <div style="width:84px;flex-shrink:0;"></div>
- <div style="width:44px;flex-shrink:0;"></div>
- <div style="flex:1;display:flex;">
- <script>
- for(let i=1;i<=16;i++) {
- document.write(`<div style="flex:1;text-align:center;font-size:8px;font-family:JetBrains Mono,monospace;color:${i%4===1?'#ff6a00':'#444'}">${i}</div>`);
- }
- </script>
- </div>
+ <div style="width:62px;flex-shrink:0;"></div>
+ <div id="rack-step-headers" style="flex:1;display:flex;overflow-x:hidden;"></div>
  </div>
 
  <!-- Channel rows -->
@@ -261,28 +262,28 @@
  <div id="right-panel">
  <div class="right-tabs">
  <button class="right-tab active" data-tab="piano-roll">
- <span class="tab-icon">🎹</span> Piano Roll
+ Piano Roll
  </button>
  <button class="right-tab" data-tab="mixer">
- <span class="tab-icon">🎚</span> Mixer
+ Mixer
  </button>
  <button class="right-tab" data-tab="playlist">
- <span class="tab-icon">📋</span> Playlist
+ Playlist
  </button>
  <button class="right-tab record-tab" data-tab="record">
- <span class="tab-icon">🎙</span> Record
+ Record
  <span class="rec-dot"></span>
  </button>
  <button class="right-tab ai-music-tab" data-tab="ai-music">
- <span class="tab-icon"></span> AI Music
+ AI Music
  <span class="ai-music-dot"></span>
  </button>
  <button class="right-tab ai-producer-tab" data-tab="ai-producer">
- <span class="tab-icon"></span> AI Producer
+ AI Producer
  <span class="ai-producer-dot"></span>
  </button>
  <button class="right-tab" data-tab="audio-editor">
- <span class="tab-icon">🎛</span> Editor
+ Audio Editor
  </button>
  </div>
 
@@ -369,7 +370,7 @@
  <button id="btn-rec-stop" title="Stop recording">■ Stop</button>
 
  <!-- Monitor -->
- <button id="btn-monitor" title="Monitor mic input through auto-tune">🎧 Monitor</button>
+ <button id="btn-monitor" title="Monitor mic input through auto-tune">Monitor</button>
 
  <!-- Status badge -->
  <div id="rec-status" class="rec-status-badge idle">● Idle</div>
@@ -501,7 +502,7 @@
  <option value="mono">Mono WAV</option>
  </select>
  <button id="btn-export">
- <span class="export-icon">⬇ Bounce to WAV</span>
+ <span class="export-icon">Bounce to WAV</span>
  <span class="export-spinner">⟳</span>
  </button>
  </div>
@@ -650,7 +651,7 @@
  <svg viewBox="0 0 16 16" width="12" fill="currentColor"><rect x="2" y="2" width="12" height="12" rx="1"/></svg>
  </button>
  <button id="ai-result-download" class="ai-ctrl-btn download" title="Download WAV">
- ⬇ Download
+ Download
  </button>
  <button id="ai-result-import" class="ai-ctrl-btn import" title="Import to Playlist">
  Import
@@ -852,57 +853,57 @@
 
      <!-- Playback & Selection Controls -->
      <div class="edison-btn-group">
-       <button class="edison-btn" id="ae-play-btn" title="Play (Space)">▶ Play</button>
-       <button class="edison-btn" id="ae-loop-btn" title="Loop Selection">🔁 Loop</button>
-       <button class="edison-btn" id="ae-pause-btn" title="Pause / Stop">⏸ Stop</button>
+       <button class="edison-btn" id="ae-play-btn" title="Play (Space)">Play</button>
+       <button class="edison-btn" id="ae-loop-btn" title="Loop Selection">Loop</button>
+       <button class="edison-btn" id="ae-pause-btn" title="Pause / Stop">Stop</button>
      </div>
 
      <!-- Zoom & View Controls -->
      <div class="edison-btn-group">
-       <button class="edison-btn" id="ae-zoom-in-btn" title="Zoom In (+ / Wheel Up)">🔍+</button>
-       <button class="edison-btn" id="ae-zoom-out-btn" title="Zoom Out (- / Wheel Down)">🔍−</button>
-       <button class="edison-btn" id="ae-zoom-fit-btn" title="Fit to Window (100%)">⇲ Fit</button>
+       <button class="edison-btn" id="ae-zoom-in-btn" title="Zoom In (+ / Wheel Up)">Zoom In</button>
+       <button class="edison-btn" id="ae-zoom-out-btn" title="Zoom Out (- / Wheel Down)">Zoom Out</button>
+       <button class="edison-btn" id="ae-zoom-fit-btn" title="Fit to Window (100%)">Fit</button>
      </div>
 
      <!-- Edit Tools -->
      <div class="edison-btn-group">
-       <button class="edison-btn" id="ae-cut-btn" title="Cut Region (Ctrl+X)">✂ Cut</button>
-       <button class="edison-btn" id="ae-copy-btn" title="Copy Region (Ctrl+C)">⎘ Copy</button>
-       <button class="edison-btn" id="ae-paste-btn" title="Paste Region (Ctrl+V)">📋 Paste</button>
-       <button class="edison-btn" id="ae-trim-btn" title="Trim to Selection">✂ Trim</button>
-       <button class="edison-btn" id="ae-del-btn" title="Delete Region">✕ Del</button>
+       <button class="edison-btn" id="ae-cut-btn" title="Cut Region (Ctrl+X)">Cut</button>
+       <button class="edison-btn" id="ae-copy-btn" title="Copy Region (Ctrl+C)">Copy</button>
+       <button class="edison-btn" id="ae-paste-btn" title="Paste Region (Ctrl+V)">Paste</button>
+       <button class="edison-btn" id="ae-trim-btn" title="Trim to Selection">Trim</button>
+       <button class="edison-btn" id="ae-del-btn" title="Delete Region">Delete</button>
      </div>
 
      <!-- DSP Processing Tools -->
      <div class="edison-btn-group">
-       <button class="edison-btn" id="ae-norm-btn" title="Normalize Peak to 0 dBFS">📊 Norm</button>
-       <button class="edison-btn" id="ae-fadein-btn" title="Fade In (0.5s)">↗ Fade In</button>
-       <button class="edison-btn" id="ae-fadeout-btn" title="Fade Out (0.5s)">↘ Fade Out</button>
-       <button class="edison-btn" id="ae-reverse-btn" title="Reverse Audio">🔄 Rev</button>
-       <button class="edison-btn" id="ae-silence-btn" title="Silence Region">🔇 Silence</button>
-       <button class="edison-btn" id="ae-gain-up-btn" title="Boost Gain (+3 dB)">▲ +3dB</button>
-       <button class="edison-btn" id="ae-gain-down-btn" title="Attenuate Gain (-3 dB)">▼ -3dB</button>
-       <button class="edison-btn" id="ae-pitch-up-btn" title="Pitch Shift +1 Semitone">♯ +1st</button>
-       <button class="edison-btn" id="ae-pitch-down-btn" title="Pitch Shift -1 Semitone">♭ -1st</button>
+       <button class="edison-btn" id="ae-norm-btn" title="Normalize Peak to 0 dBFS">Normalize</button>
+       <button class="edison-btn" id="ae-fadein-btn" title="Fade In (0.5s)">Fade In</button>
+       <button class="edison-btn" id="ae-fadeout-btn" title="Fade Out (0.5s)">Fade Out</button>
+       <button class="edison-btn" id="ae-reverse-btn" title="Reverse Audio">Reverse</button>
+       <button class="edison-btn" id="ae-silence-btn" title="Silence Region">Silence</button>
+       <button class="edison-btn" id="ae-gain-up-btn" title="Boost Gain (+3 dB)">+3 dB</button>
+       <button class="edison-btn" id="ae-gain-down-btn" title="Attenuate Gain (-3 dB)">-3 dB</button>
+       <button class="edison-btn" id="ae-pitch-up-btn" title="Pitch Shift +1 Semitone">+1 Semi</button>
+       <button class="edison-btn" id="ae-pitch-down-btn" title="Pitch Shift -1 Semitone">-1 Semi</button>
      </div>
 
      <!-- Actions -->
      <div class="edison-btn-group" style="margin-left:auto;">
-       <button class="edison-btn accent" id="ae-send-channel-btn" title="Send to Channel Rack as Sampler Track">🎹 Send to Rack</button>
-       <button class="edison-btn" id="ae-main-export" title="Export as 16-bit WAV">💾 Export WAV</button>
-       <button class="edison-btn" id="ae-open-fullscreen" title="Open Fullscreen Studio">⛶ Fullscreen</button>
+       <button class="edison-btn accent" id="ae-send-channel-btn" title="Send to Channel Rack as Sampler Track">Send to Rack</button>
+       <button class="edison-btn" id="ae-main-export" title="Export as 16-bit WAV">Export WAV</button>
+       <button class="edison-btn" id="ae-open-fullscreen" title="Open Fullscreen Studio">Fullscreen</button>
      </div>
    </div>
 
    <!-- Quick Demo Sound Loader & Importer Bar -->
    <div class="edison-sound-bar">
      <span class="edison-sound-label">QUICK SOUNDS:</span>
-     <button class="edison-sound-chip" id="ae-demo-808-btn">⚡ 808 Sub Drop</button>
-     <button class="edison-sound-chip" id="ae-demo-snare-btn">⚡ Trap Snare</button>
-     <button class="edison-sound-chip" id="ae-demo-hihat-btn">⚡ Closed Hi-Hat</button>
-     <button class="edison-sound-chip" id="ae-demo-vocal-btn">⚡ Vocal Formant</button>
-     <button class="edison-sound-chip" id="ae-load-project-channels">⎘ Load Project Tracks</button>
-     <button class="edison-sound-chip primary" id="ae-main-add-layer">+ Import WAV/MP3</button>
+     <button class="edison-sound-chip" id="ae-demo-808-btn">808 Sub Drop</button>
+     <button class="edison-sound-chip" id="ae-demo-snare-btn">Trap Snare</button>
+     <button class="edison-sound-chip" id="ae-demo-hihat-btn">Closed Hi-Hat</button>
+     <button class="edison-sound-chip" id="ae-demo-vocal-btn">Vocal Formant</button>
+     <button class="edison-sound-chip" id="ae-load-project-channels">Load Project Tracks</button>
+     <button class="edison-sound-chip primary" id="ae-main-add-layer">+ Import Audio</button>
    </div>
 
    <!-- Main High-Resolution Waveform Display -->
@@ -1426,7 +1427,7 @@
  <div id="explore-sort-tabs" class="plat-tabs">
  <button class="plat-tab active" data-sort="recent"> Latest</button>
  <button class="plat-tab" data-sort="likes"> Top Liked</button>
- <button class="plat-tab" data-sort="plays">▶ Most Played</button>
+ <button class="plat-tab" data-sort="plays">Most Played</button>
  </div>
  <select id="explore-genre-filter" class="plat-select">
  <option value="">All Genres</option>

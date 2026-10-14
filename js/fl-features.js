@@ -1142,8 +1142,8 @@ class FLFeaturePack {
 
     this._injectStyles();
 
-    console.log('[FLFeaturePack] All FL Studio features loaded ');
-    if (window.showToast) showToast('FL Studio features loaded!');
+    console.log('[FeaturePack] All Studio Pro features loaded');
+    if (window.showToast) showToast('Studio Pro tools loaded!');
   }
 
   _addToolbarButton() {
@@ -1153,8 +1153,8 @@ class FLFeaturePack {
     const btn = document.createElement('button');
     btn.id = 'fl-tools-btn';
     btn.className = 'tb-cloud-btn';
-    btn.title = 'FL Studio Tools Panel';
-    btn.innerHTML = '<span></span> FL Tools';
+    btn.title = 'Studio Tools Panel';
+    btn.innerHTML = '<span></span> Studio Tools';
     btn.style.cssText = 'border-color:rgba(255, 255, 255,0.4);color:#a1a1aa;';
     btn.addEventListener('click', () => this.panel.toggle());
 

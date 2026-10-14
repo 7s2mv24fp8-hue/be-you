@@ -67,7 +67,7 @@ class FLPatternPicker {
       item.innerHTML = `
         <span class="fl-picker-name">${p.name}</span>
         <div class="fl-picker-actions">
-          <button class="fl-picker-btn btn-clone" title="Clone Pattern">📋</button>
+          <button class="fl-picker-btn btn-clone" title="Clone Pattern">Clone</button>
         </div>
       `;
 

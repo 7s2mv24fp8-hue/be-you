@@ -128,7 +128,7 @@ class AudioEditor {
     if (!wrap) return;
     const isFull = wrap.classList.toggle('edison-fullscreen');
     const btn = document.getElementById('ae-open-fullscreen');
-    if (btn) btn.textContent = isFull ? '✕ Exit Full' : '⛶ Fullscreen';
+    if (btn) btn.textContent = isFull ? 'Exit Full' : 'Fullscreen';
     requestAnimationFrame(() => {
       this._resize();
       this._draw();
@@ -368,7 +368,7 @@ class AudioEditor {
     const playBtn = document.getElementById('ae-play-btn');
     if (playBtn) {
       playBtn.classList.add('active');
-      playBtn.textContent = '⏸ Pause';
+      playBtn.textContent = 'Pause';
     }
 
     this._rafId = requestAnimationFrame(() => this._animLoop());
@@ -385,7 +385,7 @@ class AudioEditor {
     const playBtn = document.getElementById('ae-play-btn');
     if (playBtn) {
       playBtn.classList.remove('active');
-      playBtn.textContent = '▶ Play';
+      playBtn.textContent = 'Play';
     }
     this._draw();
   }
