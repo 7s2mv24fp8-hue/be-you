@@ -7,7 +7,7 @@ services:
     runtime: python
     region: oregon
     plan: free
-    branch: main
+    branch: master
     buildCommand: "pip install -r requirements.txt"
     startCommand: "python server.py"
     healthCheckPath: /health

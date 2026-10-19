@@ -190,6 +190,14 @@ async def security_middleware(request: Request, call_next):
     if proto == "https" or request.url.scheme == "https":
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
 
+    # Avoid stale caching for frontend html, js, and css
+    if request.url.path in ("/", "/index.html"):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    elif request.url.path.startswith(("/js/", "/css/")):
+        response.headers["Cache-Control"] = "no-cache, must-revalidate"
+
     return response
 
 
