@@ -251,6 +251,24 @@ class PianoRoll {
     this.canvas.addEventListener('mouseup',   e => this._onMouseUp(e));
     this.canvas.addEventListener('contextmenu', e => { e.preventDefault(); this._eraseAt(e); });
     this.canvas.addEventListener('mouseleave', () => { this.isDragging = false; });
+
+    this.keysCanvas.addEventListener('mousedown', e => {
+      const rect = this.keysCanvas.getBoundingClientRect();
+      const y = e.clientY - rect.top;
+      const noteRow = Math.floor(y / this.cellH);
+      const midi = this.totalNotes - 1 - noteRow;
+      if (midi >= 0 && midi < this.totalNotes) {
+        if (!this.sequencer.engine.initialized) this.sequencer.engine.init();
+        this.sequencer.engine.resume();
+        const freq = this.sequencer._midiToFreq(midi);
+        const ch = this.sequencer.channels[this.channelIdx];
+        if (ch && ch.name === 'Bass') {
+          this.sequencer.engine.playBass(0, { freq, gain: 0.45, duration: 0.35 });
+        } else {
+          this.sequencer.engine.playSynth(0, { freq, gain: 0.35, duration: 0.35 });
+        }
+      }
+    });
   }
 
   _getGridPos(e) {
@@ -310,6 +328,7 @@ class PianoRoll {
       // Play preview
       if (this.sequencer.engine) {
         if (!this.sequencer.engine.initialized) this.sequencer.engine.init();
+        this.sequencer.engine.resume();
         offsets.forEach(offset => {
           const noteMidi = pos.midi + offset;
           if (noteMidi < 0 || noteMidi >= this.totalNotes) return;

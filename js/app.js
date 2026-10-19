@@ -61,6 +61,9 @@ class FLStudioApp {
     // Init position display
     this._updatePositionDisplay(0);
 
+    // Bind Audio Engine Status & Universal Audio Unlocker
+    this._bindAudioStatus();
+
     showToast('BeYou Studio loaded — Press Space to play!', 3000);
   }
 
@@ -125,6 +128,25 @@ class FLStudioApp {
     showToast(`Cloned channel: ${cloned.name}`);
   }
 
+  unmuteAll() {
+    this.sequencer.channels.forEach(ch => {
+      ch.muted = false;
+      ch.solo = false;
+      if (ch.volume === 0 || ch.volume === undefined) ch.volume = 0.85;
+    });
+    if (this.audioEngine && this.audioEngine.masterGain) {
+      this.audioEngine.setMasterVolume(0.85);
+    }
+    const volDisplay = document.getElementById('master-vol-val');
+    if (volDisplay) volDisplay.textContent = '85%';
+    const volCanvas = document.getElementById('master-vol-knob');
+    if (volCanvas && typeof drawKnob === 'function') drawKnob(volCanvas, 85, 0, 130, '#ffffff');
+
+    this._buildChannelRack();
+    if (this.mixer) this.mixer.syncChannels();
+    showToast('Unmuted: all channels & master volume active (85%)');
+  }
+
   async exportAllStems() {
     if (!this.audioEngine.initialized) this.audioEngine.init();
     const btn = document.getElementById('tb-btn-export-stems');
@@ -160,59 +182,76 @@ class FLStudioApp {
     });
   }
 
+  _auditionChannel(ch) {
+    if (!this.audioEngine) return;
+    this.audioEngine.resume();
+    if (ch.type === 'audio' && ch.audioBuffer) {
+      try {
+        const src = this.audioEngine.ctx.createBufferSource();
+        src.buffer = ch.audioBuffer;
+        src.connect(this.audioEngine.masterCompressor || this.audioEngine.masterGain || this.audioEngine.ctx.destination);
+        src.start(0);
+      } catch (e) {
+        console.warn(e);
+      }
+    } else if (ch.type === 'drum') {
+      this.audioEngine.triggerChannel(ch.name, 0, (ch.volume || 1) * 0.9);
+    } else if (ch.name === 'Bass') {
+      this.audioEngine.playBass(0, { freq: 110, gain: (ch.volume || 1) * 0.55, duration: 0.35 });
+    } else {
+      this.audioEngine.playSynth(0, { freq: 440, gain: (ch.volume || 1) * 0.4, duration: 0.35 });
+    }
+  }
+
   _buildChannelRow(ch, ci) {
     const row = document.createElement('div');
     row.className = 'channel-row';
     row.dataset.channelIdx = ci;
 
-    // Color bar
+    // Color bar - clicking auditions the channel
     const bar = document.createElement('div');
     bar.className = 'channel-color-bar';
     bar.style.background = ch.color;
+    bar.title = `Audition ${ch.name} (Click)`;
+    bar.style.cursor = 'pointer';
+    bar.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this._auditionChannel(ch);
+    });
     row.appendChild(bar);
 
-    // Label (click → open piano roll for synth, or preview for audio)
+    // Dedicated Audition Play Button (▶)
+    const auditionBtn = document.createElement('button');
+    auditionBtn.className = 'ch-audition-btn';
+    auditionBtn.textContent = '▶';
+    auditionBtn.title = `Audition ${ch.name}`;
+    auditionBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this._auditionChannel(ch);
+      auditionBtn.classList.add('auditioning');
+      setTimeout(() => auditionBtn.classList.remove('auditioning'), 180);
+    });
+    row.appendChild(auditionBtn);
+
+    // Label (click → audition & open piano roll for synth, or preview for audio)
     const label = document.createElement('div');
     label.className = 'channel-label';
     label.textContent = ch.name;
-    label.title = ch.type === 'audio' ? 'Recorded Audio Track (Click to audition)' : 'Click to edit in Piano Roll';
+    label.title = ch.type === 'audio' ? 'Recorded Audio Track (Click to audition)' : 'Click to audition & edit in Piano Roll';
     label.style.color = ch.color;
+    label.style.cursor = 'pointer';
 
     if (ch.type === 'audio') {
       const audioBadge = document.createElement('span');
       audioBadge.className = 'channel-audio-badge';
       audioBadge.textContent = ch.sampleFileName ? 'SAMPLE' : 'VOCAL';
       label.appendChild(audioBadge);
-
-      const previewBtn = document.createElement('button');
-      previewBtn.className = 'ch-preview-btn';
-      previewBtn.textContent = '▶';
-      previewBtn.title = 'Audition recorded voice take';
-      previewBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (ch.audioBuffer) {
-          try {
-            const src = this.audioEngine.ctx.createBufferSource();
-            src.buffer = ch.audioBuffer;
-            src.connect(this.audioEngine.masterCompressor);
-            src.start();
-            showToast(`Playing ${ch.name}`);
-          } catch(err) {
-            console.error(err);
-          }
-        }
-      });
-      label.appendChild(previewBtn);
     }
 
     label.addEventListener('click', () => {
+      this._auditionChannel(ch);
       if (ch.type === 'audio' && ch.audioBuffer) {
-        try {
-          const src = this.audioEngine.ctx.createBufferSource();
-          src.buffer = ch.audioBuffer;
-          src.connect(this.audioEngine.masterCompressor);
-          src.start();
-        } catch(err){}
+        // already played by _auditionChannel
       } else {
         this._selectPianoRollChannel(ci);
         this._switchTab('piano-roll');
@@ -292,8 +331,13 @@ class FLStudioApp {
       });
 
       btn.addEventListener('click', () => {
+        this.audioEngine.resume();
+        const wasOn = ch.steps[si];
         this.sequencer.toggleStep(ci, si);
         this._updateStepBtn(btn, ch, si);
+        if (!wasOn && ch.steps[si]) {
+          this.audioEngine.triggerChannel(ch.name, 0, (ch.velocity[si] || 0.8) * (ch.volume || 1));
+        }
       });
 
       stepsContainer.appendChild(btn);
@@ -322,6 +366,8 @@ class FLStudioApp {
           { label: ' Set Pattern: 32 Steps (2 Bars)', action: () => this.setPatternLength(32) },
           { label: ' Set Pattern: 48 Steps (3 Bars)', action: () => this.setPatternLength(48) },
           { label: ' Set Pattern: 64 Steps (4 Bars)', action: () => this.setPatternLength(64) },
+          'separator',
+          { label: ' Unmute All Channels & Reset Master', action: () => this.unmuteAll() },
           'separator',
           { label: ' Import Sound to this slot', action: () => {
             if (window.soundImporter) window.soundImporter.open();
@@ -470,8 +516,9 @@ class FLStudioApp {
     const stopBtn   = document.getElementById('btn-stop');
     const recordBtn = document.getElementById('btn-record');
 
-    playBtn.addEventListener('click', () => {
+    playBtn.addEventListener('click', async () => {
       if (!this.audioEngine.initialized) this.audioEngine.init();
+      await this.audioEngine.resume();
       this.sequencer.play();
       playBtn.classList.add('active', 'playing-glow');
       stopBtn.classList.remove('active');
@@ -621,6 +668,59 @@ class FLStudioApp {
     }
   }
 
+  // ── Audio Engine Status & Unmute Controller ───────────────────
+  _bindAudioStatus() {
+    const btn = document.getElementById('tb-audio-status-btn');
+    const label = document.getElementById('tb-audio-status-text');
+
+    const updateStatus = () => {
+      const state = this.audioEngine?.ctx?.state;
+      if (state === 'running') {
+        if (btn) {
+          btn.classList.remove('needs-unmute');
+          btn.title = 'Audio Engine Running — Click to test sound';
+        }
+        if (label) label.textContent = 'Audio Active';
+      } else {
+        if (btn) {
+          btn.classList.add('needs-unmute');
+          btn.title = 'Audio is Suspended by Browser — Click to Unmute';
+        }
+        if (label) label.textContent = 'Click to Unmute';
+      }
+    };
+
+    if (btn) {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (this.audioEngine) {
+          await this.audioEngine.resume();
+          this.unmuteAll();
+          if (typeof this.audioEngine.testAudio === 'function') {
+            this.audioEngine.testAudio();
+          }
+          updateStatus();
+          showToast('Audio Engine Unmuted — Sound Active!', 2500);
+        }
+      });
+    }
+
+    // Global listeners on all user gestures to immediately wake up AudioContext
+    const onUserGesture = () => {
+      if (this.audioEngine) {
+        if (!this.audioEngine.initialized) this.audioEngine.init();
+        this.audioEngine.resume().then(() => updateStatus());
+      }
+    };
+
+    ['click', 'keydown', 'mousedown', 'touchstart', 'pointerdown'].forEach(evt => {
+      window.addEventListener(evt, onUserGesture, { passive: true });
+    });
+
+    setInterval(updateStatus, 1000);
+    updateStatus();
+  }
+
   // ── Tab switching ─────────────────────────────────────────────
   _bindTabs() {
     document.querySelectorAll('.right-tab').forEach(tab => {
@@ -722,6 +822,7 @@ class FLStudioApp {
             document.getElementById('btn-play').classList.remove('active', 'playing-glow');
           } else {
             if (!this.audioEngine.initialized) this.audioEngine.init();
+            this.audioEngine.resume();
             this.sequencer.play();
             document.getElementById('btn-play').classList.add('active', 'playing-glow');
           }

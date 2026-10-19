@@ -267,6 +267,70 @@ canvas { display: block; }
   gap: 10px;
   margin-left: auto;
 }
+
+/* Audio Status & Unmute Toolbar Button */
+.tb-audio-status-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 9px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  background: rgba(0, 230, 118, 0.12);
+  color: #00e676;
+  border: 1px solid rgba(0, 230, 118, 0.35);
+}
+.tb-audio-status-btn:hover {
+  background: rgba(0, 230, 118, 0.22);
+  border-color: #00e676;
+  box-shadow: 0 0 8px rgba(0, 230, 118, 0.3);
+}
+.tb-audio-status-btn.needs-unmute {
+  background: #ff5500;
+  color: #ffffff;
+  border: 1px solid #ff7700;
+  box-shadow: 0 0 12px rgba(255, 85, 0, 0.6);
+  animation: audioPulse 1.4s infinite alternate ease-in-out;
+}
+@keyframes audioPulse {
+  0% { transform: scale(1); box-shadow: 0 0 6px rgba(255, 85, 0, 0.4); }
+  100% { transform: scale(1.04); box-shadow: 0 0 16px rgba(255, 85, 0, 0.85); }
+}
+
+.ch-audition-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #a1a1aa;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-right: 4px;
+  transition: all 0.12s;
+}
+.ch-audition-btn:hover {
+  background: rgba(255, 119, 0, 0.25);
+  color: #ff7700;
+  border-color: #ff7700;
+}
+.ch-audition-btn.auditioning {
+  background: #00e676 !important;
+  color: #000000 !important;
+  border-color: #00e676 !important;
+  transform: scale(1.15);
+}
+
 .master-knob-wrap {
   display: flex;
   flex-direction: column;

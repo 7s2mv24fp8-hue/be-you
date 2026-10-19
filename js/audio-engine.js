@@ -26,9 +26,17 @@ class AudioEngine {
   }
 
   init() {
-    if (this.initialized) return;
+    if (this.initialized) {
+      if (this._ctx && this._ctx.state === 'suspended') {
+        this._ctx.resume();
+      }
+      return;
+    }
     this.initialized = true;
     this._ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (this._ctx.state === 'suspended') {
+      this._ctx.resume();
+    }
 
     // Master compressor (Fruity Limiter / Master Compressor)
     this.masterCompressor = this.ctx.createDynamicsCompressor();
@@ -68,6 +76,8 @@ class AudioEngine {
 
     this.masterGain.connect(this.analyser);
     this.analyser.connect(this.ctx.destination);
+    // Direct destination backup ensuring audio always reaches hardware output
+    this.masterGain.connect(this.ctx.destination);
   }
 
   _initEQChain() {
@@ -248,9 +258,32 @@ class AudioEngine {
   }
 
   resume() {
-    if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
+    if (!this.initialized) {
+      this.init();
     }
+    if (this._ctx) {
+      try {
+        // Universal Web Audio unlock: 1-sample buffer started synchronously
+        const buffer = this._ctx.createBuffer(1, 1, 22050);
+        const source = this._ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(this._ctx.destination);
+        source.start(0);
+      } catch (_) {}
+      if (this._ctx.state === 'suspended') {
+        return this._ctx.resume();
+      }
+    }
+    return Promise.resolve();
+  }
+
+  testAudio() {
+    return this.resume().then(() => {
+      this.playChime(true);
+      setTimeout(() => {
+        this.triggerChannel('Kick', 0, 0.9);
+      }, 150);
+    });
   }
 
   get currentTime() {
@@ -745,29 +778,25 @@ class AudioEngine {
   // ── Map channel name to play function ────────────────────────
   triggerChannel(channelName, time, velocity = 1, config = {}) {
     const vol = velocity;
-    switch (channelName.toLowerCase()) {
-      case 'kick':
-      case '808':
-        this.playKick(time, { gain: 0.9 * vol, ...config }); break;
-      case 'snare':
-        this.playSnare(time, { gain: 0.7 * vol, ...config }); break;
-      case 'clap':
-        this.playClap(time, { gain: 0.7 * vol, ...config }); break;
-      case 'hihat':
-      case 'hi-hat c':
-      case 'hihat c':
-        this.playHihat(time, { open: false, gain: 0.5 * vol, ...config }); break;
-      case 'hihat o':
-      case 'hi-hat o':
-        this.playHihat(time, { open: true, gain: 0.4 * vol, ...config }); break;
-      case 'tom':
-        this.playTom(time, { gain: 0.75 * vol, ...config }); break;
-      case 'bass':
-        this.playBass(time, { freq: config.freq || 110, gain: 0.5 * vol, duration: config.duration || 0.25, ...config }); break;
-      case 'lead':
-        this.playSynth(time, { freq: config.freq || 440, type: 'sawtooth', gain: 0.35 * vol, duration: config.duration || 0.25, ...config }); break;
-      default:
-        this.playKick(time, { gain: 0.5 * vol }); break;
+    const n = (channelName || '').toLowerCase();
+    if (n.includes('kick') || n.includes('808') || n.includes('bd')) {
+      this.playKick(time, { gain: 0.9 * vol, ...config });
+    } else if (n.includes('snare') || n.includes('sd')) {
+      this.playSnare(time, { gain: 0.7 * vol, ...config });
+    } else if (n.includes('clap') || n.includes('cp')) {
+      this.playClap(time, { gain: 0.7 * vol, ...config });
+    } else if (n.includes('hihat o') || n.includes('hi-hat o') || n.includes('open') || n.includes('oh')) {
+      this.playHihat(time, { open: true, gain: 0.4 * vol, ...config });
+    } else if (n.includes('hihat') || n.includes('hi-hat') || n.includes('hh') || n.includes('hat')) {
+      this.playHihat(time, { open: false, gain: 0.5 * vol, ...config });
+    } else if (n.includes('tom')) {
+      this.playTom(time, { gain: 0.75 * vol, ...config });
+    } else if (n.includes('bass') || n.includes('sub')) {
+      this.playBass(time, { freq: config.freq || 110, gain: 0.5 * vol, duration: config.duration || 0.25, ...config });
+    } else if (n.includes('lead') || n.includes('synth') || n.includes('pad') || n.includes('chord')) {
+      this.playSynth(time, { freq: config.freq || 440, type: 'sawtooth', gain: 0.35 * vol, duration: config.duration || 0.25, ...config });
+    } else {
+      this.playKick(time, { gain: 0.6 * vol });
     }
   }
 

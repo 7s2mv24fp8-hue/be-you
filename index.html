@@ -120,6 +120,13 @@
 
  <!-- Master knobs & Groove Swing -->
  <div class="master-group">
+ <button id="tb-audio-status-btn" class="tb-audio-status-btn" title="Audio Engine Status — Click to Unmute or Test Sound">
+ <svg class="audio-status-icon" viewBox="0 0 16 16" width="13" fill="currentColor">
+ <path d="M11.536 14.01A8.473 8.473 0 0 0 14 8c0-2.298-.914-4.383-2.39-5.924l-.707.707A7.477 7.477 0 0 1 13 8a7.477 7.477 0 0 1-2.171 5.303l.707.707z"/>
+ <path d="M6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A1.5 1.5 0 0 1 0 9V7a1.5 1.5 0 0 1 1.5-1.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06z"/>
+ </svg>
+ <span id="tb-audio-status-text">Audio ON</span>
+ </button>
  <div class="knob-wrap" data-tooltip="Master Volume">
  <span class="master-knob-label">VOL</span>
  <canvas id="master-vol-knob" width="36" height="36" title="Master Volume (drag)"></canvas>
@@ -1461,9 +1468,10 @@
 
  <!-- Train Max Navigation Tabs -->
  <div class="train-tabs-bar" id="train-tabs-bar">
- <button class="train-tab-btn active" data-tab="song"> Train from Song Audio</button>
- <button class="train-tab-btn" data-tab="daw"> Train from DAW Beat</button>
- <button class="train-tab-btn" data-tab="brain"> Max's Brain & Dataset</button>
+ <button class="train-tab-btn active" data-tab="hours">Deep Music Trainer (Hours)</button>
+ <button class="train-tab-btn" data-tab="song">Train from Song Audio</button>
+ <button class="train-tab-btn" data-tab="daw">Train from DAW Beat</button>
+ <button class="train-tab-btn" data-tab="brain">Max's Brain & Dataset</button>
  </div>
 
  <div class="plat-modal-body-scroll">
@@ -1471,8 +1479,93 @@
  <div class="plat-loading"><div class="plat-spinner"></div><span>Loading stats...</span></div>
  </div>
 
+ <!-- TAB 0: MULTI-HOUR DEEP MUSIC TRAINER -->
+ <div id="train-tab-hours" class="train-tab-pane">
+ <div style="background: linear-gradient(135deg, rgba(255,106,0,0.12), rgba(0,0,0,0.4)); border: 1px solid rgba(255,106,0,0.3); border-radius: 12px; padding: 20px; margin-bottom: 18px;">
+ <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+ <div>
+ <div style="display: flex; align-items: center; gap: 8px;">
+ <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #00e676; box-shadow: 0 0 8px #00e676;" id="train-hours-status-dot"></span>
+ <h3 style="margin: 0; color: #fff; font-size: 18px; font-weight: 700;">Deep Music Trainer — Hours on Music</h3>
+ </div>
+ <p style="margin: 6px 0 0 0; font-size: 13px; color: #a1a1aa; max-width: 620px; line-height: 1.5;">
+ Train Max continuously on authentic music datasets for hours. Learns human drummer polyrhythms, ghost notes, 808 pitch slides, and harmonic cadences across 20 genres in background.
+ </p>
+ </div>
+ <div style="display: flex; align-items: center; gap: 8px;">
+ <label style="font-size: 12px; color: #a1a1aa; font-weight: 600;">Duration:</label>
+ <select id="train-hours-duration-select" class="plat-input" style="width: 140px; padding: 6px 10px; font-size: 12px; font-weight: 700; background: #18181b; color: #fff;">
+ <option value="1.0">1 Hour Session</option>
+ <option value="2.0" selected>2 Hours (Deep Run)</option>
+ <option value="4.0">4 Hours (Marathon)</option>
+ <option value="8.0">8 Hours (Overnight)</option>
+ <option value="0.0">Continuous (Uncapped)</option>
+ <option value="0.25">15 Min (Quick Test)</option>
+ </select>
+ </div>
+ </div>
+
+ <!-- Action Controls -->
+ <div style="display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap;">
+ <button id="train-hours-start-btn" class="plat-btn-primary" style="background: #ffffff; color: #000000; font-weight: 700; border: none; padding: 9px 20px; font-size: 13px; cursor: pointer;">
+ Start Multi-Hour Training
+ </button>
+ <button id="train-hours-stop-btn" class="plat-btn-secondary" style="border: 1px solid rgba(255,255,255,0.25); color: #fff; font-size: 13px; padding: 9px 18px; cursor: pointer; display: none;">
+ Stop & Save Checkpoint
+ </button>
+ <button id="train-hours-audition-btn" class="plat-btn-secondary" style="border: 1px solid rgba(0,230,118,0.4); color: #00e676; font-size: 13px; padding: 9px 18px; cursor: pointer; background: rgba(0,230,118,0.08);">
+ Audition Latest Learned Beat in DAW
+ </button>
+ </div>
+ </div>
+
+ <!-- Live Telemetry Grid -->
+ <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 18px;">
+ <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; text-align: center;">
+ <div style="font-size: 10px; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.5px;">Engine Status</div>
+ <div id="th-stat-status" style="font-size: 15px; font-weight: 700; color: #00e676; margin-top: 4px;">Ready</div>
+ </div>
+ <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; text-align: center;">
+ <div style="font-size: 10px; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.5px;">Music Hours Analyzed</div>
+ <div id="th-stat-audio-hours" style="font-size: 16px; font-weight: 700; color: #fff; margin-top: 4px;">0.0 hrs</div>
+ </div>
+ <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; text-align: center;">
+ <div style="font-size: 10px; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.5px;">Patterns Learned</div>
+ <div id="th-stat-patterns" style="font-size: 16px; font-weight: 700; color: #ff9d00; margin-top: 4px;">0</div>
+ </div>
+ <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; text-align: center;">
+ <div style="font-size: 10px; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.5px;">Neural Loss</div>
+ <div id="th-stat-loss" style="font-size: 16px; font-weight: 700; color: #00e676; margin-top: 4px;">0.014</div>
+ </div>
+ <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; text-align: center;">
+ <div style="font-size: 10px; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.5px;">Active Focus</div>
+ <div id="th-stat-focus" style="font-size: 14px; font-weight: 700; color: #fff; margin-top: 4px;">All 20 Genres</div>
+ </div>
+ <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px; text-align: center;">
+ <div style="font-size: 10px; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.5px;">Elapsed / Remaining</div>
+ <div id="th-stat-time" style="font-size: 13px; font-weight: 700; color: #a1a1aa; margin-top: 4px; font-family: monospace;">00:00 / 02:00:00</div>
+ </div>
+ </div>
+
+ <!-- Progress Bar -->
+ <div style="background: rgba(0,0,0,0.5); border-radius: 6px; height: 10px; overflow: hidden; margin-bottom: 18px; border: 1px solid rgba(255,255,255,0.08);">
+ <div id="th-progress-bar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #ff5500, #ff9d00, #00e676); transition: width 0.4s ease;"></div>
+ </div>
+
+ <!-- Real-time Training Terminal Log -->
+ <div style="background: #09090b; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 14px; font-family: JetBrains Mono, monospace;">
+ <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 6px;">
+ <div style="font-size: 11px; color: #a1a1aa; font-weight: 700; letter-spacing: 0.5px;">REAL-TIME NEURAL TRAINING TELEMETRY</div>
+ <div style="font-size: 10px; color: #00e676;">LIVE FEED</div>
+ </div>
+ <div id="th-terminal-logs" style="height: 140px; overflow-y: auto; font-size: 11px; line-height: 1.6; color: #22c55e;">
+ <div>[INIT] Ready to train Max on hours of music. Click 'Start Multi-Hour Training' above.</div>
+ </div>
+ </div>
+ </div>
+
  <!-- TAB 1: SONG AUDIO TRAINER -->
- <div id="train-tab-song" class="train-tab-pane">
+ <div id="train-tab-song" class="train-tab-pane hidden">
  <div class="train-dropzone" id="train-song-dropzone">
  <div class="td-icon"></div>
  <div class="td-title">Drop any Song Audio File here (MP3, WAV, OGG, FLAC)</div>

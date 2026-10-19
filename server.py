@@ -37,7 +37,7 @@ import urllib.request
 import urllib.error
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 from fastapi import FastAPI, HTTPException, Depends, Header, Response, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -708,6 +708,12 @@ class SongTrainRequest(BaseModel):
     auto_approve: bool = Field(True)
 
 
+class HoursTrainRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    duration_hours: float = Field(2.0, ge=0.0, le=168.0)
+    genres: Optional[List[str]] = Field(None)
+
+
 class ProfileUpdateRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     full_name:  Optional[str] = Field(None, min_length=1, max_length=100)
@@ -1093,6 +1099,36 @@ def get_learned_patterns_info():
         return {"trained": False, "error": str(e)}
 
 
+@app.post("/api/train/hours/start")
+def train_hours_start(req: HoursTrainRequest):
+    """Starts background multi-hour music training session for Max AI Producer."""
+    try:
+        from backend.continuous_trainer import start_training
+        return start_training(req.duration_hours, req.genres)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/train/hours/status")
+def train_hours_status():
+    """Returns live telemetry, loss curves, audio hours, and recent logs for the multi-hour trainer."""
+    try:
+        from backend.continuous_trainer import get_training_status
+        return get_training_status()
+    except Exception as e:
+        return {"is_training": False, "error": str(e)}
+
+
+@app.post("/api/train/hours/stop")
+def train_hours_stop():
+    """Halts active multi-hour training session and commits checkpoints to Max's brain."""
+    try:
+        from backend.continuous_trainer import stop_training
+        return stop_training()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/admin/train/queue")
 def admin_train_queue(admin: dict = Depends(require_admin)):
     """Admin: view pending training submissions."""
@@ -1155,6 +1191,7 @@ def admin_reject_pattern(submission_id: str, admin: dict = Depends(require_admin
 
 
 @app.api_route("/", methods=["GET", "HEAD"])
+@app.api_route("/index.html", methods=["GET", "HEAD"])
 def serve_index():
     return FileResponse(BASE_DIR / "index.html")
 

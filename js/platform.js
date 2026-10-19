@@ -491,6 +491,166 @@ window.Platform = class Platform {
         }
       }
     });
+
+    // Multi-hour music training event handlers
+    this._initHoursTrainerEvents();
+  }
+
+  _initHoursTrainerEvents() {
+    const startBtn = document.getElementById('train-hours-start-btn');
+    const stopBtn = document.getElementById('train-hours-stop-btn');
+    const auditionBtn = document.getElementById('train-hours-audition-btn');
+    const durSelect = document.getElementById('train-hours-duration-select');
+
+    if (startBtn) {
+      startBtn.addEventListener('click', async () => {
+        const dur = parseFloat(durSelect?.value || '2.0');
+        startBtn.disabled = true;
+        startBtn.textContent = 'Launching Trainer...';
+        try {
+          const res = await API.post('/api/train/hours/start', { duration_hours: dur });
+          this._toast(res.message || 'Started multi-hour training!');
+          this._pollHoursTrainingStatus();
+        } catch (err) {
+          this._toast('Error starting training: ' + err.message);
+        } finally {
+          startBtn.disabled = false;
+        }
+      });
+    }
+
+    if (stopBtn) {
+      stopBtn.addEventListener('click', async () => {
+        stopBtn.disabled = true;
+        stopBtn.textContent = 'Stopping...';
+        try {
+          const res = await API.post('/api/train/hours/stop');
+          this._toast(res.message || 'Training halted & saved!');
+          this._pollHoursTrainingStatus();
+        } catch (err) {
+          this._toast('Error stopping training: ' + err.message);
+        } finally {
+          stopBtn.disabled = false;
+        }
+      });
+    }
+
+    if (auditionBtn) {
+      auditionBtn.addEventListener('click', () => {
+        this._auditionLatestLearnedPattern();
+      });
+    }
+
+    // Initial check & interval polling
+    this._pollHoursTrainingStatus();
+    setInterval(() => {
+      const trainModal = document.getElementById('train-modal');
+      if (trainModal && !trainModal.classList.contains('hidden')) {
+        this._pollHoursTrainingStatus();
+      }
+    }, 1500);
+  }
+
+  async _pollHoursTrainingStatus() {
+    try {
+      const state = await API.get('/api/train/hours/status');
+      if (!state) return;
+
+      this._latestTrainingState = state;
+
+      const statusEl = document.getElementById('th-stat-status');
+      const audioHoursEl = document.getElementById('th-stat-audio-hours');
+      const patternsEl = document.getElementById('th-stat-patterns');
+      const lossEl = document.getElementById('th-stat-loss');
+      const focusEl = document.getElementById('th-stat-focus');
+      const timeEl = document.getElementById('th-stat-time');
+      const barEl = document.getElementById('th-progress-bar');
+      const logsEl = document.getElementById('th-terminal-logs');
+      const dotEl = document.getElementById('train-hours-status-dot');
+      const startBtn = document.getElementById('train-hours-start-btn');
+      const stopBtn = document.getElementById('train-hours-stop-btn');
+
+      if (state.is_training) {
+        if (statusEl) { statusEl.textContent = 'Active Training'; statusEl.style.color = '#00e676'; }
+        if (dotEl) { dotEl.style.background = '#00e676'; dotEl.style.boxShadow = '0 0 10px #00e676'; }
+        if (startBtn) startBtn.style.display = 'none';
+        if (stopBtn) { stopBtn.style.display = 'inline-block'; stopBtn.textContent = 'Stop & Save Checkpoint'; }
+      } else {
+        if (statusEl) { statusEl.textContent = 'Idle / Ready'; statusEl.style.color = '#a1a1aa'; }
+        if (dotEl) { dotEl.style.background = '#71717a'; dotEl.style.boxShadow = 'none'; }
+        if (startBtn) { startBtn.style.display = 'inline-block'; startBtn.textContent = 'Start Multi-Hour Training'; }
+        if (stopBtn) stopBtn.style.display = 'none';
+      }
+
+      if (audioHoursEl) audioHoursEl.textContent = `${(state.music_hours_processed || 0).toFixed(1)} hrs`;
+      if (patternsEl) patternsEl.textContent = `+${state.patterns_injected || state.patterns_generated || 0}`;
+      if (lossEl) lossEl.textContent = (state.current_loss || 0.014).toFixed(4);
+      if (focusEl) focusEl.textContent = state.is_training ? `${(state.current_genre || 'Music').toUpperCase()} @ ${state.current_bpm || 120} BPM` : 'All 20 Genres';
+
+      const formatTime = (sec) => {
+        sec = Math.max(0, Math.floor(sec || 0));
+        const h = Math.floor(sec / 3600);
+        const m = Math.floor((sec % 3600) / 60);
+        const s = sec % 60;
+        return `${h > 0 ? h + ':' : ''}${m < 10 && h > 0 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+      };
+
+      if (timeEl) {
+        timeEl.textContent = `${formatTime(state.elapsed_seconds)} / ${state.duration_hours > 0 ? formatTime(state.duration_hours * 3600) : 'Continuous'}`;
+      }
+
+      if (barEl) {
+        barEl.style.width = `${Math.min(100, Math.max(0, state.progress_pct || 0))}%`;
+      }
+
+      if (logsEl && state.recent_logs && state.recent_logs.length) {
+        logsEl.innerHTML = state.recent_logs.map(l => `<div>${l}</div>`).join('');
+        logsEl.scrollTop = logsEl.scrollHeight;
+      }
+    } catch (_) {}
+  }
+
+  _auditionLatestLearnedPattern() {
+    const patObj = this._latestTrainingState?.latest_learned_pattern;
+    if (!patObj || !patObj.pattern) {
+      this._toast('Starting continuous training to generate patterns...');
+      document.getElementById('train-hours-start-btn')?.click();
+      return;
+    }
+
+    const pattern = patObj.pattern;
+    const bpm = patObj.bpm || 120;
+    const genre = patObj.genre || 'Music';
+
+    if (window.app?.sequencer) {
+      const seq = window.app.sequencer;
+      seq.bpm = bpm;
+      const bpmDisplay = document.getElementById('bpm-display');
+      if (bpmDisplay) bpmDisplay.value = bpm;
+
+      seq.channels.forEach(ch => {
+        const steps = pattern[ch.name] || pattern[ch.name.toLowerCase()];
+        if (steps && Array.isArray(steps)) {
+          for (let i = 0; i < seq.steps && i < steps.length; i++) {
+            ch.steps[i] = Boolean(steps[i]);
+          }
+        }
+      });
+
+      if (window.app._buildChannelRack) window.app._buildChannelRack();
+      if (window.app._switchTab) window.app._switchTab('piano-roll');
+
+      this.closeAll();
+
+      if (window.app.audioEngine) {
+        window.app.audioEngine.resume().then(() => {
+          seq.stop();
+          seq.play();
+          window.app._updatePlayButton?.();
+          this._toast(` Now playing Max's learned ${genre.toUpperCase()} beat (${bpm} BPM)!`, 4000);
+        });
+      }
+    }
   }
 
   async _handleSongFile(file) {
