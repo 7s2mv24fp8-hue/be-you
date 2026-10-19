@@ -1154,8 +1154,8 @@ class FLFeaturePack {
     btn.id = 'fl-tools-btn';
     btn.className = 'tb-cloud-btn';
     btn.title = 'Studio Tools Panel';
-    btn.innerHTML = '<span></span> Studio Tools';
-    btn.style.cssText = 'border-color:rgba(255, 255, 255,0.4);color:#a1a1aa;';
+    btn.innerHTML = '<span></span> Tools';
+    btn.style.cssText = 'border-color:rgba(255, 255, 255,0.4);color:#a1a1aa;flex-shrink:0;';
     btn.addEventListener('click', () => this.panel.toggle());
 
     // Insert before the first separator

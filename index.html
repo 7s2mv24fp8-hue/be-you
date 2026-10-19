@@ -85,14 +85,12 @@
 
  <div class="toolbar-separator"></div>
 
- <!-- Project Name Pill (Click to rename) -->
- <div class="project-pill-wrap" title="Current Project Name (Click to rename)">
+ <!-- Project Name Pill (Hidden in toolbar because it is already present in Title Bar) -->
+ <div class="project-pill-wrap" style="display:none;" title="Current Project Name (Click to rename)">
  <span class="proj-pill-icon"></span>
  <input id="tb-project-title-input" class="tb-proj-input" value="Untitled Project" spellcheck="false" title="Click to rename project" />
  <span class="proj-edit-hint"></span>
  </div>
-
- <div class="toolbar-separator"></div>
 
  <!-- Plugin & Tool Launchers -->
  <div class="view-btns">
@@ -108,7 +106,7 @@
  <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
  <line x1="8" y1="8" x2="11" y2="5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
  </svg>
- Soundgoodizer
+ Goodizer
  </button>
  <button class="view-btn plugin-launch-btn" id="tb-btn-export-stems" title="Export Track Stems (WAV)">
  <svg viewBox="0 0 16 16" width="13" fill="currentColor">
@@ -129,17 +127,17 @@
  </button>
  <div class="knob-wrap" data-tooltip="Master Volume">
  <span class="master-knob-label">VOL</span>
- <canvas id="master-vol-knob" width="36" height="36" title="Master Volume (drag)"></canvas>
+ <canvas id="master-vol-knob" width="28" height="28" title="Master Volume (drag)"></canvas>
  <span id="master-vol-val" class="knob-value">85%</span>
  </div>
  <div class="knob-wrap" data-tooltip="Master Pitch">
  <span class="master-knob-label">PITCH</span>
- <canvas id="master-pitch-knob" width="36" height="36" title="Master Pitch (drag)"></canvas>
+ <canvas id="master-pitch-knob" width="28" height="28" title="Master Pitch (drag)"></canvas>
  <span id="master-pitch-val" class="knob-value">0 st</span>
  </div>
  <div class="knob-wrap" data-tooltip="Swing / Groove (0-75%)">
  <span class="master-knob-label">SWING</span>
- <input type="range" id="tb-swing-slider" min="0" max="75" value="0" style="width:48px;height:6px;accent-color:#ff7700;cursor:pointer;" title="Swing Shuffle">
+ <input type="range" id="tb-swing-slider" min="0" max="75" value="0" style="width:36px;height:5px;accent-color:#ff7700;cursor:pointer;" title="Swing Shuffle">
  <span id="tb-swing-val" class="knob-value">0%</span>
  </div>
  </div>
@@ -148,24 +146,12 @@
 
  <!-- Main Actions Group -->
  <div class="cloud-group">
- <button id="plat-cloud-save-btn" class="tb-cloud-btn" title="Save Project to Cloud">
- <span></span> Save
- </button>
- <button id="btn-cloud-open" class="tb-cloud-btn" title="Open Cloud Projects">
- <span></span> Projects
- </button>
- <button id="btn-import-sound" class="tb-cloud-btn" title="Import audio files or browse instrument presets" style="border-color:rgba(255,255,255,0.2);color:#ffffff;font-weight:700;">
- <span></span> Import Sounds
- </button>
- <button id="plat-explore-tab" title="Explore Community Beats">
- Explore
- </button>
- <button id="plat-train-btn" title="Train Max with song audio & beats">
- Train Max
- </button>
- <button id="btn-admin-dash" class="tb-cloud-btn admin-btn" title="Super Admin Dashboard">
- <span></span> Admin
- </button>
+ <button id="plat-cloud-save-btn" class="tb-cloud-btn" title="Save Project to Cloud">Save</button>
+ <button id="btn-cloud-open" class="tb-cloud-btn" title="Open Cloud Projects">Projects</button>
+ <button id="btn-import-sound" class="tb-cloud-btn" title="Import audio files or browse instrument presets" style="border-color:rgba(255,255,255,0.2);color:#ffffff;font-weight:700;">Import</button>
+ <button id="plat-explore-tab" class="tb-cloud-btn" title="Explore Community Beats">Explore</button>
+ <button id="plat-train-btn" class="tb-cloud-btn" title="Train Max with song audio & beats">Train</button>
+ <button id="btn-admin-dash" class="tb-cloud-btn admin-btn" title="Super Admin Dashboard">Admin</button>
  </div>
 
  <div class="toolbar-separator"></div>
@@ -180,7 +166,7 @@
  </div>
 
  <!-- AI Beat Suggester toggle -->
- <div style="margin-left:auto;padding-right:10px;">
+ <div style="flex-shrink:0;">
  <button id="btn-ai-toggle" title="AI Beat Suggester">
  <span class="ai-btn-dot"></span>
  AI Beats
@@ -238,10 +224,12 @@
  </div>
 
  <!-- Step headers -->
- <div style="display:flex;align-items:center;height:20px;background:#111;border-bottom:1px solid var(--border);padding:0 4px;">
+ <div style="display:flex;align-items:center;height:20px;background:#111;border-bottom:1px solid var(--border);padding:0 4px;overflow:hidden;">
  <div style="width:84px;flex-shrink:0;"></div>
  <div style="width:62px;flex-shrink:0;"></div>
- <div id="rack-step-headers" style="flex:1;display:flex;overflow-x:hidden;"></div>
+ <div id="rack-step-headers-wrap" style="flex:1;overflow-x:hidden;min-width:0;">
+ <div id="rack-step-headers" style="display:flex;gap:2px;padding:0 4px;width:max-content;"></div>
+ </div>
  </div>
 
  <!-- Channel rows -->
@@ -855,7 +843,7 @@
    <div class="edison-topbar">
      <div class="edison-brand">
        <span class="edison-led"></span>
-       <span class="edison-title">EDISON AUDIO EDITOR</span>
+       <span class="edison-title">PRECISION AUDIO EDITOR</span>
      </div>
 
      <!-- Playback & Selection Controls -->
@@ -1375,15 +1363,11 @@
  }, 200);
 
  // Mode toggle
- document.getElementById('mode-pattern').addEventListener('click', e => {
- e.currentTarget.classList.add('active');
- document.getElementById('mode-song').classList.remove('active');
- document.getElementById('status-mode').textContent = 'Pattern Mode';
+ document.getElementById('mode-pattern')?.addEventListener('click', () => {
+   if (window.app) window.app.setPlaybackMode('pattern');
  });
- document.getElementById('mode-song').addEventListener('click', e => {
- e.currentTarget.classList.add('active');
- document.getElementById('mode-pattern').classList.remove('active');
- document.getElementById('status-mode').textContent = 'Song Mode';
+ document.getElementById('mode-song')?.addEventListener('click', () => {
+   if (window.app) window.app.setPlaybackMode('song');
  });
 
  // Status step update
@@ -1926,18 +1910,20 @@
 
 /* ── Platform explore button in toolbar ──────────────────────────────────── */
 #plat-explore-tab {
- display: inline-flex; align-items: center; gap: 5px;
+ display: inline-flex; align-items: center; gap: 3px;
  background: rgba(168,85,247,0.12); border: 1px solid rgba(168,85,247,0.3);
- color: #c084fc; font-size: 11px; font-weight: 700;
- padding: 4px 11px; border-radius: 5px; cursor: pointer; transition: all 0.18s; height: 26px;
+ color: #c084fc; font-size: 10px; font-weight: 700;
+ padding: 2px 6px; border-radius: 4px; cursor: pointer; transition: all 0.18s; height: 24px;
+ white-space: nowrap; flex-shrink: 0;
 }
 #plat-explore-tab:hover { background: rgba(168,85,247,0.22); color: #fff; }
 
 #plat-train-btn {
- display: inline-flex; align-items: center; gap: 5px;
+ display: inline-flex; align-items: center; gap: 3px;
  background: rgba(255,106,0,0.12); border: 1px solid rgba(255,106,0,0.3);
- color: #fb923c; font-size: 11px; font-weight: 700;
- padding: 4px 11px; border-radius: 5px; cursor: pointer; transition: all 0.18s; height: 26px;
+ color: #fb923c; font-size: 10px; font-weight: 700;
+ padding: 2px 6px; border-radius: 4px; cursor: pointer; transition: all 0.18s; height: 24px;
+ white-space: nowrap; flex-shrink: 0;
 }
 #plat-train-btn:hover { background: rgba(255,106,0,0.22); color: #fff; }
 

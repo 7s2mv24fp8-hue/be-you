@@ -1141,7 +1141,7 @@ class AudioEditor {
     const url = URL.createObjectURL(wavBlob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `edison_export_${Date.now()}.wav`;
+    a.download = `audio_export_${Date.now()}.wav`;
     a.click();
     URL.revokeObjectURL(url);
     if (window.showToast) window.showToast('WAV file downloaded successfully!');

@@ -242,6 +242,15 @@ class Playlist {
   _attachEvents() {
     this.canvas.addEventListener('mousedown', e => {
       e.preventDefault();
+      const rect = this.canvas.getBoundingClientRect();
+      const y = e.clientY - rect.top;
+      // Clicking on top 14px ruler or with Alt key seeks playhead directly
+      if (y <= 14 || e.altKey) {
+        const x = Math.max(0, e.clientX - rect.left);
+        const bar = Math.min(this.bars, x / this.cellW);
+        this.seek(bar);
+        return;
+      }
       this.isDragging = true;
       this._handleCanvasClick(e);
     });
@@ -291,6 +300,21 @@ class Playlist {
   }
 
   setTool(tool) { this.tool = tool; }
+
+  seek(bar) {
+    this.playPosition = Math.max(0, Math.min(this.bars, bar));
+    if (this.sequencer) {
+      this.sequencer.songStep = Math.floor(this.playPosition * 16);
+      this.sequencer.currentStep = this.sequencer.songStep % this.sequencer.steps;
+      if (window.app && typeof window.app._updatePositionDisplay === 'function') {
+        const step = this.sequencer.songStep;
+        const beat = Math.floor((step % 16) / 4) + 1;
+        const subdiv = (step % 4) + 1;
+        window.app._updatePositionDisplay(step, beat, subdiv);
+      }
+    }
+    this.render();
+  }
 
   updatePlayhead(bar) {
     this.playPosition = bar;

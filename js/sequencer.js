@@ -9,16 +9,21 @@ class Sequencer {
 
     // Playback state
     this.isPlaying = false;
+    this.playbackMode = 'pattern'; // 'pattern' | 'song'
     this.bpm = 140;
     this.steps = 16;
     this.swing = 0; // 0.0 to 0.75 groove swing
     this.currentStep = 0;
+    this.songStep = 0;
 
     // Scheduling config
     this.scheduleAheadTime = 0.12; // seconds to look ahead
     this.lookahead = 20;           // ms timer interval
     this._nextStepTime = 0;
     this._schedulerTimer = null;
+
+    // Optional reference to Playlist for Song Mode arrangement playback
+    this.playlist = null;
 
     // Channel data: array of channels
     // Each channel: { name, color, steps: bool[16], velocity: num[16], volume: 1, pan: 0, muted: false, solo: false, type: 'drum'|'synth', notes: [] }
@@ -112,6 +117,16 @@ class Sequencer {
     }
   }
 
+  // ── Playback mode control ──────────────────────────────────────
+  setPlaybackMode(mode) {
+    if (mode !== 'pattern' && mode !== 'song') return;
+    this.playbackMode = mode;
+    if (!this.isPlaying) {
+      this.currentStep = 0;
+      this.songStep = 0;
+    }
+  }
+
   // ── Playback control ───────────────────────────────────────────
   play() {
     if (!this.engine.initialized) this.engine.init();
@@ -119,7 +134,16 @@ class Sequencer {
 
     if (this.isPlaying) return;
     this.isPlaying = true;
-    this.currentStep = 0;
+    if (this.playbackMode === 'song') {
+      const totalBars = (this.playlist && this.playlist.bars) ? this.playlist.bars : 32;
+      const maxSteps = totalBars * 16;
+      if (this.songStep >= maxSteps) {
+        this.songStep = 0;
+      }
+      this.currentStep = this.songStep % this.steps;
+    } else {
+      this.currentStep = 0;
+    }
     this._nextStepTime = this.engine.currentTime + 0.05;
     this._schedulerTimer = setInterval(() => this._scheduler(), this.lookahead);
   }
@@ -129,6 +153,10 @@ class Sequencer {
     clearInterval(this._schedulerTimer);
     this._schedulerTimer = null;
     this.currentStep = 0;
+    this.songStep = 0;
+    if (this.playlist && typeof this.playlist.updatePlayhead === 'function') {
+      this.playlist.updatePlayhead(0);
+    }
     if (this.onStop) this.onStop();
   }
 
@@ -140,19 +168,24 @@ class Sequencer {
   _scheduler() {
     const now = this.engine.currentTime;
     while (this._nextStepTime < now + this.scheduleAheadTime) {
-      this._scheduleStep(this.currentStep, this._nextStepTime);
+      const stepIndex = this.playbackMode === 'song' ? this.songStep : this.currentStep;
+      this._scheduleStep(stepIndex, this._nextStepTime);
       this._advanceStep();
     }
   }
 
   _scheduleStep(step, time) {
+    const isSongMode = this.playbackMode === 'song';
+    const patternStep = isSongMode ? (step % this.steps) : step;
+    const currentBar = isSongMode ? Math.floor(step / 16) : 0;
+
     // Humanized groove swing offset for 16th offbeats (odd steps)
-    const swingDelay = (step % 2 === 1) ? (this.swing * this.stepDuration * 0.55) : 0;
+    const swingDelay = (patternStep % 2 === 1) ? (this.swing * this.stepDuration * 0.55) : 0;
     const playTime = time + swingDelay;
 
     // Metronome click on beats 1, 2, 3, 4 (steps 0, 4, 8, 12, 16...)
-    if (this.metronomeEnabled && step % 4 === 0 && this.engine.playMetronome) {
-      this.engine.playMetronome(step, time);
+    if (this.metronomeEnabled && patternStep % 4 === 0 && this.engine.playMetronome) {
+      this.engine.playMetronome(patternStep, time);
     }
 
     const hasSolo = this.channels.some(c => c.solo);
@@ -160,13 +193,21 @@ class Sequencer {
     this.channels.forEach((ch, idx) => {
       if (ch.muted) return;
       if (hasSolo && !ch.solo) return;
-      if (!ch.steps[step]) return;
 
-      const vel = (ch.velocity[step] !== undefined ? ch.velocity[step] : 0.8) * ch.volume;
+      // In Song Mode, check if channel has an active block on this bar in the playlist arrangement
+      if (isSongMode && this.playlist && this.playlist.tracks) {
+        const track = this.playlist.tracks[idx] || this.playlist.tracks.find(t => t.name === ch.name);
+        const hasBlock = track && track.blocks && track.blocks.some(b => currentBar >= b.bar && currentBar < (b.bar + b.length));
+        if (!hasBlock) return; // Muted for this bar in the song arrangement
+      }
 
-      const stepPitch = (ch.stepPitch && ch.stepPitch[step] !== undefined) ? ch.stepPitch[step] : 0;
-      const stepPan   = (ch.stepPan && ch.stepPan[step] !== undefined) ? ch.stepPan[step] : (ch.pan || 0);
-      const stepCutoff = (ch.stepCutoff && ch.stepCutoff[step] !== undefined) ? ch.stepCutoff[step] : (ch.filterFreq || 2000);
+      if (!ch.steps[patternStep]) return;
+
+      const vel = (ch.velocity[patternStep] !== undefined ? ch.velocity[patternStep] : 0.8) * ch.volume;
+
+      const stepPitch = (ch.stepPitch && ch.stepPitch[patternStep] !== undefined) ? ch.stepPitch[patternStep] : 0;
+      const stepPan   = (ch.stepPan && ch.stepPan[patternStep] !== undefined) ? ch.stepPan[patternStep] : (ch.pan || 0);
+      const stepCutoff = (ch.stepCutoff && ch.stepCutoff[patternStep] !== undefined) ? ch.stepCutoff[patternStep] : (ch.filterFreq || 2000);
 
       if (ch.type === 'drum') {
         this.engine.triggerChannel(ch.name, playTime, vel, { pitchOffset: stepPitch, pan: stepPan, cutoff: stepCutoff });
@@ -197,7 +238,7 @@ class Sequencer {
         }
       } else {
         // Synth: find notes for this step from piano roll
-        const stepNotes = ch.notes.filter(n => Math.floor(n.step) === step);
+        const stepNotes = ch.notes.filter(n => Math.floor(n.step) === patternStep);
         if (stepNotes.length > 0) {
           stepNotes.forEach(n => {
             let freq = this._midiToFreq(n.midi);
@@ -224,16 +265,33 @@ class Sequencer {
     });
 
     // Notify UI on the step being played
-    const stepCopy = step;
+    const stepCopy = patternStep;
+    const songStepCopy = step;
     const delay = (time - this.engine.currentTime) * 1000;
     setTimeout(() => {
-      if (this.onStep) this.onStep(stepCopy);
+      if (this.onStep) this.onStep(stepCopy, songStepCopy);
     }, Math.max(0, delay));
   }
 
   _advanceStep() {
     this._nextStepTime += this.stepDuration;
-    this.currentStep = (this.currentStep + 1) % this.steps;
+    if (this.playbackMode === 'song') {
+      const totalBars = (this.playlist && this.playlist.bars) ? this.playlist.bars : 32;
+      const maxSteps = totalBars * 16;
+      if (this.playlist && this.playlist.isLooping) {
+        const loopStartStep = Math.max(0, Math.floor(this.playlist.loopStart * 16));
+        const loopEndStep = Math.min(maxSteps, Math.floor(this.playlist.loopEnd * 16));
+        this.songStep++;
+        if (this.songStep >= loopEndStep || this.songStep < loopStartStep) {
+          this.songStep = loopStartStep;
+        }
+      } else {
+        this.songStep = (this.songStep + 1) % maxSteps;
+      }
+      this.currentStep = this.songStep % this.steps;
+    } else {
+      this.currentStep = (this.currentStep + 1) % this.steps;
+    }
   }
 
   // ── Step manipulation ──────────────────────────────────────────

@@ -64,6 +64,15 @@ class FLStudioApp {
     // Bind Audio Engine Status & Universal Audio Unlocker
     this._bindAudioStatus();
 
+    // Sync Channel Rack horizontal scroll with step headers
+    const channelsList = document.getElementById('channels-list');
+    const rackStepHeadersWrap = document.getElementById('rack-step-headers-wrap') || document.getElementById('rack-step-headers');
+    if (channelsList && rackStepHeadersWrap) {
+      channelsList.addEventListener('scroll', () => {
+        rackStepHeadersWrap.scrollLeft = channelsList.scrollLeft;
+      }, { passive: true });
+    }
+
     showToast('BeYou Studio loaded — Press Space to play!', 3000);
   }
 
@@ -73,10 +82,11 @@ class FLStudioApp {
     if (!container) return;
     numSteps = numSteps || (this.sequencer ? this.sequencer.steps : 16);
     container.innerHTML = '';
+    container.style.cssText = 'display:flex;gap:2px;padding:0 4px;width:max-content;';
     for (let i = 1; i <= numSteps; i++) {
       const d = document.createElement('div');
       const isBeatStart = (i % 4 === 1);
-      d.style.cssText = `flex:1;min-width:18px;text-align:center;font-size:8px;font-family:JetBrains Mono,monospace;color:${isBeatStart ? '#ff7700' : '#555'};`;
+      d.style.cssText = `min-width:20px;max-width:26px;width:22px;text-align:center;font-size:8px;font-family:JetBrains Mono,monospace;color:${isBeatStart ? '#ff7700' : '#555'};flex-shrink:0;`;
       d.textContent = i;
       container.appendChild(d);
     }
@@ -492,6 +502,7 @@ class FLStudioApp {
     const canvas = document.getElementById('playlist-canvas');
     const labels = document.getElementById('playlist-track-labels');
     this.playlist = new Playlist(canvas, labels, this.sequencer);
+    this.sequencer.playlist = this.playlist;
 
     // Tool buttons
     document.getElementById('pl-draw-btn').addEventListener('click', () => {
@@ -508,6 +519,22 @@ class FLStudioApp {
       this.playlist.toggleLoop();
       e.currentTarget.classList.toggle('active', this.playlist.isLooping);
     });
+  }
+
+  setPlaybackMode(mode) {
+    if (mode !== 'pattern' && mode !== 'song') return;
+    if (this.sequencer) {
+      this.sequencer.setPlaybackMode(mode);
+    }
+    const patBtn = document.getElementById('mode-pattern');
+    const songBtn = document.getElementById('mode-song');
+    if (patBtn) patBtn.classList.toggle('active', mode === 'pattern');
+    if (songBtn) songBtn.classList.toggle('active', mode === 'song');
+    const statusMode = document.getElementById('status-mode');
+    if (statusMode) {
+      statusMode.textContent = mode === 'pattern' ? 'Pattern Mode' : 'Song Mode (Arrangement)';
+    }
+    showToast(mode === 'pattern' ? 'Pattern Mode (Loops channel rack)' : 'Song Mode (Plays playlist arrangement)');
   }
 
   // ── Transport ─────────────────────────────────────────────────
@@ -537,13 +564,23 @@ class FLStudioApp {
       document.querySelectorAll('.step-btn.playing').forEach(b => b.classList.remove('playing'));
       if (this.pianoRoll) { this.pianoRoll.playhead = 0; this.pianoRoll.render(); }
       if (this.playlist)  { this.playlist.updatePlayhead(0); }
-      this._updatePositionDisplay(0);
+      this._updatePositionDisplay(0, 1, 1);
       setTimeout(() => stopBtn.classList.remove('active'), 200);
     });
 
     recordBtn.addEventListener('click', () => {
       this._toggleVoiceRecording();
     });
+
+    // Pattern vs Song mode buttons
+    const patBtn = document.getElementById('mode-pattern');
+    const songBtn = document.getElementById('mode-song');
+    if (patBtn) {
+      patBtn.addEventListener('click', () => this.setPlaybackMode('pattern'));
+    }
+    if (songBtn) {
+      songBtn.addEventListener('click', () => this.setPlaybackMode('song'));
+    }
 
     // Floating recording HUD stop button
     document.getElementById('btn-hud-stop-rec')?.addEventListener('click', () => {
@@ -562,7 +599,7 @@ class FLStudioApp {
   }
 
   // ── Step callback ─────────────────────────────────────────────
-  _onStep(step) {
+  _onStep(step, songStep) {
     // Highlight current step in channel rack
     document.querySelectorAll('.step-btn').forEach(btn => {
       const s = parseInt(btn.dataset.step, 10);
@@ -574,17 +611,22 @@ class FLStudioApp {
       this.pianoRoll.updatePlayhead(step);
     }
 
-    // Update playlist playhead (16 steps = 1 bar)
-    const bar = step / 16;
-    this.playbarPos += 1 / 16;
-    if (this.playlist && this.activeTab === 'playlist') {
-      this.playlist.updatePlayhead(this.playbarPos % this.playlist.bars);
+    // Update playlist playhead
+    if (this.playlist) {
+      if (this.sequencer.playbackMode === 'song') {
+        const curSongStep = songStep !== undefined ? songStep : (this.sequencer.songStep || 0);
+        this.playlist.updatePlayhead(curSongStep / 16);
+      } else if (this.activeTab === 'playlist') {
+        this.playlist.updatePlayhead(step / 16);
+      }
     }
 
     // Update position display
-    const beat = Math.floor(step / 4) + 1;
-    const subdivBeat = (step % 4) + 1;
-    this._updatePositionDisplay(step, beat, subdivBeat);
+    const activeStep = (this.sequencer.playbackMode === 'song' && songStep !== undefined) ? songStep : step;
+    const bar = Math.floor(activeStep / 16) + 1;
+    const beat = Math.floor((activeStep % 16) / 4) + 1;
+    const subdivBeat = (activeStep % 4) + 1;
+    this._updatePositionDisplay(activeStep, beat, subdivBeat);
   }
 
   _onStop() {
@@ -680,13 +722,13 @@ class FLStudioApp {
           btn.classList.remove('needs-unmute');
           btn.title = 'Audio Engine Running — Click to test sound';
         }
-        if (label) label.textContent = 'Audio Active';
+        if (label) label.textContent = 'Audio ON';
       } else {
         if (btn) {
           btn.classList.add('needs-unmute');
           btn.title = 'Audio is Suspended by Browser — Click to Unmute';
         }
-        if (label) label.textContent = 'Click to Unmute';
+        if (label) label.textContent = 'Unmute';
       }
     };
 

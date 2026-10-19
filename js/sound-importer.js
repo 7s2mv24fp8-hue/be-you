@@ -637,10 +637,11 @@ class SoundImporter {
 
 /* Import button in toolbar */
 #btn-import-sound {
-  display: inline-flex; align-items: center; gap: 5px;
+  display: inline-flex; align-items: center; gap: 3px;
   background: rgba(255, 255, 255,0.1); border: 1px solid rgba(255, 255, 255,0.28);
-  color: #e4e4e7; font-size: 11px; font-weight: 700;
-  padding: 4px 11px; border-radius: 5px; cursor: pointer; transition: all 0.18s; height: 26px;
+  color: #e4e4e7; font-size: 10px; font-weight: 700;
+  padding: 2px 6px; border-radius: 4px; cursor: pointer; transition: all 0.18s; height: 24px;
+  white-space: nowrap; flex-shrink: 0;
 }
 #btn-import-sound:hover { background: rgba(255, 255, 255,0.2); color: #fff; }
 `;

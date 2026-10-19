@@ -349,7 +349,7 @@ class MaxStudioBuddy {
     } else if (lower.includes('open eq') || lower.includes('parametric eq') || lower.includes('fruity eq')) {
       app._switchTab('mixer');
       if (window.flParametricEQ) window.flParametricEQ.openFloating();
-      responseMsg += `Opened Fruity Parametric EQ 2. `;
+      responseMsg += `Opened Parametric EQ 2. `;
     } else if (lower.includes('soundgoodizer') || lower.includes('maximizer')) {
       if (window.flSoundgoodizer) {
         window.flSoundgoodizer.open();
