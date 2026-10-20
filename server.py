@@ -611,8 +611,8 @@ def admin_logs(limit: int = 50, admin: dict = Depends(require_admin)):
 
 # ── AI Music Generation Endpoints (Hidden API Keys Proxy) ─────────────────────
 
-@app.get("/health")
-@app.get("/api/music/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
+@app.api_route("/api/music/health", methods=["GET", "HEAD"])
 def health_check():
     """Health endpoint for Render & Docker uptime checks."""
     return {

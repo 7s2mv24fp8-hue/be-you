@@ -1,6 +1,6 @@
 # BeYou Studio — Production Web DAW
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/7s2mv24fp8-hue/fl-studio-clone)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/7s2mv24fp8-hue/be-you)
 
 > **BeYou Studio** is a full-featured, browser-based Digital Audio Workstation (DAW) and music production suite powered by the Web Audio API, Canvas, Python FastAPI, and AI audio synthesis.
 
@@ -10,7 +10,7 @@
 
 Click the button above or visit this direct link to deploy **BeYou Studio** immediately:
 
-👉 **[Deploy BeYou Studio on Render](https://render.com/deploy?repo=https://github.com/7s2mv24fp8-hue/fl-studio-clone)**
+👉 **[Deploy BeYou Studio on Render](https://render.com/deploy?repo=https://github.com/7s2mv24fp8-hue/be-you)**
 
 Render will automatically:
 1. Detect [`render.yaml`](render.yaml) Blueprint.
