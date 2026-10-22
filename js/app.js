@@ -665,6 +665,20 @@ class FLStudioApp {
     }
   }
 
+  togglePause() {
+    if (this.sequencer.isPlaying) {
+      this.sequencer.pause();
+      this._updateTransportUI('paused');
+      showToast('Paused ❚❚');
+    } else if (this.sequencer.isPaused) {
+      this.sequencer.resume();
+      this._updateTransportUI('playing');
+      showToast('Resuming ▶');
+    } else {
+      showToast('Playback stopped');
+    }
+  }
+
   _bindTransport() {
     const playBtn   = document.getElementById('btn-play');
     const pauseBtn  = document.getElementById('btn-pause');
@@ -693,17 +707,7 @@ class FLStudioApp {
     };
 
     const handlePause = () => {
-      if (this.sequencer.isPlaying) {
-        this.sequencer.pause();
-        this._updateTransportUI('paused');
-        showToast('Paused ❚❚');
-      } else if (this.sequencer.isPaused) {
-        this.sequencer.resume();
-        this._updateTransportUI('playing');
-        showToast('Resuming ▶');
-      } else {
-        handlePlay();
-      }
+      this.togglePause();
     };
 
     const handleStop = () => {
@@ -825,6 +829,9 @@ class FLStudioApp {
 
   _onPause(step, songStep) {
     this._updateTransportUI('paused');
+    const effectiveStep = (step !== undefined) ? step : this.sequencer.currentStep;
+    const effectiveSongStep = (songStep !== undefined) ? songStep : this.sequencer.songStep;
+    this._onStep(effectiveStep, effectiveSongStep);
   }
 
   _onResume(step, songStep) {
@@ -1057,15 +1064,7 @@ class FLStudioApp {
           e.preventDefault();
           if (e.shiftKey) {
             // Shift+Space toggles pause/resume
-            if (this.sequencer.isPlaying) {
-              this.sequencer.pause();
-              this._updateTransportUI('paused');
-              showToast('Paused ❚❚');
-            } else if (this.sequencer.isPaused) {
-              this.sequencer.resume();
-              this._updateTransportUI('playing');
-              showToast('Resuming ▶');
-            }
+            this.togglePause();
           } else {
             // Normal spacebar
             if (this.sequencer.isPlaying) {
@@ -1089,15 +1088,10 @@ class FLStudioApp {
           }
           break;
         case 'Pause':
-          e.preventDefault();
-          if (this.sequencer.isPlaying) {
-            this.sequencer.pause();
-            this._updateTransportUI('paused');
-            showToast('Paused ❚❚');
-          } else if (this.sequencer.isPaused) {
-            this.sequencer.resume();
-            this._updateTransportUI('playing');
-            showToast('Resuming ▶');
+        case 'KeyP':
+          if (!e.ctrlKey && !e.metaKey && !['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) {
+            e.preventDefault();
+            this.togglePause();
           }
           break;
         case 'Escape':

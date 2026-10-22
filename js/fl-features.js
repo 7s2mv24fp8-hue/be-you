@@ -614,12 +614,6 @@ class KeyboardShortcuts {
       if (['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) return;
 
       switch (true) {
-        case (e.code === 'Space'): {
-          e.preventDefault();
-          const playBtn = document.getElementById('btn-play');
-          if (playBtn) playBtn.click();
-          break;
-        }
         case (e.ctrlKey && e.code === 'KeyZ'): {
           e.preventDefault();
           this._undo();

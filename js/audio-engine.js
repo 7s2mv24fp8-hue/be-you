@@ -12,6 +12,7 @@ class AudioEngine {
     this.initialized = false;
     window.audioEngine = this;
     this.tracks = {};
+    this._activeNodes = new Set();
   }
 
   get ctx() {
@@ -223,7 +224,7 @@ class AudioEngine {
     if (!this.ctx) return;
     const t = time || this.ctx.currentTime;
     const isDownbeat = (step === 0);
-    const osc = this.ctx.createOscillator();
+    const osc = this._trackNode(this.ctx.createOscillator());
     const gain = this.ctx.createGain();
 
     osc.type = 'sine';
@@ -292,6 +293,48 @@ class AudioEngine {
   setMasterVolume(vol) { // 0–1
     if (this.masterGain) {
       this.masterGain.gain.setTargetAtTime(vol, this.ctx.currentTime, 0.01);
+    }
+  }
+
+  _trackNode(node) {
+    if (!node) return node;
+    if (!this._activeNodes) this._activeNodes = new Set();
+    this._activeNodes.add(node);
+    const onEnded = () => {
+      if (this._activeNodes) this._activeNodes.delete(node);
+    };
+    try {
+      node.addEventListener('ended', onEnded, { once: true });
+    } catch (_) {
+      node.onended = onEnded;
+    }
+    return node;
+  }
+
+  stopAll() {
+    if (this._activeNodes) {
+      for (const node of this._activeNodes) {
+        try {
+          if (typeof node.stop === 'function') {
+            node.stop(0);
+          }
+          if (typeof node.disconnect === 'function') {
+            node.disconnect();
+          }
+        } catch (_) {}
+      }
+      this._activeNodes.clear();
+    }
+
+    if (this.masterGain && this.ctx) {
+      try {
+        const now = this.ctx.currentTime;
+        const curGain = this.masterGain.gain.value || 0.85;
+        this.masterGain.gain.cancelScheduledValues(now);
+        this.masterGain.gain.setValueAtTime(0, now);
+        this.masterGain.gain.setValueAtTime(0, now + 0.02);
+        this.masterGain.gain.linearRampToValueAtTime(curGain, now + 0.04);
+      } catch (_) {}
     }
   }
 
@@ -526,7 +569,7 @@ class AudioEngine {
     const t = time || this.ctx.currentTime;
 
     // Sub oscillator
-    const osc = this.ctx.createOscillator();
+    const osc = this._trackNode(this.ctx.createOscillator());
     osc.type = 'sine';
     osc.frequency.setValueAtTime(freq * pitch * 3.5, t);
     osc.frequency.exponentialRampToValueAtTime(freq * pitch, t + 0.05);
@@ -559,7 +602,7 @@ class AudioEngine {
     const data = buffer.getChannelData(0);
     for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1);
 
-    const noise = this.ctx.createBufferSource();
+    const noise = this._trackNode(this.ctx.createBufferSource());
     noise.buffer = buffer;
 
     const noiseFilter = this.ctx.createBiquadFilter();
@@ -572,7 +615,7 @@ class AudioEngine {
     noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
 
     // Tone component
-    const osc = this.ctx.createOscillator();
+    const osc = this._trackNode(this.ctx.createOscillator());
     osc.type = 'triangle';
     osc.frequency.setValueAtTime(220, t);
     osc.frequency.exponentialRampToValueAtTime(160, t + 0.1);
@@ -611,7 +654,7 @@ class AudioEngine {
     filter.frequency.value = open ? 7000 : 9000;
 
     freqs.forEach(freq => {
-      const osc = this.ctx.createOscillator();
+      const osc = this._trackNode(this.ctx.createOscillator());
       osc.type = 'square';
       osc.frequency.value = freq;
       const g = this.ctx.createGain();
@@ -638,7 +681,7 @@ class AudioEngine {
       const data = buffer.getChannelData(0);
       for (let j = 0; j < bufferSize; j++) data[j] = Math.random() * 2 - 1;
 
-      const noise = this.ctx.createBufferSource();
+      const noise = this._trackNode(this.ctx.createBufferSource());
       noise.buffer = buffer;
 
       const filter = this.ctx.createBiquadFilter();
@@ -665,7 +708,7 @@ class AudioEngine {
     const { freq = 120, gain = 0.75 } = options;
     const t = time || this.ctx.currentTime;
 
-    const osc = this.ctx.createOscillator();
+    const osc = this._trackNode(this.ctx.createOscillator());
     osc.type = 'sine';
     osc.frequency.setValueAtTime(freq * 1.5, t);
     osc.frequency.exponentialRampToValueAtTime(freq, t + 0.02);
@@ -702,13 +745,13 @@ class AudioEngine {
     const noteEnd = t + duration;
 
     // Oscillator 1
-    const osc1 = this.ctx.createOscillator();
+    const osc1 = this._trackNode(this.ctx.createOscillator());
     osc1.type = type;
     osc1.frequency.value = freq;
     osc1.detune.value = detune;
 
     // Oscillator 2 (slight detune for fatness)
-    const osc2 = this.ctx.createOscillator();
+    const osc2 = this._trackNode(this.ctx.createOscillator());
     osc2.type = type;
     osc2.frequency.value = freq;
     osc2.detune.value = detune + 7;

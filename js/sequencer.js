@@ -16,6 +16,9 @@ class Sequencer {
     this.swing = 0; // 0.0 to 0.75 groove swing
     this.currentStep = 0;
     this.songStep = 0;
+    this.lastAudibleStep = 0;
+    this.lastAudibleSongStep = 0;
+    this._stepTimeouts = [];
 
     // Scheduling config
     this.scheduleAheadTime = 0.12; // seconds to look ahead
@@ -228,7 +231,9 @@ class Sequencer {
     } else {
       this.currentStep = 0;
     }
-    this._nextStepTime = this.engine.currentTime + 0.05;
+    this.lastAudibleStep = this.currentStep;
+    this.lastAudibleSongStep = this.songStep;
+    this._nextStepTime = this.engine.currentTime + 0.04;
     this._schedulerTimer = setInterval(() => this._scheduler(), this.lookahead);
   }
 
@@ -236,8 +241,30 @@ class Sequencer {
     if (this.isPlaying) {
       this.isPlaying = false;
       this.isPaused = true;
-      clearInterval(this._schedulerTimer);
-      this._schedulerTimer = null;
+      if (this._schedulerTimer) {
+        clearInterval(this._schedulerTimer);
+        this._schedulerTimer = null;
+      }
+
+      // Cancel all queued future UI step updates
+      if (this._stepTimeouts) {
+        this._stepTimeouts.forEach(id => clearTimeout(id));
+        this._stepTimeouts = [];
+      }
+
+      // Freeze playback position at the step that was actively heard
+      if (this.lastAudibleStep !== undefined) {
+        this.currentStep = this.lastAudibleStep;
+      }
+      if (this.lastAudibleSongStep !== undefined) {
+        this.songStep = this.lastAudibleSongStep;
+      }
+
+      // Immediately silence any active audio nodes/voices
+      if (this.engine && typeof this.engine.stopAll === 'function') {
+        this.engine.stopAll();
+      }
+
       if (this.onPause) this.onPause(this.currentStep, this.songStep);
     } else if (this.isPaused) {
       this.resume();
@@ -250,7 +277,17 @@ class Sequencer {
     this.engine.resume();
     this.isPlaying = true;
     this.isPaused = false;
-    this._nextStepTime = this.engine.currentTime + 0.05;
+
+    // Clear any stale timeouts
+    if (this._stepTimeouts) {
+      this._stepTimeouts.forEach(id => clearTimeout(id));
+      this._stepTimeouts = [];
+    }
+
+    this.lastAudibleStep = this.playbackMode === 'song' ? (this.songStep % this.steps) : this.currentStep;
+    this.lastAudibleSongStep = this.songStep;
+
+    this._nextStepTime = this.engine.currentTime + 0.03;
     this._schedulerTimer = setInterval(() => this._scheduler(), this.lookahead);
     if (this.onResume) this.onResume(this.currentStep, this.songStep);
   }
@@ -258,10 +295,23 @@ class Sequencer {
   stop() {
     this.isPlaying = false;
     this.isPaused = false;
-    clearInterval(this._schedulerTimer);
-    this._schedulerTimer = null;
+    if (this._schedulerTimer) {
+      clearInterval(this._schedulerTimer);
+      this._schedulerTimer = null;
+    }
+    if (this._stepTimeouts) {
+      this._stepTimeouts.forEach(id => clearTimeout(id));
+      this._stepTimeouts = [];
+    }
     this.currentStep = 0;
     this.songStep = 0;
+    this.lastAudibleStep = 0;
+    this.lastAudibleSongStep = 0;
+
+    if (this.engine && typeof this.engine.stopAll === 'function') {
+      this.engine.stopAll();
+    }
+
     if (this.playlist && typeof this.playlist.updatePlayhead === 'function') {
       this.playlist.updatePlayhead(0);
     }
@@ -327,6 +377,7 @@ class Sequencer {
         // Play recorded vocal / audio clip with pitch & pan
         try {
           const src = this.engine.ctx.createBufferSource();
+          if (this.engine._trackNode) this.engine._trackNode(src);
           src.buffer = ch.audioBuffer;
           if (stepPitch !== 0) {
             src.playbackRate.value = Math.pow(2, stepPitch / 12);
@@ -379,10 +430,20 @@ class Sequencer {
     // Notify UI on the step being played
     const stepCopy = patternStep;
     const songStepCopy = step;
-    const delay = (time - this.engine.currentTime) * 1000;
-    setTimeout(() => {
+    const delay = Math.max(0, (time - this.engine.currentTime) * 1000);
+    if (!this._stepTimeouts) this._stepTimeouts = [];
+    let timeoutId = null;
+    timeoutId = setTimeout(() => {
+      if (this._stepTimeouts) {
+        const idx = this._stepTimeouts.indexOf(timeoutId);
+        if (idx !== -1) this._stepTimeouts.splice(idx, 1);
+      }
+      if (!this.isPlaying) return;
+      this.lastAudibleStep = stepCopy;
+      this.lastAudibleSongStep = songStepCopy;
       if (this.onStep) this.onStep(stepCopy, songStepCopy);
-    }, Math.max(0, delay));
+    }, delay);
+    this._stepTimeouts.push(timeoutId);
   }
 
   _advanceStep() {
