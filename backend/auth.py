@@ -72,6 +72,13 @@ def check_rate_limit(request: Request, key_prefix: str = "auth", max_attempts: i
     timestamps.append(now)
     _RATE_LIMIT_STORE[rate_key] = timestamps
 
+    # Periodically prune stale keys from the store to prevent memory leak
+    if len(_RATE_LIMIT_STORE) > 5000:
+        stale_keys = [k for k, ts in _RATE_LIMIT_STORE.items()
+                      if all(now - t >= window_seconds for t in ts)]
+        for k in stale_keys:
+            del _RATE_LIMIT_STORE[k]
+
 
 # ── 2. Bot Protection (Honeypot & User-Agent) ────────────────────────────────
 

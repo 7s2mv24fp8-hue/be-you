@@ -324,7 +324,7 @@ def update_project_safe(project_id: str, updates: Dict[str, Any]) -> bool:
     Safely updates project fields using strict parameterization and column whitelisting.
     Prevents SQL injection and field tampering.
     """
-    ALLOWED_COLUMNS = {"title", "bpm", "channel_count", "state_json", "is_public", "updated_at"}
+    ALLOWED_COLUMNS = {"title", "bpm", "channel_count", "state_json", "is_public", "updated_at", "genre", "like_count", "play_count"}
     filtered_updates = {k: v for k, v in updates.items() if k in ALLOWED_COLUMNS}
     if not filtered_updates:
         return False

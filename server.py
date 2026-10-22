@@ -202,9 +202,20 @@ async def security_middleware(request: Request, call_next):
 
 
 # Strict CORS Configuration
+ALLOWED_ORIGINS = [
+    "http://localhost:8000",
+    "http://localhost:8080",
+    "http://127.0.0.1:8000",
+    "http://127.0.0.1:8080",
+]
+# In production, Render sets the RENDER_EXTERNAL_URL env var automatically
+_render_url = os.environ.get("RENDER_EXTERNAL_URL", "")
+if _render_url:
+    ALLOWED_ORIGINS.append(_render_url.rstrip("/"))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS if IS_PRODUCTION else ["*"],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "X-File-Name", "X-Requested-With"],
@@ -1048,7 +1059,8 @@ def train_song(req: SongTrainRequest, req_obj: Request):
     if auth.startswith("Bearer "):
         try:
             token = auth.split(" ")[1]
-            u = get_current_user(token)
+            from backend.auth import get_user_from_token
+            u = get_user_from_token(token)
             if u:
                 user_id = u["id"]
         except Exception:

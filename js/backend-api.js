@@ -64,27 +64,7 @@ class BackendAPI {
       }
     }
 
-    // Auto-login as default Super Admin Rahul Sharma if first time
-    return await this.loginDefaultAdmin();
-  }
-
-  async loginDefaultAdmin() {
-    try {
-      const res = await fetch(`${this.baseUrl}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: 'rahul', password: 'password123', honeypot: null })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        this.token = data.token;
-        this.currentUser = data.user;
-        localStorage.setItem(this.tokenKey, this.token);
-        return this.currentUser;
-      }
-    } catch (e) {
-      console.warn('Default admin auto-login unreachable:', e);
-    }
+    // No stored token — return null so caller can prompt the user to log in
     return null;
   }
 

@@ -65,3 +65,12 @@ ALLOWED_AUDIO_MIMES = {
     "audio/m4a", "audio/mp4",
     "application/octet-stream", # for raw audio recordings
 }
+
+# ── Production Safety Guard ────────────────────────────────────────────────────
+_WEAK_PASSWORDS = {"password123", "password", "admin", "admin123", "changeme", ""}
+if IS_PRODUCTION and ADMIN_PASSWORD.lower() in _WEAK_PASSWORDS:
+    raise RuntimeError(
+        "\n\n[SECURITY ERROR] Refusing to start in production with a weak ADMIN_PASSWORD.\n"
+        "Set a strong ADMIN_PASSWORD secret in the Render dashboard (or your deployment env).\n"
+        "It must be at least 12 characters with uppercase, numbers, and symbols.\n"
+    )
