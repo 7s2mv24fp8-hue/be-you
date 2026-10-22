@@ -238,8 +238,8 @@ canvas { display: block; }
   border: none;
   cursor: ns-resize;
   padding: 0;
-  line-height: 1;
   -moz-appearance: textfield;
+  appearance: textfield;
 }
 .bpm-display::-webkit-outer-spin-button,
 .bpm-display::-webkit-inner-spin-button {
