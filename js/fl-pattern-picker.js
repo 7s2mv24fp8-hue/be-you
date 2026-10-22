@@ -67,9 +67,27 @@ class FLPatternPicker {
       item.innerHTML = `
         <span class="fl-picker-name">${p.name}</span>
         <div class="fl-picker-actions">
+          <button class="fl-picker-btn btn-extend" title="Extend Pattern Length">Extend</button>
           <button class="fl-picker-btn btn-clone" title="Clone Pattern">Clone</button>
         </div>
       `;
+
+      const extendBtn = item.querySelector('.btn-extend');
+      if (extendBtn) {
+        extendBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.activePatternId = p.id;
+          if (window.app && window.app.sequencer) {
+            window.app.sequencer.patternName = p.name;
+          }
+          const rackSelect = document.getElementById('rack-pattern-select');
+          if (rackSelect) rackSelect.value = p.name;
+          this._renderList();
+          if (window.app && typeof window.app.openExtendPatternModal === 'function') {
+            window.app.openExtendPatternModal();
+          }
+        });
+      }
 
       item.addEventListener('click', () => {
         this.activePatternId = p.id;

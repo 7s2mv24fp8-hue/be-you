@@ -53,9 +53,13 @@ class FLStudioApp {
     this._initAudioEditor();
     this._initGlobalDropZone();
 
+    this._bindExtendPatternModal();
+
     // Sequencer callbacks
-    this.sequencer.onStep = step => this._onStep(step);
+    this.sequencer.onStep = (step, songStep) => this._onStep(step, songStep);
     this.sequencer.onStop = () => this._onStop();
+    this.sequencer.onPause = (step, songStep) => this._onPause(step, songStep);
+    this.sequencer.onResume = (step, songStep) => this._onResume(step, songStep);
     this.sequencer.onPatternChange = () => this._refreshChannelRack();
 
     // Init position display
@@ -92,19 +96,121 @@ class FLStudioApp {
     }
   }
 
-  setPatternLength(newSteps) {
+  setPatternLength(newSteps, options = {}) {
     newSteps = parseInt(newSteps, 10) || 16;
-    this.sequencer.setStepCount(newSteps);
+    this.sequencer.extendPattern(newSteps, options);
     this._renderStepHeaders(newSteps);
     this._buildChannelRack();
     if (this.pianoRoll && typeof this.pianoRoll.setSteps === 'function') {
       this.pianoRoll.setSteps(newSteps);
     }
     const select = document.getElementById('rack-step-length-select');
-    if (select && select.value !== String(newSteps)) {
+    if (select) {
+      let opt = select.querySelector(`option[value="${newSteps}"]`);
+      if (!opt) {
+        opt = document.createElement('option');
+        opt.value = String(newSteps);
+        opt.textContent = `${newSteps} Steps (${(newSteps / 16).toFixed(1).replace('.0','')} Bars)`;
+        const customOpt = select.querySelector('option[value="custom"]');
+        if (customOpt) {
+          select.insertBefore(opt, customOpt);
+        } else {
+          select.appendChild(opt);
+        }
+      }
       select.value = String(newSteps);
     }
-    showToast(`Pattern: ${newSteps} steps (${newSteps / 16} bars)`);
+    const bars = (newSteps / 16).toFixed(1).replace('.0', '');
+    showToast(`Pattern: ${newSteps} steps (${bars} bar${newSteps === 16 ? '' : 's'})${options.repeat ? ' • Groove duplicated' : ''}`);
+  }
+
+  openExtendPatternModal() {
+    const modal = document.getElementById('modal-extend-pattern');
+    if (!modal) return;
+    const curSteps = this.sequencer.steps || 16;
+    const curBars = (curSteps / 16).toFixed(1).replace('.0', '');
+    const patName = this.sequencer.patternName || 'Pattern 1';
+
+    const nameEl = document.getElementById('extend-modal-pattern-name');
+    if (nameEl) nameEl.textContent = patName;
+
+    const badgeEl = document.getElementById('extend-modal-current-steps-badge');
+    if (badgeEl) badgeEl.textContent = `${curSteps} Steps (${curBars} Bar${curSteps === 16 ? '' : 's'})`;
+
+    const targetStepsInput = document.getElementById('extend-target-steps');
+    const targetBarsInput = document.getElementById('extend-target-bars');
+
+    const nextSteps = curSteps < 128 ? (curSteps >= 64 ? 128 : Math.min(128, curSteps * 2)) : 128;
+    if (targetStepsInput) targetStepsInput.value = nextSteps;
+    if (targetBarsInput) targetBarsInput.value = (nextSteps / 16).toFixed(1).replace('.0', '');
+
+    document.querySelectorAll('.extend-preset-btn[data-steps]').forEach(b => {
+      b.classList.toggle('active', parseInt(b.dataset.steps, 10) === nextSteps);
+    });
+
+    modal.classList.remove('hidden');
+  }
+
+  _bindExtendPatternModal() {
+    const modal = document.getElementById('modal-extend-pattern');
+    if (!modal) return;
+
+    const targetStepsInput = document.getElementById('extend-target-steps');
+    const targetBarsInput = document.getElementById('extend-target-bars');
+
+    const syncPresetHighlight = (steps) => {
+      document.querySelectorAll('.extend-preset-btn[data-steps]').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.steps, 10) === steps);
+      });
+    };
+
+    targetStepsInput?.addEventListener('input', () => {
+      const s = Math.min(128, Math.max(8, parseInt(targetStepsInput.value, 10) || 16));
+      if (targetBarsInput) targetBarsInput.value = (s / 16).toFixed(1).replace('.0', '');
+      syncPresetHighlight(s);
+    });
+
+    targetBarsInput?.addEventListener('input', () => {
+      const b = Math.min(8, Math.max(0.5, parseFloat(targetBarsInput.value) || 1));
+      const s = Math.min(128, Math.max(8, Math.round(b * 16)));
+      if (targetStepsInput) targetStepsInput.value = s;
+      syncPresetHighlight(s);
+    });
+
+    // Preset buttons
+    document.querySelectorAll('.extend-preset-btn[data-steps]').forEach(b => {
+      b.addEventListener('click', () => {
+        const s = parseInt(b.dataset.steps, 10);
+        if (targetStepsInput) targetStepsInput.value = s;
+        if (targetBarsInput) targetBarsInput.value = (s / 16).toFixed(1).replace('.0', '');
+        syncPresetHighlight(s);
+      });
+    });
+
+    document.getElementById('extend-preset-add-bar')?.addEventListener('click', () => {
+      const cur = parseInt(targetStepsInput?.value, 10) || this.sequencer.steps || 16;
+      const s = Math.min(128, cur + 16);
+      if (targetStepsInput) targetStepsInput.value = s;
+      if (targetBarsInput) targetBarsInput.value = (s / 16).toFixed(1).replace('.0', '');
+      syncPresetHighlight(s);
+    });
+
+    document.getElementById('extend-preset-double')?.addEventListener('click', () => {
+      const cur = parseInt(targetStepsInput?.value, 10) || this.sequencer.steps || 16;
+      const s = Math.min(128, cur * 2);
+      if (targetStepsInput) targetStepsInput.value = s;
+      if (targetBarsInput) targetBarsInput.value = (s / 16).toFixed(1).replace('.0', '');
+      syncPresetHighlight(s);
+    });
+
+    // Confirm button
+    document.getElementById('btn-extend-pattern-confirm')?.addEventListener('click', () => {
+      const targetSteps = parseInt(targetStepsInput?.value, 10) || 16;
+      const modeRadio = document.querySelector('input[name="extend-content-mode"]:checked');
+      const isRepeat = modeRadio ? modeRadio.value === 'repeat' : true;
+      this.setPatternLength(targetSteps, { repeat: isRepeat });
+      modal.classList.add('hidden');
+    });
   }
 
   cloneChannel(ci) {
@@ -538,37 +644,100 @@ class FLStudioApp {
   }
 
   // ── Transport ─────────────────────────────────────────────────
+  _updateTransportUI(state) {
+    const playBtns = [document.getElementById('btn-play'), document.getElementById('rack-play-btn')].filter(Boolean);
+    const pauseBtns = [document.getElementById('btn-pause'), document.getElementById('rack-pause-btn')].filter(Boolean);
+    const stopBtns = [document.getElementById('btn-stop'), document.getElementById('rack-stop-btn')].filter(Boolean);
+
+    if (state === 'playing') {
+      playBtns.forEach(b => b.classList.add('active', 'playing-glow'));
+      pauseBtns.forEach(b => b.classList.remove('active', 'paused-glow'));
+      stopBtns.forEach(b => b.classList.remove('active'));
+    } else if (state === 'paused') {
+      playBtns.forEach(b => b.classList.remove('active', 'playing-glow'));
+      pauseBtns.forEach(b => b.classList.add('active', 'paused-glow'));
+      stopBtns.forEach(b => b.classList.remove('active'));
+    } else if (state === 'stopped') {
+      playBtns.forEach(b => b.classList.remove('active', 'playing-glow'));
+      pauseBtns.forEach(b => b.classList.remove('active', 'paused-glow'));
+      stopBtns.forEach(b => b.classList.add('active'));
+      setTimeout(() => stopBtns.forEach(b => b.classList.remove('active')), 220);
+    }
+  }
+
   _bindTransport() {
     const playBtn   = document.getElementById('btn-play');
+    const pauseBtn  = document.getElementById('btn-pause');
     const stopBtn   = document.getElementById('btn-stop');
     const recordBtn = document.getElementById('btn-record');
 
-    playBtn.addEventListener('click', async () => {
+    const rackPlayBtn   = document.getElementById('rack-play-btn');
+    const rackPauseBtn  = document.getElementById('rack-pause-btn');
+    const rackStopBtn   = document.getElementById('rack-stop-btn');
+    const rackExtendBtn = document.getElementById('rack-extend-btn');
+    const rackDoubleBtn = document.getElementById('rack-double-btn');
+
+    const handlePlay = async (preferredMode) => {
       if (!this.audioEngine.initialized) this.audioEngine.init();
       await this.audioEngine.resume();
-      this.sequencer.play();
-      playBtn.classList.add('active', 'playing-glow');
-      stopBtn.classList.remove('active');
-      showToast('Playing');
-    });
+      if (preferredMode) this.setPlaybackMode(preferredMode);
+      if (this.sequencer.isPaused) {
+        this.sequencer.resume();
+        this._updateTransportUI('playing');
+        showToast('Resuming Playback ▶');
+      } else {
+        this.sequencer.play();
+        this._updateTransportUI('playing');
+        showToast('Playing');
+      }
+    };
 
-    stopBtn.addEventListener('click', () => {
+    const handlePause = () => {
+      if (this.sequencer.isPlaying) {
+        this.sequencer.pause();
+        this._updateTransportUI('paused');
+        showToast('Paused ❚❚');
+      } else if (this.sequencer.isPaused) {
+        this.sequencer.resume();
+        this._updateTransportUI('playing');
+        showToast('Resuming ▶');
+      } else {
+        handlePlay();
+      }
+    };
+
+    const handleStop = () => {
       this.sequencer.stop();
-      playBtn.classList.remove('active', 'playing-glow');
-      stopBtn.classList.add('active');
-      // If voice recording is in progress, stop and insert take
+      this._updateTransportUI('stopped');
       if (this.recorder && this.recorder.isRecording) {
         this._stopVoiceRecording();
       }
-      // Clear step highlights
       document.querySelectorAll('.step-btn.playing').forEach(b => b.classList.remove('playing'));
       if (this.pianoRoll) { this.pianoRoll.playhead = 0; this.pianoRoll.render(); }
       if (this.playlist)  { this.playlist.updatePlayhead(0); }
       this._updatePositionDisplay(0, 1, 1);
-      setTimeout(() => stopBtn.classList.remove('active'), 200);
+    };
+
+    playBtn?.addEventListener('click', () => handlePlay());
+    pauseBtn?.addEventListener('click', () => handlePause());
+    stopBtn?.addEventListener('click', () => handleStop());
+
+    rackPlayBtn?.addEventListener('click', () => handlePlay('pattern'));
+    rackPauseBtn?.addEventListener('click', () => handlePause());
+    rackStopBtn?.addEventListener('click', () => handleStop());
+
+    rackExtendBtn?.addEventListener('click', () => this.openExtendPatternModal());
+    rackDoubleBtn?.addEventListener('click', () => {
+      const curSteps = this.sequencer.steps || 16;
+      const nextSteps = Math.min(128, curSteps * 2);
+      if (nextSteps > curSteps) {
+        this.setPatternLength(nextSteps, { repeat: true });
+      } else {
+        showToast('Maximum pattern length reached (128 steps)');
+      }
     });
 
-    recordBtn.addEventListener('click', () => {
+    recordBtn?.addEventListener('click', () => {
       this._toggleVoiceRecording();
     });
 
@@ -589,7 +758,26 @@ class FLStudioApp {
 
     // Step length selector
     document.getElementById('rack-step-length-select')?.addEventListener('change', e => {
-      this.setPatternLength(parseInt(e.target.value, 10));
+      if (e.target.value === 'custom') {
+        this.openExtendPatternModal();
+        e.target.value = String(this.sequencer.steps);
+      } else {
+        this.setPatternLength(parseInt(e.target.value, 10), { repeat: false });
+      }
+    });
+
+    // Pattern select dropdown
+    document.getElementById('rack-pattern-select')?.addEventListener('change', e => {
+      const patName = e.target.value;
+      this.sequencer.patternName = patName;
+      if (window.flPatternPicker) {
+        const found = window.flPatternPicker.patterns.find(p => p.name === patName);
+        if (found) {
+          window.flPatternPicker.activePatternId = found.id;
+          window.flPatternPicker._renderList();
+        }
+      }
+      showToast(`Selected ${patName}`);
     });
 
     // Stems export button
@@ -630,9 +818,17 @@ class FLStudioApp {
   }
 
   _onStop() {
-    document.getElementById('btn-play').classList.remove('active', 'playing-glow');
+    this._updateTransportUI('stopped');
     document.querySelectorAll('.step-btn.playing').forEach(b => b.classList.remove('playing'));
     this.playbarPos = 0;
+  }
+
+  _onPause(step, songStep) {
+    this._updateTransportUI('paused');
+  }
+
+  _onResume(step, songStep) {
+    this._updateTransportUI('playing');
   }
 
   _updatePositionDisplay(step, beat = 1, subdiv = 1) {
@@ -859,29 +1055,69 @@ class FLStudioApp {
       switch (e.code) {
         case 'Space':
           e.preventDefault();
-          if (this.sequencer.isPlaying) {
-            this.sequencer.stop();
-            document.getElementById('btn-play').classList.remove('active', 'playing-glow');
+          if (e.shiftKey) {
+            // Shift+Space toggles pause/resume
+            if (this.sequencer.isPlaying) {
+              this.sequencer.pause();
+              this._updateTransportUI('paused');
+              showToast('Paused ❚❚');
+            } else if (this.sequencer.isPaused) {
+              this.sequencer.resume();
+              this._updateTransportUI('playing');
+              showToast('Resuming ▶');
+            }
           } else {
-            if (!this.audioEngine.initialized) this.audioEngine.init();
-            this.audioEngine.resume();
-            this.sequencer.play();
-            document.getElementById('btn-play').classList.add('active', 'playing-glow');
+            // Normal spacebar
+            if (this.sequencer.isPlaying) {
+              this.sequencer.stop();
+              this._updateTransportUI('stopped');
+              document.querySelectorAll('.step-btn.playing').forEach(b => b.classList.remove('playing'));
+              if (this.pianoRoll) { this.pianoRoll.playhead = 0; this.pianoRoll.render(); }
+              if (this.playlist)  { this.playlist.updatePlayhead(0); }
+              this._updatePositionDisplay(0, 1, 1);
+            } else if (this.sequencer.isPaused) {
+              this.sequencer.resume();
+              this._updateTransportUI('playing');
+              showToast('Resuming ▶');
+            } else {
+              if (!this.audioEngine.initialized) this.audioEngine.init();
+              this.audioEngine.resume();
+              this.sequencer.play();
+              this._updateTransportUI('playing');
+              showToast('Playing');
+            }
+          }
+          break;
+        case 'Pause':
+          e.preventDefault();
+          if (this.sequencer.isPlaying) {
+            this.sequencer.pause();
+            this._updateTransportUI('paused');
+            showToast('Paused ❚❚');
+          } else if (this.sequencer.isPaused) {
+            this.sequencer.resume();
+            this._updateTransportUI('playing');
+            showToast('Resuming ▶');
           }
           break;
         case 'Escape':
           this.sequencer.stop();
+          this._updateTransportUI('stopped');
           break;
         case 'KeyZ':
           if (e.ctrlKey || e.metaKey) showToast('Undo (not implemented in demo)');
           break;
         case 'F5':
           e.preventDefault();
-          document.getElementById('btn-play').click();
+          document.getElementById('btn-play')?.click();
           break;
         case 'F6':
           e.preventDefault();
-          document.getElementById('btn-stop').click();
+          document.getElementById('btn-stop')?.click();
+          break;
+        case 'F7':
+          e.preventDefault();
+          document.getElementById('btn-pause')?.click();
           break;
         case 'F9':
           e.preventDefault();
@@ -2347,6 +2583,10 @@ class FLStudioApp {
       this.sequencer.bpm = state.bpm;
       const bpmEl = document.getElementById('bpm-display');
       if (bpmEl) bpmEl.value = state.bpm;
+    }
+
+    if (state.steps) {
+      this.setPatternLength(state.steps, { repeat: false });
     }
 
     if (state.channels && Array.isArray(state.channels)) {

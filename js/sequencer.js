@@ -9,6 +9,7 @@ class Sequencer {
 
     // Playback state
     this.isPlaying = false;
+    this.isPaused = false;
     this.playbackMode = 'pattern'; // 'pattern' | 'song'
     this.bpm = 140;
     this.steps = 16;
@@ -36,6 +37,8 @@ class Sequencer {
     // Callbacks
     this.onStep = null;       // (stepIndex) => void
     this.onStop = null;       // () => void
+    this.onPause = null;      // (currentStep, songStep) => void
+    this.onResume = null;     // (currentStep, songStep) => void
     this.onPatternChange = null;
 
     // Piano roll channel index (which channel piano roll edits)
@@ -71,30 +74,84 @@ class Sequencer {
     this.swing = Math.max(0, Math.min(0.75, parseFloat(val) || 0));
   }
 
-  setStepCount(newSteps) {
+  // ── Pattern length & Extension ────────────────────────────────
+  extendPattern(newSteps, options = {}) {
+    const repeat = options.repeat !== undefined ? !!options.repeat : true;
     newSteps = Math.max(8, Math.min(128, parseInt(newSteps, 10) || 16));
+    const oldSteps = this.steps;
+
     this.steps = newSteps;
 
     this.channels.forEach(ch => {
-      const oldSteps = ch.steps || [];
-      const oldVel = ch.velocity || [];
-      const oldPitch = ch.stepPitch || [];
-      const oldPan = ch.stepPan || [];
-      const oldCutoff = ch.stepCutoff || [];
+      const oldStepsArr = ch.steps || [];
+      const oldVelArr = ch.velocity || [];
+      const oldPitchArr = ch.stepPitch || [];
+      const oldPanArr = ch.stepPan || [];
+      const oldCutoffArr = ch.stepCutoff || [];
 
-      ch.steps = new Array(newSteps).fill(false);
-      ch.velocity = new Array(newSteps).fill(0.8);
-      ch.stepPitch = new Array(newSteps).fill(0);
-      ch.stepPan = new Array(newSteps).fill(0);
-      ch.stepCutoff = new Array(newSteps).fill(2000);
+      const nextSteps = new Array(newSteps).fill(false);
+      const nextVel = new Array(newSteps).fill(0.8);
+      const nextPitch = new Array(newSteps).fill(0);
+      const nextPan = new Array(newSteps).fill(0);
+      const nextCutoff = new Array(newSteps).fill(2000);
 
-      for (let i = 0; i < Math.min(oldSteps.length, newSteps); i++) {
-        ch.steps[i] = oldSteps[i];
-        ch.velocity[i] = oldVel[i] !== undefined ? oldVel[i] : 0.8;
-        ch.stepPitch[i] = oldPitch[i] !== undefined ? oldPitch[i] : 0;
-        ch.stepPan[i] = oldPan[i] !== undefined ? oldPan[i] : 0;
-        ch.stepCutoff[i] = oldCutoff[i] !== undefined ? oldCutoff[i] : 2000;
+      // Copy existing steps
+      const copyLimit = Math.min(oldStepsArr.length, newSteps);
+      for (let i = 0; i < copyLimit; i++) {
+        nextSteps[i] = !!oldStepsArr[i];
+        nextVel[i] = oldVelArr[i] !== undefined ? oldVelArr[i] : 0.8;
+        nextPitch[i] = oldPitchArr[i] !== undefined ? oldPitchArr[i] : 0;
+        nextPan[i] = oldPanArr[i] !== undefined ? oldPanArr[i] : 0;
+        nextCutoff[i] = oldCutoffArr[i] !== undefined ? oldCutoffArr[i] : 2000;
       }
+
+      // If extending and repeat is true, duplicate pattern cyclically
+      if (newSteps > oldSteps && repeat && oldSteps > 0) {
+        for (let i = oldSteps; i < newSteps; i++) {
+          const src = i % oldSteps;
+          nextSteps[i] = !!oldStepsArr[src];
+          nextVel[i] = oldVelArr[src] !== undefined ? oldVelArr[src] : 0.8;
+          nextPitch[i] = oldPitchArr[src] !== undefined ? oldPitchArr[src] : 0;
+          nextPan[i] = oldPanArr[src] !== undefined ? oldPanArr[src] : 0;
+          nextCutoff[i] = oldCutoffArr[src] !== undefined ? oldCutoffArr[src] : 2000;
+        }
+
+        // Duplicate synth piano roll notes
+        if (ch.notes && ch.notes.length > 0) {
+          const origNotes = ch.notes.filter(n => n.step < oldSteps);
+          const numReps = Math.ceil(newSteps / oldSteps);
+          const newNotesList = [...origNotes];
+
+          for (let r = 1; r < numReps; r++) {
+            const offset = r * oldSteps;
+            origNotes.forEach(n => {
+              const shiftedStep = n.step + offset;
+              if (shiftedStep < newSteps) {
+                if (!newNotesList.some(existing => existing.step === shiftedStep && existing.midi === n.midi)) {
+                  newNotesList.push({
+                    step: shiftedStep,
+                    midi: n.midi,
+                    length: n.length || 1,
+                    velocity: n.velocity !== undefined ? n.velocity : 0.8
+                  });
+                }
+              }
+            });
+          }
+          ch.notes = newNotesList;
+        }
+      } else if (newSteps < oldSteps) {
+        // Truncate notes if shrunk
+        if (ch.notes) {
+          ch.notes = ch.notes.filter(n => n.step < newSteps);
+        }
+      }
+
+      ch.steps = nextSteps;
+      ch.velocity = nextVel;
+      ch.stepPitch = nextPitch;
+      ch.stepPan = nextPan;
+      ch.stepCutoff = nextCutoff;
     });
 
     if (this.currentStep >= newSteps) {
@@ -114,14 +171,34 @@ class Sequencer {
       if (window.flGraphEditor && window.flGraphEditor.visible) {
         window.flGraphEditor.render();
       }
+      const select = document.getElementById('rack-step-length-select');
+      if (select) {
+        let opt = select.querySelector(`option[value="${newSteps}"]`);
+        if (!opt) {
+          opt = document.createElement('option');
+          opt.value = String(newSteps);
+          opt.textContent = `${newSteps} Steps (${(newSteps / 16).toFixed(1).replace('.0','')} Bars)`;
+          const customOpt = select.querySelector('option[value="custom"]');
+          if (customOpt) {
+            select.insertBefore(opt, customOpt);
+          } else {
+            select.appendChild(opt);
+          }
+        }
+        select.value = String(newSteps);
+      }
     }
+  }
+
+  setStepCount(newSteps) {
+    this.extendPattern(newSteps, { repeat: false });
   }
 
   // ── Playback mode control ──────────────────────────────────────
   setPlaybackMode(mode) {
     if (mode !== 'pattern' && mode !== 'song') return;
     this.playbackMode = mode;
-    if (!this.isPlaying) {
+    if (!this.isPlaying && !this.isPaused) {
       this.currentStep = 0;
       this.songStep = 0;
     }
@@ -133,7 +210,14 @@ class Sequencer {
     this.engine.resume();
 
     if (this.isPlaying) return;
+
+    if (this.isPaused) {
+      this.resume();
+      return;
+    }
+
     this.isPlaying = true;
+    this.isPaused = false;
     if (this.playbackMode === 'song') {
       const totalBars = (this.playlist && this.playlist.bars) ? this.playlist.bars : 32;
       const maxSteps = totalBars * 16;
@@ -148,8 +232,32 @@ class Sequencer {
     this._schedulerTimer = setInterval(() => this._scheduler(), this.lookahead);
   }
 
+  pause() {
+    if (this.isPlaying) {
+      this.isPlaying = false;
+      this.isPaused = true;
+      clearInterval(this._schedulerTimer);
+      this._schedulerTimer = null;
+      if (this.onPause) this.onPause(this.currentStep, this.songStep);
+    } else if (this.isPaused) {
+      this.resume();
+    }
+  }
+
+  resume() {
+    if (this.isPlaying) return;
+    if (!this.engine.initialized) this.engine.init();
+    this.engine.resume();
+    this.isPlaying = true;
+    this.isPaused = false;
+    this._nextStepTime = this.engine.currentTime + 0.05;
+    this._schedulerTimer = setInterval(() => this._scheduler(), this.lookahead);
+    if (this.onResume) this.onResume(this.currentStep, this.songStep);
+  }
+
   stop() {
     this.isPlaying = false;
+    this.isPaused = false;
     clearInterval(this._schedulerTimer);
     this._schedulerTimer = null;
     this.currentStep = 0;
@@ -161,7 +269,11 @@ class Sequencer {
   }
 
   toggle() {
-    this.isPlaying ? this.stop() : this.play();
+    if (this.isPlaying) {
+      this.pause();
+    } else {
+      this.play();
+    }
   }
 
   // ── Lookahead scheduler ────────────────────────────────────────

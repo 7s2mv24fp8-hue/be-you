@@ -200,7 +200,13 @@ canvas { display: block; }
   box-shadow: 0 0 8px var(--accent-glow);
 }
 .transport-btn.play.active { background: #10b981; color: #ffffff; border-color: #10b981; box-shadow: 0 0 12px rgba(16, 185, 129, 0.6); }
+.transport-btn.pause.active, .transport-btn.pause.paused-glow { background: #f59e0b; color: #ffffff; border-color: #f59e0b; box-shadow: 0 0 12px rgba(245, 158, 11, 0.7); animation: tb-pulse-pause 1.4s infinite ease-in-out; }
 .transport-btn.record.active { background: #ef4444; color: #ffffff; border-color: #ef4444; box-shadow: 0 0 12px rgba(239, 68, 68, 0.6); }
+
+@keyframes tb-pulse-pause {
+  0%, 100% { opacity: 1; filter: brightness(1); }
+  50% { opacity: 0.8; filter: brightness(1.2); }
+}
 
 /* BPM Control */
 .bpm-group {
@@ -528,6 +534,128 @@ canvas { display: block; }
   font-size: 10px;
   color: var(--text-muted);
   margin-left: auto;
+}
+
+/* Channel Rack Transport Buttons */
+.rack-transport-group {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 2px 4px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.rack-transport-btn {
+  height: 20px;
+  min-width: 20px;
+  padding: 0 5px;
+  background: var(--bg-element);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+.rack-transport-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+.rack-transport-btn.rack-play-btn.active {
+  background: #10b981;
+  color: #ffffff;
+  border-color: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+}
+.rack-transport-btn.rack-pause-btn {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #f59e0b;
+}
+.rack-transport-btn.rack-pause-btn:hover {
+  background: rgba(245, 158, 11, 0.25);
+  color: #fbbf24;
+  border-color: #f59e0b;
+}
+.rack-transport-btn.rack-pause-btn.active, .rack-transport-btn.rack-pause-btn.paused-glow {
+  background: #f59e0b;
+  color: #ffffff;
+  border-color: #f59e0b;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.7);
+  animation: tb-pulse-pause 1.4s infinite ease-in-out;
+}
+.rack-transport-btn.rack-stop-btn.active {
+  background: #4b5563;
+  color: #ffffff;
+}
+.rack-pause-label {
+  font-size: 8.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* Extend & Double pattern buttons */
+.rack-extend-btn:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+  color: #ffffff !important;
+}
+.rack-double-btn:hover {
+  background: var(--accent-hover) !important;
+  color: #ffffff !important;
+}
+
+/* Modal Pattern Extension Presets */
+.extend-preset-btn {
+  background: var(--bg-element);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  border-radius: 4px;
+  padding: 7px 4px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.12s;
+}
+.extend-preset-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+.extend-preset-btn.active {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--accent);
+  color: #ffffff;
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+/* Step Header Number alignment */
+.rack-step-num {
+  width: 22px;
+  min-width: 20px;
+  max-width: 26px;
+  flex: 1;
+  font-size: 8px;
+  color: #71717a;
+  text-align: center;
+  user-select: none;
+  font-family: var(--font-mono);
+  line-height: 18px;
+  flex-shrink: 0;
+}
+.rack-step-num.beat-start {
+  color: var(--accent);
+  font-weight: 700;
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 #channels-list {
@@ -5501,10 +5629,28 @@ canvas { display: block; }
   opacity: 1;
 }
 .fl-picker-btn {
-  background: none;
-  border: none;
-  font-size: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  color: inherit;
+  font-size: 9px;
+  font-weight: 600;
+  padding: 1px 5px;
   cursor: pointer;
+  margin-left: 3px;
+  transition: all 0.1s;
+}
+.fl-picker-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+.fl-picker-item.active .fl-picker-btn {
+  background: rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.25);
+  color: #000;
+}
+.fl-picker-item.active .fl-picker-btn:hover {
+  background: rgba(0, 0, 0, 0.2);
 }
 
 

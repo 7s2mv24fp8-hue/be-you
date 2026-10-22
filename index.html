@@ -46,6 +46,12 @@
  <button id="btn-play" class="transport-btn play" title="Play (Space / F5)" data-tooltip="Play">
  <svg viewBox="0 0 16 16" width="14" fill="currentColor"><polygon points="3,2 13,8 3,14"/></svg>
  </button>
+ <button id="btn-pause" class="transport-btn pause" title="Pause (Shift+Space / P)" data-tooltip="Pause">
+ <svg viewBox="0 0 16 16" width="12" fill="currentColor">
+   <rect x="2.5" y="2" width="3.5" height="12" rx="1"/>
+   <rect x="10" y="2" width="3.5" height="12" rx="1"/>
+ </svg>
+ </button>
  <button id="btn-stop" class="transport-btn stop" title="Stop (F6)" data-tooltip="Stop">
  <svg viewBox="0 0 16 16" width="12" fill="currentColor"><rect x="2" y="2" width="12" height="12" rx="1"/></svg>
  </button>
@@ -216,6 +222,25 @@
  </div>
  </div>
  <div class="rack-controls">
+ <!-- Channel Rack Loop Transport -->
+ <div class="rack-transport-group" title="Channel Rack Pattern Transport">
+ <button id="rack-play-btn" class="rack-transport-btn rack-play-btn" title="Play Pattern Loop (Rack)" data-tooltip="Play Rack">
+ <svg viewBox="0 0 16 16" width="9" height="9" fill="currentColor"><polygon points="3,2 13,8 3,14"/></svg>
+ </button>
+ <button id="rack-pause-btn" class="rack-transport-btn rack-pause-btn" title="Pause Pattern Loop (Rack)" data-tooltip="Pause Rack">
+ <svg viewBox="0 0 16 16" width="9" height="9" fill="currentColor">
+   <rect x="2.5" y="2" width="3.5" height="12" rx="1"/>
+   <rect x="10" y="2" width="3.5" height="12" rx="1"/>
+ </svg>
+ <span class="rack-pause-label">Pause</span>
+ </button>
+ <button id="rack-stop-btn" class="rack-transport-btn rack-stop-btn" title="Stop Pattern Loop" data-tooltip="Stop Rack">
+ <svg viewBox="0 0 16 16" width="8" height="8" fill="currentColor"><rect x="3" y="3" width="10" height="10" rx="1"/></svg>
+ </button>
+ </div>
+
+ <div class="rack-v-sep" style="width:1px;height:16px;background:var(--border);margin:0 2px;"></div>
+
  <label style="font-size:10px;color:var(--text-muted);display:flex;align-items:center;gap:4px;">
  <span>Length:</span>
  <select id="rack-step-length-select" class="rack-pattern-select" style="padding:1px 4px;font-size:10px;height:20px;border-color:rgba(255,255,255,0.15);">
@@ -223,8 +248,24 @@
  <option value="32">32 Steps (2 Bars)</option>
  <option value="48">48 Steps (3 Bars)</option>
  <option value="64">64 Steps (4 Bars)</option>
+ <option value="80">80 Steps (5 Bars)</option>
+ <option value="96">96 Steps (6 Bars)</option>
+ <option value="112">112 Steps (7 Bars)</option>
+ <option value="128">128 Steps (8 Bars)</option>
+ <option value="custom">Custom / Extend...</option>
  </select>
  </label>
+
+ <button id="rack-extend-btn" class="ch-btn rack-extend-btn" title="Extend pattern to length (choose custom steps, bars, or duplicate beat)" style="width:auto;padding:0 6px;font-size:9px;font-weight:600;display:flex;align-items:center;gap:3px;background:rgba(255,255,255,0.06);color:#f4f4f5;border-color:rgba(255,255,255,0.2);">
+ <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+   <path d="M2 8h12M10 4l4 4-4 4"/>
+ </svg>
+ Extend
+ </button>
+ <button id="rack-double-btn" class="ch-btn rack-double-btn" title="Double pattern length & duplicate beat (2x)" style="width:auto;padding:0 5px;font-size:9px;font-weight:700;color:var(--accent);">
+ 2x
+ </button>
+
  <div style="margin-left:auto;display:flex;gap:4px;">
  <button class="ch-btn" title="Randomize All" onclick="sequencerRandomizeAll()" style="width:auto;padding:0 6px;font-size:9px;">Rand</button>
  <button class="ch-btn" title="Clear All" onclick="sequencerClearAll()" style="width:auto;padding:0 6px;font-size:9px;">Clear</button>
@@ -1057,7 +1098,82 @@
  }
 </style>
 
-<!-- ── Modals: Cloud Projects, Save, Admin Dashboard, Auth ──────────── -->
+<!-- ── Modals: Cloud Projects, Save, Admin Dashboard, Auth, Pattern Extension ──────────── -->
+
+<!-- Modal: Extend Pattern Length -->
+<div id="modal-extend-pattern" class="fl-modal-overlay hidden">
+ <div class="fl-modal-box" style="max-width: 480px;">
+ <div class="fl-modal-header">
+ <div class="fl-modal-title">
+   <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:-2px;">
+     <path d="M2 8h12M10 4l4 4-4 4M6 12l-4-4 4-4"/>
+   </svg>
+   Extend Pattern Length
+ </div>
+ <button class="fl-modal-close" data-close="modal-extend-pattern">✕</button>
+ </div>
+ <div class="fl-modal-body">
+ <!-- Current pattern info -->
+ <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.03);padding:8px 12px;border-radius:6px;border:1px solid var(--border);margin-bottom:14px;">
+   <span style="font-size:11px;color:var(--text-muted);">Current Pattern: <strong id="extend-modal-pattern-name" style="color:var(--text-primary);">Pattern 1</strong></span>
+   <span id="extend-modal-current-steps-badge" class="badge" style="background:#27272a;color:#a1a1aa;padding:2px 8px;border-radius:10px;font-size:10px;font-family:var(--font-mono);">16 Steps (1 Bar)</span>
+ </div>
+
+ <!-- Quick presets -->
+ <div class="fl-form-group">
+   <label class="fl-form-label" style="margin-bottom:6px;">Quick Extension Presets</label>
+   <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:6px;">
+     <button type="button" class="extend-preset-btn" data-steps="32" data-bars="2">32 (2 Bars)</button>
+     <button type="button" class="extend-preset-btn" data-steps="48" data-bars="3">48 (3 Bars)</button>
+     <button type="button" class="extend-preset-btn" data-steps="64" data-bars="4">64 (4 Bars)</button>
+     <button type="button" class="extend-preset-btn" data-steps="128" data-bars="8">128 (8 Bars)</button>
+   </div>
+   <div style="display:flex;gap:6px;margin-top:6px;">
+     <button type="button" class="extend-preset-btn flex-1" id="extend-preset-add-bar" style="flex:1;">+1 Bar (+16 steps)</button>
+     <button type="button" class="extend-preset-btn flex-1" id="extend-preset-double" style="flex:1;color:var(--accent);">2x Double Current</button>
+   </div>
+ </div>
+
+ <!-- Custom target length input -->
+ <div class="fl-form-group" style="margin-top:12px;">
+   <label class="fl-form-label">Target Pattern Length</label>
+   <div style="display:flex;gap:10px;align-items:center;">
+     <div style="flex:1;">
+       <div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;">Total Steps (8 - 128)</div>
+       <input type="number" id="extend-target-steps" class="fl-form-input" min="8" max="128" step="16" value="32" style="font-family:var(--font-mono);font-size:13px;font-weight:600;">
+     </div>
+     <div style="flex:1;">
+       <div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;">Total Bars (4/4 time)</div>
+       <input type="number" id="extend-target-bars" class="fl-form-input" min="0.5" max="8" step="0.5" value="2" style="font-family:var(--font-mono);font-size:13px;font-weight:600;">
+     </div>
+   </div>
+ </div>
+
+ <!-- Duplicate / Repeat Options -->
+ <div class="fl-form-group" style="margin-top:14px;background:rgba(255,255,255,0.02);padding:10px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);">
+   <label class="fl-form-label" style="margin-bottom:8px;">Content Behavior</label>
+   <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;margin-bottom:8px;font-size:11px;color:#e4e4e7;">
+     <input type="radio" name="extend-content-mode" value="repeat" checked style="margin-top:2px;">
+     <div>
+       <strong>Repeat & Duplicate Groove (Recommended)</strong>
+       <div style="font-size:10px;color:var(--text-muted);">Duplicates all drum steps, velocities, and melody notes across the extended bars.</div>
+     </div>
+   </label>
+   <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;font-size:11px;color:#e4e4e7;">
+     <input type="radio" name="extend-content-mode" value="blank" style="margin-top:2px;">
+     <div>
+       <strong>Pad with Empty Steps</strong>
+       <div style="font-size:10px;color:var(--text-muted);">Keeps original pattern in the first section and leaves new bars empty for drum fills or variations.</div>
+     </div>
+   </label>
+ </div>
+ </div>
+ <div class="fl-modal-footer">
+ <button class="fl-btn-secondary" data-close="modal-extend-pattern">Cancel</button>
+ <button id="btn-extend-pattern-confirm" class="fl-btn-primary">Apply & Extend Pattern</button>
+ </div>
+ </div>
+</div>
 
 <!-- Modal: Save Project -->
 <div id="modal-save-project" class="fl-modal-overlay hidden">
