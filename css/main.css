@@ -238,6 +238,7 @@ canvas { display: block; }
   border: none;
   cursor: ns-resize;
   padding: 0;
+  line-height: 1;
   -moz-appearance: textfield;
   appearance: textfield;
 }
