@@ -12,6 +12,12 @@
  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ff7700'><rect x='1' y='6' width='2' height='5'/><rect x='4' y='3' width='2' height='10'/><rect x='7' y='1' width='2' height='14'/><rect x='10' y='4' width='2' height='9'/><rect x='13' y='7' width='2' height='4'/></svg>">
 </head>
 <body>
+<!-- iOS / Safari: AudioContext requires user gesture — shown on touch devices -->
+<div id="ios-audio-banner" role="button" tabindex="0" aria-label="Tap to activate audio">
+  🔊 Tap anywhere to activate audio engine
+</div>
+<!-- Mobile sidebar dim overlay -->
+<div id="sidebar-overlay" aria-hidden="true"></div>
 <div id="app">
 
  <!-- ── Title Bar ─────────────────────────────────────── -->
@@ -32,6 +38,8 @@
 
  <!-- ── Transport / Toolbar ───────────────────────────── -->
  <div id="toolbar">
+  <!-- Mobile sidebar toggle (hidden on desktop, shown via CSS on ≤1024px) -->
+  <button id="mobile-sidebar-toggle" style="display:none" aria-label="Toggle instrument rack" title="Instrument Rack">☰</button>
 
  <!-- Transport -->
  <div class="transport-group">

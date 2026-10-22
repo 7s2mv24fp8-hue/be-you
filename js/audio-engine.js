@@ -15,9 +15,8 @@ class AudioEngine {
   }
 
   get ctx() {
-    if (!this.initialized) {
-      this.init();
-    }
+    // Do NOT auto-init here — Safari/iOS will permanently suspend an AudioContext
+    // created before a user gesture. Always call init() explicitly on user interaction.
     return this._ctx;
   }
 

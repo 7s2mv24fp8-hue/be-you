@@ -6832,4 +6832,222 @@ canvas { display: block; }
   box-shadow: 0 0 10px rgba(0, 210, 211, 0.6);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE / TABLET RESPONSIVE DESIGN
+   Breakpoints:
+     ≤ 1024px  → Tablet landscape (collapse sidebar, compact toolbar)
+     ≤  768px  → Tablet portrait / large phone (stacked panels)
+     ≤  480px  → Phone (minimal UI, touch-first)
+   ═══════════════════════════════════════════════════════════════════════════ */
 
+/* ── iOS "Tap to activate audio" banner ─────────────────────────────── */
+#ios-audio-banner {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  padding: 14px 20px;
+  padding-bottom: calc(14px + env(safe-area-inset-bottom));
+  background: linear-gradient(135deg, rgba(255,107,0,0.97), rgba(220,60,0,0.97));
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  z-index: 99999;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  animation: banner-slide-up 0.4s cubic-bezier(0.16,1,0.3,1);
+}
+@keyframes banner-slide-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+#ios-audio-banner.visible { display: block; }
+
+/* ── Safe area / notch support (iPhone X+) ──────────────────────────── */
+#titlebar {
+  padding-left: max(8px, env(safe-area-inset-left));
+  padding-right: max(8px, env(safe-area-inset-right));
+}
+
+/* ── Touch target minimum size (WCAG 2.5.5: 44×44 px) ──────────────── */
+@media (pointer: coarse) {
+  button,
+  .transport-btn,
+  .mode-btn,
+  .bpm-arrow,
+  .btn-tap-btn,
+  .right-tab,
+  .ch-btn,
+  .fl-modal-close,
+  .admin-act-btn { min-height: 44px; min-width: 44px; }
+
+  .seq-step {
+    min-height: 36px !important;
+    min-width: 36px !important;
+    border-radius: 4px;
+  }
+  .piano-key { min-width: 48px !important; }
+  input[type="range"] { height: 28px; cursor: pointer; }
+  .knob-wrap, .ch-knob, .master-knob {
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+}
+
+/* ── Tablet Landscape (≤ 1024px) ─────────────────────────────────────── */
+@media (max-width: 1024px) {
+  #sidebar {
+    position: fixed !important;
+    left: -100% !important;
+    top: 0 !important;
+    height: 100% !important;
+    width: min(380px, 85vw) !important;
+    z-index: 9000 !important;
+    transition: left 0.28s cubic-bezier(0.16,1,0.3,1) !important;
+    box-shadow: 4px 0 32px rgba(0,0,0,0.7);
+  }
+  #sidebar.mobile-open { left: 0 !important; }
+  #sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 8999;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+  #sidebar-overlay.visible { display: block; }
+  #mobile-sidebar-toggle {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 36px; height: 36px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 16px;
+    cursor: pointer;
+    margin-right: 6px;
+    transition: all 0.15s;
+  }
+  #mobile-sidebar-toggle:hover {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+  }
+  #main-content, #content-area, .main-panel {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+  #bpm-display { width: 48px; }
+  .seq-grid-wrap, #sequencer-grid {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ── Tablet Portrait / Large Phone (≤ 768px) ─────────────────────────── */
+@media (max-width: 768px) {
+  #toolbar {
+    flex-wrap: wrap;
+    height: auto !important;
+    min-height: 44px;
+    padding: 4px 8px;
+    gap: 4px;
+  }
+  .toolbar-separator { display: none; }
+  .timesig-group { display: none !important; }
+  .position-display { display: none !important; }
+  .proj-title-inline-input, .tb-proj-input {
+    max-width: 100px !important;
+    width: 100px !important;
+  }
+  .transport-group { order: 0; justify-content: center; }
+  .mode-toggle { order: 1; }
+  .bpm-group { order: 2; }
+  .bpm-label { display: none; }
+  #bpm-display { width: 42px; font-size: 14px; }
+  .btn-tap-btn { display: none; }
+  .right-tabs {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap !important;
+    scrollbar-width: none;
+  }
+  .right-tabs::-webkit-scrollbar { display: none; }
+  .ch-row { flex-wrap: wrap; }
+  .ch-name { min-width: 80px; max-width: 80px; }
+  .fl-modal-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 90vh !important;
+    border-radius: 12px 12px 0 0 !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+  }
+  .fl-modal-overlay { align-items: flex-end !important; }
+  .step-sequencer-wrap, #step-seq-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  #piano-roll-canvas-wrap, .piano-roll-container {
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  #mixer-channels {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+  }
+  .admin-table th:nth-child(n+5),
+  .admin-table td:nth-child(n+5) { display: none; }
+}
+
+/* ── Phone (≤ 480px) ─────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .app-title { font-size: 11px; }
+  .transport-btn { width: 38px; height: 38px; font-size: 12px; }
+  .mode-btn { padding: 2px 6px; font-size: 9px; }
+  .ch-name {
+    max-width: 60px !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .piano-key.white { width: 36px !important; height: 20px !important; }
+  .piano-key.black { width: 22px !important; height: 12px !important; }
+  .seq-step { min-width: 28px !important; min-height: 28px !important; }
+  /* Prevent iOS auto-zoom on input focus (font-size must be ≥ 16px) */
+  #aip-user-input, .fl-form-input, .aip-text-input { font-size: 16px !important; }
+  .fl-modal-box { max-height: 95vh !important; }
+  .fl-modal-footer, #aip-input-bar {
+    padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
+  }
+}
+
+/* ── Landscape phone ─────────────────────────────────────────────────── */
+@media (max-width: 768px) and (orientation: landscape) {
+  #toolbar { flex-wrap: nowrap; }
+  .fl-modal-box {
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+  }
+}
+
+/* ── High-DPI / Retina: crisper canvas pixels ────────────────────────── */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  canvas {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* ── Prefers-reduced-motion (accessibility) ─────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

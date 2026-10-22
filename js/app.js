@@ -3183,3 +3183,70 @@ if (document.readyState === 'loading') {
 
 window.bootstrapFLStudioApp = bootstrapFLStudioApp;
 
+
+// ── Mobile Sidebar Drawer ────────────────────────────────────────────────────
+(function initMobileSidebar() {
+  const toggle  = document.getElementById('mobile-sidebar-toggle');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  if (!toggle || !sidebar || !overlay) return;
+
+  function openSidebar() {
+    sidebar.classList.add('mobile-open');
+    overlay.classList.add('visible');
+    toggle.setAttribute('aria-expanded', 'true');
+  }
+  function closeSidebar() {
+    sidebar.classList.remove('mobile-open');
+    overlay.classList.remove('visible');
+    toggle.setAttribute('aria-expanded', 'false');
+  }
+
+  toggle.addEventListener('click', () => {
+    sidebar.classList.contains('mobile-open') ? closeSidebar() : openSidebar();
+  });
+  overlay.addEventListener('click', closeSidebar);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && sidebar.classList.contains('mobile-open')) closeSidebar();
+  });
+})();
+
+// ── iOS / Safari AudioContext Banner ────────────────────────────────────────
+(function initIOSAudioBanner() {
+  if (!('ontouchstart' in window) && !navigator.maxTouchPoints) return;
+  const banner = document.getElementById('ios-audio-banner');
+  if (!banner) return;
+
+  function checkBanner() {
+    const ctx = window.audioEngine && window.audioEngine._ctx;
+    if (!ctx || ctx.state === 'suspended') {
+      banner.classList.add('visible');
+    } else {
+      banner.classList.remove('visible');
+    }
+  }
+
+  setTimeout(checkBanner, 1200);
+
+  function onBannerTap() {
+    const engine = window.audioEngine;
+    if (engine) {
+      if (!engine.initialized) engine.init();
+      const ctx = engine._ctx;
+      if (ctx && ctx.state === 'suspended') {
+        ctx.resume().then(() => banner.classList.remove('visible'));
+      } else {
+        banner.classList.remove('visible');
+      }
+    } else {
+      banner.classList.remove('visible');
+    }
+  }
+
+  banner.addEventListener('click', onBannerTap);
+  banner.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') onBannerTap(); });
+
+  ['click', 'touchstart', 'keydown'].forEach(evt => {
+    window.addEventListener(evt, () => setTimeout(checkBanner, 400), { passive: true });
+  });
+})();
