@@ -373,7 +373,15 @@ class GenerationHistory {
       return raw ? JSON.parse(raw) : [];
     } catch (e) { return []; }
   }
-}
+
+  /**
+   * Get a history entry by its ID.
+   * @param {string} id - Entry ID.
+   * @returns {object|null} Entry object or null if not found.
+   */
+  getEntry(id) {
+    return this.items.find(i => i.id === id) || null;
+  }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 4. MUSIC AI (orchestrator)
@@ -436,6 +444,85 @@ class MusicAI {
     return this.generate(prompt, { onStatus });
   }
 
+  /**
+   * Extend an existing generation pattern by re-generating with the same prompt and concatenating audio.
+   * @param {string} entryId - ID of the existing generation entry to extend.
+   * @param {object} options - Options object.
+   * @param {Function} options.onStatus - Status callback.
+   * @returns {Promise<object>} New generation result with combined audio URL and entry.
+   */
+  async extendPattern(entryId, { onStatus = () => {} } = {}) {
+    const entry = this.history.getEntry(entryId);
+    if (!entry) throw new Error('History entry not found');
+    // Re-use the original prompt to generate additional audio
+    const newResult = await this.generate(entry.prompt, { onStatus });
+
+    // Concatenate original and new audio blobs using AudioContext
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const [buf1, buf2] = await Promise.all([
+      this.toAudioBuffer(entryId ? this.history.getUrl(entryId) && await fetch(this.history.getUrl(entryId)).then(r => r.blob()) : null, audioCtx),
+      this.toAudioBuffer(newResult.blob, audioCtx)
+    ].map(async (p) => p))
+      .catch(() => { throw new Error('Failed to decode audio for concatenation'); });
+
+    // Simple concatenation assuming same sample rate and channel count
+    const numberOfChannels = Math.max(buf1.numberOfChannels, buf2.numberOfChannels);
+    const length = buf1.length + buf2.length;
+    const combined = audioCtx.createBuffer(numberOfChannels, length, buf1.sampleRate);
+    for (let ch = 0; ch < numberOfChannels; ch++) {
+      const channelData = combined.getChannelData(ch);
+      if (ch < buf1.numberOfChannels) channelData.set(buf1.getChannelData(ch), 0);
+      if (ch < buf2.numberOfChannels) channelData.set(buf2.getChannelData(ch), buf1.length);
+    }
+    // Export combined buffer to WAV Blob (basic implementation)
+    const wavBlob = await new Promise((resolve) => {
+      const worker = new Worker(URL.createObjectURL(new Blob([`
+        self.onmessage = function(e) {
+          const { buffer, sampleRate } = e.data;
+          const numChannels = buffer.numberOfChannels;
+          const length = buffer.length * numChannels * 2 + 44;
+          const view = new DataView(new ArrayBuffer(length));
+          function writeString(view, offset, string) {
+            for (let i = 0; i < string.length; i++) {
+              view.setUint8(offset + i, string.charCodeAt(i));
+            }
+          }
+          /* RIFF identifier */
+          writeString(view, 0, 'RIFF');
+          view.setUint32(4, length - 8, true);
+          writeString(view, 8, 'WAVE');
+          writeString(view, 12, 'fmt ');
+          view.setUint32(16, 16, true); // PCM format chunk size
+          view.setUint16(20, 1, true); // Audio format = PCM
+          view.setUint16(22, numChannels, true);
+          view.setUint32(24, sampleRate, true);
+          view.setUint32(28, sampleRate * numChannels * 2, true); // byte rate
+          view.setUint16(32, numChannels * 2, true); // block align
+          view.setUint16(34, 16, true); // bits per sample
+          writeString(view, 36, 'data');
+          view.setUint32(40, length - 44, true);
+          // Write interleaved PCM samples
+          let offset = 44;
+          for (let i = 0; i < buffer.length; i++) {
+            for (let ch = 0; ch < numChannels; ch++) {
+              const sample = Math.max(-1, Math.min(1, buffer.getChannelData(ch)[i]));
+              view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+              offset += 2;
+            }
+          }
+          const wav = new Blob([view], { type: 'audio/wav' });
+          self.postMessage({ wav });
+        };
+      `], { type: 'application/javascript' })))
+      worker.onmessage = (e) => resolve(e.data.wav);
+      worker.postMessage({ buffer: combined, sampleRate: combined.sampleRate });
+    });
+
+    const combinedUrl = URL.createObjectURL(wavBlob);
+    const combinedEntry = this.history.add(entry.prompt, wavBlob, combinedUrl);
+    return { blob: wavBlob, url: combinedUrl, entry: combinedEntry };
+  }
+
   play(url) {
     this.stop();
     this.currentAudio = new Audio(url);
@@ -472,7 +559,6 @@ class MusicAI {
     this.getActiveClient().cancel();
     this.isGenerating = false;
   }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Expose
