@@ -121,7 +121,7 @@ class LocalMusicClient {
 class HuggingFaceMusic {
   constructor() {
     this.apiKey    = localStorage.getItem('fl-studio-hf-key') || '';
-    this.modelId   = MUSICGEN_MODELS.small;
+    this.modelId   = MUSICGEN_MODELS.medium; // Use higher-quality medium model by default
     this.baseUrl   = 'https://api-inference.huggingface.co/models';
     this._abortCtrl = null;
   }
@@ -134,7 +134,12 @@ class HuggingFaceMusic {
   hasKey() { return this.apiKey.length > 0; }
 
   setModel(size) {
-    this.modelId = MUSICGEN_MODELS[size] || MUSICGEN_MODELS.small;
+    this.modelId = MUSICGEN_MODELS[size] || MUSICGEN_MODELS.medium;
+  }
+
+  // Convenience wrapper to change model size at runtime (e.g., 'small' or 'medium')
+  setModelSize(size) {
+    this.setModel(size);
   }
 
   /**
