@@ -22,18 +22,35 @@ class MaxStudioBuddy {
     this.initialTop = 0;
     this.hasMoved = false;
 
+    // Knowledge Engine (trained on CoT Music Production DAW dataset)
+    this.kb = null;
+    this._initKnowledgeEngine();
+
     this.tips = [
       "Drag Max anywhere on screen! Touch Max to open the AI Portal.",
       "Pro Tip: Press F4 to open the Graph Editor and tweak per-step pitch & velocity!",
       "Write 'make a 140 BPM trap beat' in the AI Portal to generate drums & bass!",
+      "Ask Max any production question — trained on 3,700+ DAW knowledge entries!",
       "Pro Tip: Use Alt+S in Piano Roll to strum chords like a real guitar!",
       "Pro Tip: Use Alt+A in Piano Roll to split hi-hats into 1/32 trap rolls!",
       "Drag & drop any WAV or MP3 audio file anywhere on screen to import it!",
       "Press F9 or Ctrl+M to open the Mixer and adjust volumes & Parametric EQ!",
+      "Try asking: 'How do I sidechain compress in FL Studio?'",
     ];
 
     this._initBuddy();
     this._disableOldAIOptions();
+  }
+
+  async _initKnowledgeEngine() {
+    if (typeof MaxKnowledgeEngine !== 'undefined') {
+      this.kb = new MaxKnowledgeEngine();
+      const ok = await this.kb.load();
+      if (ok) {
+        const stats = this.kb.getStats();
+        console.log(`[Max] Knowledge engine loaded: ${stats.entries} entries, ${stats.indexTerms} topics`);
+      }
+    }
   }
 
   _disableOldAIOptions() {
@@ -87,6 +104,7 @@ class MaxStudioBuddy {
             <button class="max-portal-chip" data-action="chords">Strum Piano Chords</button>
             <button class="max-portal-chip" data-action="automix">Auto-Mix Session</button>
             <button class="max-portal-chip" data-action="humanize">Humanize Groove</button>
+            <button class="max-portal-chip max-chip-knowledge" data-action="knowledge">📚 Ask Max (3,700+ Tips)</button>
           </div>
 
           <!-- Writing Console Input Area -->
@@ -300,6 +318,16 @@ class MaxStudioBuddy {
   executeWrittenCommand(cmdText) {
     this.logPortalMessage('You', cmdText);
 
+    // ── Knowledge Engine: check if this is a question Max can answer ──
+    if (this.kb && this.kb.loaded && this.kb.isKnowledgeQuery(cmdText)) {
+      const answer = this.kb.getAnswer(cmdText);
+      if (answer) {
+        this.logPortalMessage('Max', answer);
+        this.speak('Here\'s what I found from my production knowledge base!', 5000);
+        return; // Don't execute as DAW command
+      }
+    }
+
     if (!this._ensureEngineReady()) {
       this.logPortalMessage('Max', 'DAW engine ready now! Executing command...');
     }
@@ -483,6 +511,18 @@ class MaxStudioBuddy {
       if (app._refreshChannelRack) app._refreshChannelRack();
       this.logPortalMessage('Max', 'Humanized pattern! Applied subtle per-step velocity dynamics.');
       this.speak('Groove humanized with natural velocity!', 4500);
+    } else if (action === 'knowledge') {
+      // Show knowledge base prompt
+      const textarea = document.getElementById('max-portal-textarea');
+      if (textarea) {
+        textarea.placeholder = 'Ask any production question... e.g. "How do I sidechain compress?" or "What is velocity layering?"';
+        textarea.focus();
+      }
+      const statsMsg = this.kb && this.kb.loaded
+        ? `📚 Knowledge Base Online! ${this.kb.getStats().entries} production tips loaded from the CoT Music Production dataset. Ask me anything about FL Studio, mixing, sound design, synthesis, MIDI, automation, and more!`
+        : '📚 Knowledge Base is loading... Try asking a question in a moment!';
+      this.logPortalMessage('Max', statsMsg);
+      this.speak('Ask me any production question!', 4500);
     }
   }
 

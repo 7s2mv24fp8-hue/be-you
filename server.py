@@ -1219,6 +1219,8 @@ app.mount("/css", StaticFiles(directory=str(BASE_DIR / "css")), name="css")
 app.mount("/js", StaticFiles(directory=str(BASE_DIR / "js")), name="js")
 if (BASE_DIR / "assets").exists():
     app.mount("/assets", StaticFiles(directory=str(BASE_DIR / "assets")), name="assets")
+if (BASE_DIR / "data").exists():
+    app.mount("/data", StaticFiles(directory=str(BASE_DIR / "data")), name="data")
 
 
 if __name__ == "__main__":

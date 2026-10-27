@@ -1464,6 +1464,7 @@ class FLStudioApp {
     const playBtn    = document.getElementById('ai-result-play');
     const stopBtn    = document.getElementById('ai-result-stop');
     const dlBtn      = document.getElementById('ai-result-download');
+    const extendBtn  = document.getElementById('ai-result-extend');
     const importBtn  = document.getElementById('ai-result-import');
     const waveCanvas = document.getElementById('ai-result-waveform-canvas');
     const progressEl = document.getElementById('ai-result-progress');
@@ -1822,6 +1823,62 @@ class FLStudioApp {
       }
     });
 
+    // ── Extend Track Pattern ──
+    const handleExtend = async (entryId) => {
+      if (!this.musicAI) return;
+      const targetId = entryId || (currentResult && currentResult.entry && currentResult.entry.id);
+      if (!targetId) {
+        showToast('Please generate or select a track to extend first.', 2500);
+        return;
+      }
+      if (!this.musicAI.hasApiKey()) {
+        showStatus('Please set your Hugging Face API key first.', 'error');
+        return;
+      }
+
+      stopPlayback();
+      genBtn?.classList.add('generating');
+      cancelBtn?.classList.remove('hidden');
+      loadingEl?.classList.remove('hidden');
+      if (loadingTxt) loadingTxt.textContent = 'Extending track pattern & concatenating audio...';
+      hideStatus();
+
+      try {
+        const extResult = await this.musicAI.extendPattern(targetId, {
+          onStatus: (status) => {
+            if (loadingTxt) {
+              const msgs = {
+                extending: 'Generating extension audio...',
+                loading: 'Model is loading, please wait...',
+                done: 'Concatenating and finalizing...',
+              };
+              loadingTxt.textContent = msgs[status] || 'Processing extension...';
+            }
+          }
+        });
+
+        currentResult = extResult;
+        if (resultPromptEl) resultPromptEl.textContent = extResult.entry.prompt;
+        if (resultTimeEl) {
+          resultTimeEl.textContent = new Date(extResult.entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        drawWaveform(extResult.url);
+        resultCard?.classList.remove('hidden');
+        this._renderAIHistory();
+        showToast(' Pattern extended with seamless continuation!', 3500);
+      } catch (err) {
+        console.error('Failed to extend pattern:', err);
+        showStatus(err.message || 'Failed to extend track', 'error');
+        showToast(`Extension error: ${err.message}`, 3500);
+      } finally {
+        genBtn?.classList.remove('generating');
+        cancelBtn?.classList.add('hidden');
+        loadingEl?.classList.add('hidden');
+      }
+    };
+
+    extendBtn?.addEventListener('click', () => handleExtend());
+
     // ── History ──
     this._renderAIHistory = () => {
       if (!historyList || !this.musicAI) return;
@@ -1840,7 +1897,8 @@ class FLStudioApp {
         el.innerHTML = `
           <div class="ai-history-item-prompt" title="${item.prompt}">${item.prompt}</div>
           <div class="ai-history-item-time">${timeStr}</div>
-          ${url ? '<button class="ai-history-item-play" data-play>▶</button>' : ''}
+          ${url ? '<button class="ai-history-item-play" data-play title="Play">▶</button>' : ''}
+          <button class="ai-history-item-extend" data-extend title="Extend this pattern">➕</button>
           <button class="ai-history-item-delete" data-delete title="Remove">&times;</button>
         `;
         // Play from history
@@ -1852,6 +1910,11 @@ class FLStudioApp {
             playingAudio.play().catch(() => {});
             playingAudio.addEventListener('ended', () => { playingAudio = null; });
           }
+        });
+        // Extend from history
+        el.querySelector('[data-extend]')?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          handleExtend(item.id);
         });
         // Delete from history
         el.querySelector('[data-delete]')?.addEventListener('click', (e) => {
