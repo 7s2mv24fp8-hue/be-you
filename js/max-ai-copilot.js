@@ -328,6 +328,36 @@ class MaxStudioBuddy {
       }
     }
 
+    // ── Music Tag Engine: check for genre tag/instrument recommendation queries ──
+    const tagEngine = this.tagEngine || window.musicTagEngine;
+    if (tagEngine && tagEngine.loaded) {
+      const tagMatch = cmdText.match(/(?:recommend|suggest|what|best)\s+(?:instruments|instrumentation|moods|mood|tags|tempo|bpm)\s+(?:for|in)\s+([a-zA-Z\s\-]+)/i)
+        || cmdText.match(/(?:instruments|tags|bpm|tempo)\s+for\s+([a-zA-Z\s\-]+)/i);
+      if (tagMatch) {
+        const genre = tagMatch[1].replace(/[?!.]/g, '').trim();
+        const recs = tagEngine.getRecommendations(genre);
+        if (recs) {
+          const instList = recs.topInstruments.slice(0, 5).map(i => `<code>${i.name}</code> (${Math.round(i.weight * 100)}%)`).join(', ');
+          const moodList = recs.topMoods.slice(0, 4).map(m => `<code>${m.name}</code>`).join(', ');
+          const bpmInfo = recs.recommendedBpm ? `${recs.recommendedBpm.medium} BPM (range: ${recs.recommendedBpm.slow}–${recs.recommendedBpm.fast} BPM)` : '120 BPM';
+          const card = `
+            <div class="max-kb-answer">
+              <div class="max-kb-topic">🎵 Trained Music Tag Guide: ${recs.genre.toUpperCase()}</div>
+              <div class="max-kb-text">
+                Based on <strong>53,000+ musical compositions</strong> from Qwen-Audio 2.0:<br><br>
+                <strong>🥁 Key Instruments:</strong> ${instList}<br>
+                <strong>✨ Common Moods:</strong> ${moodList}<br>
+                <strong>⏱ Recommended Tempo:</strong> ${bpmInfo}<br><br>
+                <em>Sample Prompt:</em> "${recs.exemplars[0] || tagEngine.synthesizePrompt({ genre: recs.genre, bpm: recs.recommendedBpm?.medium || 120 })}"
+              </div>
+            </div>`;
+          this.logPortalMessage('Max', card);
+          this.speak(`Here are the top instruments and tempo for ${genre}!`, 5000);
+          return;
+        }
+      }
+    }
+
     if (!this._ensureEngineReady()) {
       this.logPortalMessage('Max', 'DAW engine ready now! Executing command...');
     }

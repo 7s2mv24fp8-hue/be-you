@@ -248,6 +248,11 @@ class PromptBuilder {
    */
   static build({ bpm = 120, genre = 'Hip-Hop', density = 50, syncopation = 30,
                   moods = [], instruments = [], userText = '' } = {}) {
+    // If trained MusicTagEngine is loaded, use its statistical Qwen prompt synthesis
+    if (typeof window !== 'undefined' && window.musicTagEngine && window.musicTagEngine.loaded) {
+      return window.musicTagEngine.synthesizePrompt({ genre, bpm, moods, instruments, userText });
+    }
+
     const parts = [];
 
     // Genre base
@@ -407,6 +412,16 @@ class MusicAI {
     this.currentAudio = null;
     this.selectedMoods = [];
     this.selectedInstruments = [];
+
+    // Tag & Prompt Engine (trained on wanghappy/Music-tag-generation dataset)
+    this.tagEngine = typeof MusicTagEngine !== 'undefined' ? new MusicTagEngine() : null;
+    if (this.tagEngine) {
+      this.tagEngine.load().then(ok => {
+        if (ok && typeof window !== 'undefined') {
+          window.musicTagEngine = this.tagEngine;
+        }
+      });
+    }
   }
 
   setProvider(p) {

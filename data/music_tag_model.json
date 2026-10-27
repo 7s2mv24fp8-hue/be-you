@@ -1,0 +1,3674 @@
+{
+  "metadata": {
+    "name": "BeYou Music Tag & Prompt Model",
+    "dataset": "wanghappy/Music-tag-generation (Qwen-Audio 2.0)",
+    "trainedSamples": 53053,
+    "generatedAt": "2026-10-28",
+    "totalGenres": 36,
+    "totalInstruments": 27,
+    "totalMoods": 37
+  },
+  "genres": {
+    "experimental": {
+      "count": 11882,
+      "instruments": [
+        {
+          "name": "synthesizer",
+          "weight": 0.707
+        },
+        {
+          "name": "piano",
+          "weight": 0.274
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.21
+        },
+        {
+          "name": "drums",
+          "weight": 0.203
+        },
+        {
+          "name": "bass",
+          "weight": 0.194
+        },
+        {
+          "name": "percussion",
+          "weight": 0.177
+        },
+        {
+          "name": "strings",
+          "weight": 0.137
+        },
+        {
+          "name": "drum machine",
+          "weight": 0.087
+        }
+      ],
+      "moods": [
+        {
+          "name": "mysterious",
+          "weight": 0.336
+        },
+        {
+          "name": "contemplative",
+          "weight": 0.176
+        },
+        {
+          "name": "somber",
+          "weight": 0.117
+        },
+        {
+          "name": "eerie",
+          "weight": 0.107
+        },
+        {
+          "name": "dark",
+          "weight": 0.08
+        },
+        {
+          "name": "reflective",
+          "weight": 0.069
+        }
+      ],
+      "tempos": {
+        "medium": 6152,
+        "fast": 807,
+        "slow": 4923
+      },
+      "recommendedBpm": {
+        "slow": 80,
+        "medium": 120,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of the music piece is experimental, featuring the harp, cello, and human voice. The instruments are being played at a medium tempo with a somber and contemplative mood.",
+        "The genre of the music piece is experimental, featuring electric guitar, synthesizer, and bass. The tempo is medium with a melancholic and introspective mood.",
+        "The genre of the music piece is experimental, featuring synthesizers, electric guitars, and drums. The tempo is medium with a dark and moody mood.",
+        "The genre of the music piece is experimental, featuring synthesizer, piano, and strings. The tempo is medium with a mysterious and suspenseful mood."
+      ]
+    },
+    "rock": {
+      "count": 2334,
+      "instruments": [
+        {
+          "name": "drums",
+          "weight": 0.955
+        },
+        {
+          "name": "bass",
+          "weight": 0.928
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.88
+        },
+        {
+          "name": "human voice",
+          "weight": 0.063
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.029
+        },
+        {
+          "name": "trumpet",
+          "weight": 0.012
+        },
+        {
+          "name": "piano",
+          "weight": 0.012
+        },
+        {
+          "name": "saxophone",
+          "weight": 0.008
+        }
+      ],
+      "moods": [
+        {
+          "name": "energetic",
+          "weight": 0.413
+        },
+        {
+          "name": "lively",
+          "weight": 0.284
+        },
+        {
+          "name": "intense",
+          "weight": 0.074
+        },
+        {
+          "name": "exciting",
+          "weight": 0.067
+        },
+        {
+          "name": "passionate",
+          "weight": 0.064
+        },
+        {
+          "name": "groovy",
+          "weight": 0.043
+        }
+      ],
+      "tempos": {
+        "fast": 958,
+        "medium": 1361,
+        "slow": 15
+      },
+      "recommendedBpm": {
+        "slow": 90,
+        "medium": 120,
+        "fast": 150
+      },
+      "exemplars": [
+        "The genre of music piece is rock, the instruments used are electric guitar, bass, drums, and voice, the tempo is fast with a mood of angry.",
+        "The genre of music piece is rock, the instruments include the human voice, electric guitar, bass, and drums, the tempo is fast with a mood of passionate.",
+        "The genre of the music piece is rock, which is performed by electric guitar and bass. The tempo is medium with a sad and sentimental mood.",
+        "The genre of the music piece is rock, which is performed by electric guitar, bass, and drums. The tempo is fast with a strong groove, and the mood is energetic and exciting."
+      ]
+    },
+    "metal": {
+      "count": 549,
+      "instruments": [
+        {
+          "name": "drums",
+          "weight": 0.989
+        },
+        {
+          "name": "bass",
+          "weight": 0.956
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.834
+        },
+        {
+          "name": "human voice",
+          "weight": 0.038
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.016
+        },
+        {
+          "name": "strings",
+          "weight": 0.004
+        },
+        {
+          "name": "brass",
+          "weight": 0.002
+        },
+        {
+          "name": "percussion",
+          "weight": 0.002
+        }
+      ],
+      "moods": [
+        {
+          "name": "aggressive",
+          "weight": 0.288
+        },
+        {
+          "name": "angry",
+          "weight": 0.235
+        },
+        {
+          "name": "intense",
+          "weight": 0.224
+        },
+        {
+          "name": "fierce",
+          "weight": 0.104
+        },
+        {
+          "name": "energetic",
+          "weight": 0.026
+        },
+        {
+          "name": "dark",
+          "weight": 0.022
+        }
+      ],
+      "tempos": {
+        "fast": 455,
+        "medium": 94
+      },
+      "recommendedBpm": {
+        "slow": 100,
+        "medium": 135,
+        "fast": 180
+      },
+      "exemplars": [
+        "The genre of the music piece is metal, the instruments used are the electric guitar, bass, and drums, the tempo is fast with a mood of angry and aggressive.",
+        "The genre of the music piece is metal, the instruments used are the electric guitar, bass, and drums, the tempo is fast with a mood of anger and aggression.",
+        "The genre of the music piece is metal, which is performed by the electric guitar, bass, and drums. The tempo is fast with a mood of intense and powerful.",
+        "The genre of the music piece is metal, the instruments used are the bass, drums, and guitar, the tempo is fast with a mood of anger."
+      ]
+    },
+    "pop": {
+      "count": 5531,
+      "instruments": [
+        {
+          "name": "drums",
+          "weight": 0.69
+        },
+        {
+          "name": "bass",
+          "weight": 0.615
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.471
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.457
+        },
+        {
+          "name": "piano",
+          "weight": 0.241
+        },
+        {
+          "name": "human voice",
+          "weight": 0.113
+        },
+        {
+          "name": "acoustic guitar",
+          "weight": 0.043
+        },
+        {
+          "name": "drum machine",
+          "weight": 0.035
+        }
+      ],
+      "moods": [
+        {
+          "name": "lively",
+          "weight": 0.451
+        },
+        {
+          "name": "energetic",
+          "weight": 0.271
+        },
+        {
+          "name": "upbeat",
+          "weight": 0.169
+        },
+        {
+          "name": "sad",
+          "weight": 0.14
+        },
+        {
+          "name": "happy",
+          "weight": 0.096
+        },
+        {
+          "name": "groovy",
+          "weight": 0.08
+        }
+      ],
+      "tempos": {
+        "fast": 611,
+        "medium": 4844,
+        "slow": 76
+      },
+      "recommendedBpm": {
+        "slow": 95,
+        "medium": 118,
+        "fast": 130
+      },
+      "exemplars": [
+        "The genre of music piece is pop, the instruments include the guitar, the tempo is fast with a lively and energetic mood.",
+        "The genre of the music piece is pop, which is performed by accordion, bass, drums, guitar and voice. The tempo is medium with a sad and longing mood.",
+        "The genre of the music piece is experimental pop, featuring guitars, bass, and drums. The tempo is medium with a melancholic and thoughtful mood.",
+        "The genre of the music piece is pop, which is performed by electric guitars and drums. The tempo is medium with a lively and uplifting mood."
+      ]
+    },
+    "punk": {
+      "count": 665,
+      "instruments": [
+        {
+          "name": "drums",
+          "weight": 0.905
+        },
+        {
+          "name": "bass",
+          "weight": 0.902
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.608
+        },
+        {
+          "name": "human voice",
+          "weight": 0.161
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.009
+        },
+        {
+          "name": "trumpet",
+          "weight": 0.002
+        },
+        {
+          "name": "saxophone",
+          "weight": 0.002
+        }
+      ],
+      "moods": [
+        {
+          "name": "angry",
+          "weight": 0.137
+        },
+        {
+          "name": "energetic",
+          "weight": 0.105
+        },
+        {
+          "name": "manic",
+          "weight": 0.089
+        },
+        {
+          "name": "lively",
+          "weight": 0.05
+        },
+        {
+          "name": "aggressive",
+          "weight": 0.023
+        },
+        {
+          "name": "intense",
+          "weight": 0.006
+        }
+      ],
+      "tempos": {
+        "fast": 664,
+        "medium": 1
+      },
+      "recommendedBpm": {
+        "slow": 80,
+        "medium": 120,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of music piece is punk, the instruments used are the guitar, bass, and drums, the tempo is fast with a mood of angry.",
+        "The genre of the music piece is punk, the instruments used are the electric guitar, bass, and drums, the tempo is fast with a mood of angry and rebellious.",
+        "The genre of the music piece is punk, hardcore. It is played with the electric guitar, bass, and drums. The tempo is fast with a mood of anger and rebellion.",
+        "The genre of the music piece is punk, the instruments used are the bass, drums, and guitar, the tempo is fast with a mood of excitement."
+      ]
+    },
+    "international": {
+      "count": 405,
+      "instruments": [
+        {
+          "name": "bass",
+          "weight": 0.42
+        },
+        {
+          "name": "drums",
+          "weight": 0.323
+        },
+        {
+          "name": "human voice",
+          "weight": 0.309
+        },
+        {
+          "name": "percussion",
+          "weight": 0.19
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.153
+        },
+        {
+          "name": "piano",
+          "weight": 0.131
+        },
+        {
+          "name": "trumpet",
+          "weight": 0.096
+        },
+        {
+          "name": "saxophone",
+          "weight": 0.067
+        }
+      ],
+      "moods": [
+        {
+          "name": "lively",
+          "weight": 0.546
+        },
+        {
+          "name": "energetic",
+          "weight": 0.338
+        },
+        {
+          "name": "happy",
+          "weight": 0.215
+        },
+        {
+          "name": "groovy",
+          "weight": 0.143
+        },
+        {
+          "name": "upbeat",
+          "weight": 0.094
+        },
+        {
+          "name": "passionate",
+          "weight": 0.064
+        }
+      ],
+      "tempos": {
+        "fast": 78,
+        "medium": 311,
+        "slow": 16
+      },
+      "recommendedBpm": {
+        "slow": 80,
+        "medium": 120,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of the music piece is international, featuring the flute, violin, and human voice. The tempo is fast with a lively and energetic mood.",
+        "The genre of the music piece is international, the instruments include the bass, drum, guitar, keyboard, and voice, the tempo is medium with a happy mood.",
+        "The genre of the music piece is international, the instruments include the human voice, and the tempo is fast with a lively mood.",
+        "The genre of the music piece is international, the instruments include the clarinet, saxophone, violin, cymbal, and drum, and the tempo is fast with a lively and energetic mood."
+      ]
+    },
+    "classical": {
+      "count": 7440,
+      "instruments": [
+        {
+          "name": "piano",
+          "weight": 0.465
+        },
+        {
+          "name": "cello",
+          "weight": 0.292
+        },
+        {
+          "name": "violin",
+          "weight": 0.214
+        },
+        {
+          "name": "flute",
+          "weight": 0.086
+        },
+        {
+          "name": "clarinet",
+          "weight": 0.082
+        },
+        {
+          "name": "strings",
+          "weight": 0.075
+        },
+        {
+          "name": "choir",
+          "weight": 0.055
+        },
+        {
+          "name": "human voice",
+          "weight": 0.052
+        }
+      ],
+      "moods": [
+        {
+          "name": "lively",
+          "weight": 0.231
+        },
+        {
+          "name": "somber",
+          "weight": 0.217
+        },
+        {
+          "name": "sad",
+          "weight": 0.177
+        },
+        {
+          "name": "playful",
+          "weight": 0.17
+        },
+        {
+          "name": "energetic",
+          "weight": 0.077
+        },
+        {
+          "name": "reflective",
+          "weight": 0.077
+        }
+      ],
+      "tempos": {
+        "medium": 4422,
+        "slow": 2318,
+        "fast": 700
+      },
+      "recommendedBpm": {
+        "slow": 65,
+        "medium": 95,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of the music piece is classical. It is performed by a piano and a cello. The tempo is medium with a dramatic and emotional mood.",
+        "The genre of the music piece is classical, featuring the instruments violin, cello, and piano. The tempo is slow with a somber and ominous mood.",
+        "The genre of the music piece is classical, which is performed by piano and strings. The tempo is slow, with a somber and reflective mood.",
+        "The genre of the music piece is classical, which is performed by nylon string guitar. The tempo is medium with a sad and sentimental mood."
+      ]
+    },
+    "folk": {
+      "count": 4597,
+      "instruments": [
+        {
+          "name": "acoustic guitar",
+          "weight": 0.432
+        },
+        {
+          "name": "bass",
+          "weight": 0.162
+        },
+        {
+          "name": "piano",
+          "weight": 0.147
+        },
+        {
+          "name": "drums",
+          "weight": 0.14
+        },
+        {
+          "name": "human voice",
+          "weight": 0.11
+        },
+        {
+          "name": "cello",
+          "weight": 0.083
+        },
+        {
+          "name": "violin",
+          "weight": 0.083
+        },
+        {
+          "name": "flute",
+          "weight": 0.062
+        }
+      ],
+      "moods": [
+        {
+          "name": "sad",
+          "weight": 0.292
+        },
+        {
+          "name": "lively",
+          "weight": 0.235
+        },
+        {
+          "name": "melancholic",
+          "weight": 0.171
+        },
+        {
+          "name": "happy",
+          "weight": 0.106
+        },
+        {
+          "name": "somber",
+          "weight": 0.078
+        },
+        {
+          "name": "energetic",
+          "weight": 0.062
+        }
+      ],
+      "tempos": {
+        "medium": 3231,
+        "slow": 1203,
+        "fast": 163
+      },
+      "recommendedBpm": {
+        "slow": 85,
+        "medium": 110,
+        "fast": 135
+      },
+      "exemplars": [
+        "The genre of the music piece is folk. It is performed by a female singer with guitar accompaniment. The tempo is medium with a gentle and soothing mood.",
+        "The genre of the music piece is folk, which is performed by acoustic guitar and male voice. The tempo is medium with a sad and longing mood.",
+        "The genre of the music piece is folk, which is performed by acoustic guitar and female voice. The tempo is medium with a sad and emotional mood.",
+        "The genre of the music piece is folk, which is performed by banjo and guitar. The tempo is medium with a lively and cheerful mood."
+      ]
+    },
+    "electronic": {
+      "count": 12386,
+      "instruments": [
+        {
+          "name": "synthesizer",
+          "weight": 0.986
+        },
+        {
+          "name": "drum machine",
+          "weight": 0.454
+        },
+        {
+          "name": "bass",
+          "weight": 0.426
+        },
+        {
+          "name": "drums",
+          "weight": 0.348
+        },
+        {
+          "name": "piano",
+          "weight": 0.128
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.123
+        },
+        {
+          "name": "percussion",
+          "weight": 0.065
+        },
+        {
+          "name": "strings",
+          "weight": 0.056
+        }
+      ],
+      "moods": [
+        {
+          "name": "energetic",
+          "weight": 0.379
+        },
+        {
+          "name": "lively",
+          "weight": 0.245
+        },
+        {
+          "name": "groovy",
+          "weight": 0.152
+        },
+        {
+          "name": "mysterious",
+          "weight": 0.148
+        },
+        {
+          "name": "upbeat",
+          "weight": 0.077
+        },
+        {
+          "name": "intense",
+          "weight": 0.056
+        }
+      ],
+      "tempos": {
+        "medium": 8021,
+        "fast": 3524,
+        "slow": 841
+      },
+      "recommendedBpm": {
+        "slow": 110,
+        "medium": 124,
+        "fast": 138
+      },
+      "exemplars": [
+        "The genre of the music piece is electronic, featuring synthesizers, electric guitars, and drums. The tempo is medium with a groovy beat and a mysterious mood.",
+        "The genre of the music piece is electronic, featuring synthesizers, bass, and drums. The tempo is medium with a steady beat, creating a determined and confident mood.",
+        "The genre of the music piece is electronic, featuring synthesizer, piano, and strings. The tempo is medium with a mysterious and contemplative mood.",
+        "The genre of the music piece is electronic, featuring synthesizer, drum machine, and bass. The tempo is medium with a suspenseful and ominous mood."
+      ]
+    },
+    "jazz": {
+      "count": 2027,
+      "instruments": [
+        {
+          "name": "bass",
+          "weight": 0.767
+        },
+        {
+          "name": "drums",
+          "weight": 0.694
+        },
+        {
+          "name": "piano",
+          "weight": 0.608
+        },
+        {
+          "name": "saxophone",
+          "weight": 0.256
+        },
+        {
+          "name": "trumpet",
+          "weight": 0.181
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.147
+        },
+        {
+          "name": "double bass",
+          "weight": 0.074
+        },
+        {
+          "name": "acoustic guitar",
+          "weight": 0.045
+        }
+      ],
+      "moods": [
+        {
+          "name": "lively",
+          "weight": 0.495
+        },
+        {
+          "name": "energetic",
+          "weight": 0.301
+        },
+        {
+          "name": "groovy",
+          "weight": 0.175
+        },
+        {
+          "name": "relaxed",
+          "weight": 0.166
+        },
+        {
+          "name": "playful",
+          "weight": 0.094
+        },
+        {
+          "name": "sad",
+          "weight": 0.069
+        }
+      ],
+      "tempos": {
+        "medium": 1923,
+        "fast": 63,
+        "slow": 41
+      },
+      "recommendedBpm": {
+        "slow": 80,
+        "medium": 115,
+        "fast": 160
+      },
+      "exemplars": [
+        "The genre of the music piece is jazz, which is performed by saxophone and bass. The tempo is medium with a lively and playful mood.",
+        "The genre of the music piece is jazz, which is performed by the bass, piano, and saxophone. The tempo is medium with a lively and playful mood.",
+        "The genre of the music piece is jazz, which is performed by saxophone, bass, and drums. The tempo is medium with a lively and energetic mood.",
+        "The genre of the music piece is jazz, which is performed by the trumpet, saxophone, piano, bass and drums. The tempo is medium with a bluesy mood."
+      ]
+    },
+    "noise": {
+      "count": 212,
+      "instruments": [
+        {
+          "name": "drums",
+          "weight": 0.783
+        },
+        {
+          "name": "bass",
+          "weight": 0.656
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.491
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.472
+        },
+        {
+          "name": "human voice",
+          "weight": 0.217
+        },
+        {
+          "name": "drum machine",
+          "weight": 0.019
+        },
+        {
+          "name": "organ",
+          "weight": 0.014
+        },
+        {
+          "name": "piano",
+          "weight": 0.009
+        }
+      ],
+      "moods": [
+        {
+          "name": "angry",
+          "weight": 0.264
+        },
+        {
+          "name": "manic",
+          "weight": 0.241
+        },
+        {
+          "name": "aggressive",
+          "weight": 0.189
+        },
+        {
+          "name": "intense",
+          "weight": 0.099
+        },
+        {
+          "name": "eerie",
+          "weight": 0.024
+        },
+        {
+          "name": "dark",
+          "weight": 0.019
+        }
+      ],
+      "tempos": {
+        "fast": 188,
+        "slow": 18,
+        "medium": 6
+      },
+      "recommendedBpm": {
+        "slow": 80,
+        "medium": 120,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of the music piece is noise, the instruments used are synthesizers, and the tempo is fast with a manic mood.",
+        "The genre of the music piece is noise, the instruments used are synthesizers, and the tempo is fast with a manic mood.",
+        "The genre of the music piece is noise, the instruments used are the piano and the drums, the tempo is fast with a manic and chaotic mood.",
+        "The genre of the music piece is noise, the instruments used are synthesizer, and the tempo is fast with a chaotic mood."
+      ]
+    },
+    "soundtrack": {
+      "count": 293,
+      "instruments": [
+        {
+          "name": "piano",
+          "weight": 0.614
+        },
+        {
+          "name": "cello",
+          "weight": 0.41
+        },
+        {
+          "name": "strings",
+          "weight": 0.375
+        },
+        {
+          "name": "violin",
+          "weight": 0.263
+        },
+        {
+          "name": "percussion",
+          "weight": 0.249
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.198
+        },
+        {
+          "name": "drums",
+          "weight": 0.133
+        },
+        {
+          "name": "choir",
+          "weight": 0.109
+        }
+      ],
+      "moods": [
+        {
+          "name": "sad",
+          "weight": 0.287
+        },
+        {
+          "name": "dramatic",
+          "weight": 0.27
+        },
+        {
+          "name": "mysterious",
+          "weight": 0.164
+        },
+        {
+          "name": "reflective",
+          "weight": 0.133
+        },
+        {
+          "name": "somber",
+          "weight": 0.106
+        },
+        {
+          "name": "intense",
+          "weight": 0.048
+        }
+      ],
+      "tempos": {
+        "medium": 258,
+        "slow": 29,
+        "fast": 6
+      },
+      "recommendedBpm": {
+        "slow": 80,
+        "medium": 120,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of the music piece is soundtrack, the instruments used are synthesizer, strings, percussion, and choir, the tempo is medium with a suspenseful and dramatic mood.",
+        "The genre of the music piece is soundtrack. It is performed by a piano and orchestra. The tempo is medium with a sad and sentimental mood.",
+        "The genre of the music piece is soundtrack, featuring strings, woodwinds, and percussion. The tempo is medium with a mysterious and suspenseful mood.",
+        "The genre of the music piece is soundtrack, the instruments used are cello, harp, piano, and orchestra, the tempo is slow, and the mood is sad and dramatic."
+      ]
+    },
+    "soul": {
+      "count": 28,
+      "instruments": [
+        {
+          "name": "bass",
+          "weight": 0.964
+        },
+        {
+          "name": "drums",
+          "weight": 0.821
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.286
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.286
+        },
+        {
+          "name": "piano",
+          "weight": 0.286
+        },
+        {
+          "name": "electric piano",
+          "weight": 0.143
+        },
+        {
+          "name": "human voice",
+          "weight": 0.071
+        },
+        {
+          "name": "trumpet",
+          "weight": 0.071
+        }
+      ],
+      "moods": [
+        {
+          "name": "groovy",
+          "weight": 0.429
+        },
+        {
+          "name": "passionate",
+          "weight": 0.286
+        },
+        {
+          "name": "relaxed",
+          "weight": 0.25
+        },
+        {
+          "name": "sad",
+          "weight": 0.107
+        },
+        {
+          "name": "lively",
+          "weight": 0.071
+        },
+        {
+          "name": "soothing",
+          "weight": 0.071
+        }
+      ],
+      "tempos": {
+        "medium": 28
+      },
+      "recommendedBpm": {
+        "slow": 80,
+        "medium": 120,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of the music piece is soul-r&b, which is performed by electric guitar, bass, drums and background vocalists. The tempo is medium with a lively and passionate mood.",
+        "The genre of the music piece is soul-r&b, which is performed by a female singer with a piano accompaniment. The tempo is medium with a passionate and soulful mood.",
+        "The genre of the music piece is soul-r&b, which is performed by a male singer with a keyboard, bass, and drums. The tempo is medium with a passionate and emotional mood.",
+        "The genre of the music piece is soul, featuring electric piano, bass, and drums. The tempo is medium with a groovy and relaxed mood."
+      ]
+    },
+    "hip-hop": {
+      "count": 837,
+      "instruments": [
+        {
+          "name": "bass",
+          "weight": 0.581
+        },
+        {
+          "name": "drums",
+          "weight": 0.462
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.301
+        },
+        {
+          "name": "piano",
+          "weight": 0.229
+        },
+        {
+          "name": "drum machine",
+          "weight": 0.127
+        },
+        {
+          "name": "human voice",
+          "weight": 0.08
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.074
+        },
+        {
+          "name": "strings",
+          "weight": 0.041
+        }
+      ],
+      "moods": [
+        {
+          "name": "groovy",
+          "weight": 0.523
+        },
+        {
+          "name": "energetic",
+          "weight": 0.299
+        },
+        {
+          "name": "relaxed",
+          "weight": 0.106
+        },
+        {
+          "name": "passionate",
+          "weight": 0.084
+        },
+        {
+          "name": "sad",
+          "weight": 0.066
+        },
+        {
+          "name": "intense",
+          "weight": 0.063
+        }
+      ],
+      "tempos": {
+        "medium": 752,
+        "fast": 74,
+        "slow": 11
+      },
+      "recommendedBpm": {
+        "slow": 75,
+        "medium": 90,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of the music piece is hip-hop, which is performed by a bass, drums, and keyboard. The tempo of the music piece is medium with a funky and groovy mood.",
+        "The genre of music piece is hip-hop. It is medium tempo with a groovy beat, piano, and strings. The mood is suspenseful and ominous.",
+        "The genre of the music piece is hip-hop. It is composed of a piano, bass, and drums. The tempo is medium with a melancholic mood.",
+        "The genre of the music piece is hip-hop. It is composed of a bass, a drum, and a keyboard. The tempo is medium with a mood of anger."
+      ]
+    },
+    "reggae": {
+      "count": 209,
+      "instruments": [
+        {
+          "name": "bass",
+          "weight": 0.981
+        },
+        {
+          "name": "drums",
+          "weight": 0.818
+        },
+        {
+          "name": "organ",
+          "weight": 0.383
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.316
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.163
+        },
+        {
+          "name": "percussion",
+          "weight": 0.115
+        },
+        {
+          "name": "piano",
+          "weight": 0.077
+        },
+        {
+          "name": "trumpet",
+          "weight": 0.077
+        }
+      ],
+      "moods": [
+        {
+          "name": "groovy",
+          "weight": 0.641
+        },
+        {
+          "name": "relaxed",
+          "weight": 0.44
+        },
+        {
+          "name": "happy",
+          "weight": 0.297
+        },
+        {
+          "name": "lively",
+          "weight": 0.153
+        },
+        {
+          "name": "upbeat",
+          "weight": 0.129
+        },
+        {
+          "name": "energetic",
+          "weight": 0.077
+        }
+      ],
+      "tempos": {
+        "medium": 202,
+        "fast": 2,
+        "slow": 5
+      },
+      "recommendedBpm": {
+        "slow": 70,
+        "medium": 80,
+        "fast": 90
+      },
+      "exemplars": [
+        "The genre of the music piece is reggae - dub. It is performed by a bass, drums, guitar, organ, and synthesizer. The tempo is medium with a groovy and funky mood.",
+        "The genre of the music piece is reggae, which is characterized by the use of instruments such as bass, drums, organ, and piano. The tempo is medium with a lively and upbeat mood.",
+        "The genre of the music piece is reggae - dub. It is performed using the bass, drums, organ, and synthesizer. The tempo is medium with a groovy and relaxed mood.",
+        "The genre of the music piece is reggae - dub, featuring electric guitar, bass, and drums. The tempo is medium with a groovy and funky mood."
+      ]
+    },
+    "chinese characteristic": {
+      "count": 48,
+      "instruments": [
+        {
+          "name": "flute",
+          "weight": 0.354
+        },
+        {
+          "name": "piano",
+          "weight": 0.125
+        },
+        {
+          "name": "cello",
+          "weight": 0.104
+        },
+        {
+          "name": "harp",
+          "weight": 0.042
+        },
+        {
+          "name": "strings",
+          "weight": 0.021
+        }
+      ],
+      "moods": [
+        {
+          "name": "sad",
+          "weight": 0.75
+        },
+        {
+          "name": "exciting",
+          "weight": 0.083
+        },
+        {
+          "name": "peaceful",
+          "weight": 0.062
+        },
+        {
+          "name": "mysterious",
+          "weight": 0.042
+        },
+        {
+          "name": "lively",
+          "weight": 0.042
+        },
+        {
+          "name": "passionate",
+          "weight": 0.021
+        }
+      ],
+      "tempos": {
+        "medium": 44,
+        "fast": 3,
+        "slow": 1
+      },
+      "recommendedBpm": {
+        "slow": 80,
+        "medium": 120,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of the music piece is Chinese characteristic. It is performed by flute and orchestra with a medium tempo. The mood of the music piece is peaceful and elegant.",
+        "The genre of the music piece is Chinese characteristic. It is performed by flute and orchestra. The tempo is medium with a sad and longing mood.",
+        "The genre of the music piece is Chinese characteristic. It is performed by flute and string instruments with a slow tempo. The mood of the music is mysterious and solemn.",
+        "The genre of the music piece is Chinese characteristic, which is performed by the flute, pipa, and piano. The tempo is medium with a sad and longing mood."
+      ]
+    },
+    "epic": {
+      "count": 16,
+      "instruments": [
+        {
+          "name": "percussion",
+          "weight": 1.0
+        },
+        {
+          "name": "strings",
+          "weight": 0.938
+        },
+        {
+          "name": "brass",
+          "weight": 0.938
+        },
+        {
+          "name": "choir",
+          "weight": 0.125
+        },
+        {
+          "name": "piano",
+          "weight": 0.062
+        }
+      ],
+      "moods": [
+        {
+          "name": "dramatic",
+          "weight": 0.25
+        },
+        {
+          "name": "energetic",
+          "weight": 0.125
+        },
+        {
+          "name": "ominous",
+          "weight": 0.062
+        },
+        {
+          "name": "intense",
+          "weight": 0.062
+        },
+        {
+          "name": "exciting",
+          "weight": 0.062
+        },
+        {
+          "name": "lively",
+          "weight": 0.062
+        }
+      ],
+      "tempos": {
+        "medium": 12,
+        "fast": 4
+      },
+      "recommendedBpm": {
+        "slow": 80,
+        "medium": 120,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of the music piece is epic, featuring strings, piano, and percussion. The tempo is medium with a steady beat, and the mood is suspenseful and ominous.",
+        "The genre of the music piece is epic, featuring powerful strings, brass, and percussion that create a heroic and triumphant mood.",
+        "The genre of the music piece is epic, featuring strings, brass, and percussion. The tempo is medium with a dramatic and heroic mood.",
+        "The genre of the music piece is epic, featuring strings, brass, and percussion. The tempo is medium with a dramatic and heroic mood."
+      ]
+    },
+    "blues": {
+      "count": 122,
+      "instruments": [
+        {
+          "name": "electric guitar",
+          "weight": 0.557
+        },
+        {
+          "name": "bass",
+          "weight": 0.525
+        },
+        {
+          "name": "drums",
+          "weight": 0.484
+        },
+        {
+          "name": "acoustic guitar",
+          "weight": 0.197
+        },
+        {
+          "name": "piano",
+          "weight": 0.057
+        },
+        {
+          "name": "human voice",
+          "weight": 0.049
+        },
+        {
+          "name": "organ",
+          "weight": 0.016
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.008
+        }
+      ],
+      "moods": [
+        {
+          "name": "groovy",
+          "weight": 0.213
+        },
+        {
+          "name": "lively",
+          "weight": 0.205
+        },
+        {
+          "name": "energetic",
+          "weight": 0.164
+        },
+        {
+          "name": "sad",
+          "weight": 0.123
+        },
+        {
+          "name": "passionate",
+          "weight": 0.049
+        },
+        {
+          "name": "somber",
+          "weight": 0.041
+        }
+      ],
+      "tempos": {
+        "medium": 85,
+        "slow": 20,
+        "fast": 17
+      },
+      "recommendedBpm": {
+        "slow": 80,
+        "medium": 120,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of the music piece is blues, which is performed by acoustic guitar and electric guitar. The tempo is medium with a bluesy and emotional mood.",
+        "The genre of the music piece is blues, which is performed by the piano. The instruments used are the piano. The tempo of the music is medium with a bluesy and emotional mood.",
+        "The genre of the music piece is blues, which is performed by electric guitar and bass. The tempo is medium with a bluesy mood.",
+        "The genre of the music piece is blues, which is performed by acoustic guitars. The tempo is medium with a groovy and playful mood."
+      ]
+    },
+    "ambient": {
+      "count": 176,
+      "instruments": [
+        {
+          "name": "synthesizer",
+          "weight": 0.926
+        },
+        {
+          "name": "piano",
+          "weight": 0.5
+        },
+        {
+          "name": "strings",
+          "weight": 0.483
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.165
+        },
+        {
+          "name": "bass",
+          "weight": 0.114
+        },
+        {
+          "name": "percussion",
+          "weight": 0.108
+        },
+        {
+          "name": "drums",
+          "weight": 0.085
+        },
+        {
+          "name": "electric piano",
+          "weight": 0.04
+        }
+      ],
+      "moods": [
+        {
+          "name": "soothing",
+          "weight": 0.244
+        },
+        {
+          "name": "reflective",
+          "weight": 0.239
+        },
+        {
+          "name": "calm",
+          "weight": 0.239
+        },
+        {
+          "name": "peaceful",
+          "weight": 0.21
+        },
+        {
+          "name": "contemplative",
+          "weight": 0.148
+        },
+        {
+          "name": "somber",
+          "weight": 0.142
+        }
+      ],
+      "tempos": {
+        "medium": 59,
+        "slow": 117
+      },
+      "recommendedBpm": {
+        "slow": 60,
+        "medium": 80,
+        "fast": 100
+      },
+      "exemplars": [
+        "The genre of the music piece is ambient, featuring synthesizer, piano, and strings. The tempo is medium with a sad and reflective mood.",
+        "The genre of the music piece is ambient, new age, instrumental. It is medium tempo with a calm and soothing mood. The main instruments used are piano, synthesizer, and strings.",
+        "The genre of the music piece is ambient, the instruments used are piano, synthesizer, and strings. The tempo is medium with a calm and soothing mood.",
+        "The genre of the music piece is ambient, featuring synthesizer, bass, and drums. The tempo is slow, with a mysterious and contemplative mood."
+      ]
+    },
+    "funk": {
+      "count": 158,
+      "instruments": [
+        {
+          "name": "bass",
+          "weight": 0.842
+        },
+        {
+          "name": "drums",
+          "weight": 0.759
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.589
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.158
+        },
+        {
+          "name": "saxophone",
+          "weight": 0.095
+        },
+        {
+          "name": "organ",
+          "weight": 0.051
+        },
+        {
+          "name": "piano",
+          "weight": 0.051
+        },
+        {
+          "name": "electric piano",
+          "weight": 0.051
+        }
+      ],
+      "moods": [
+        {
+          "name": "groovy",
+          "weight": 0.633
+        },
+        {
+          "name": "lively",
+          "weight": 0.519
+        },
+        {
+          "name": "energetic",
+          "weight": 0.38
+        },
+        {
+          "name": "upbeat",
+          "weight": 0.323
+        },
+        {
+          "name": "relaxed",
+          "weight": 0.057
+        },
+        {
+          "name": "playful",
+          "weight": 0.044
+        }
+      ],
+      "tempos": {
+        "medium": 153,
+        "fast": 5
+      },
+      "recommendedBpm": {
+        "slow": 80,
+        "medium": 120,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of the music piece is funk, which is expressed by the electric guitar, bass, and drums. The tempo is medium with a lively and energetic mood.",
+        "The genre of the music piece is funk, which is performed by electric guitar, bass, and drums. The tempo is medium with a lively and energetic mood.",
+        "The genre of the music piece is funk, which is characterized by the use of electric bass, electric guitar, horns, and drums. The tempo is medium with a lively and energetic mood.",
+        "The genre of the music piece is funk, featuring electric guitar, bass, synthesizer, and drums. The tempo is medium with a lively and upbeat mood."
+      ]
+    },
+    "lo-fi": {
+      "count": 54,
+      "instruments": [
+        {
+          "name": "bass",
+          "weight": 0.852
+        },
+        {
+          "name": "drums",
+          "weight": 0.833
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.556
+        },
+        {
+          "name": "human voice",
+          "weight": 0.315
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.222
+        },
+        {
+          "name": "piano",
+          "weight": 0.148
+        },
+        {
+          "name": "drum machine",
+          "weight": 0.074
+        },
+        {
+          "name": "acoustic guitar",
+          "weight": 0.056
+        }
+      ],
+      "moods": [
+        {
+          "name": "relaxed",
+          "weight": 0.315
+        },
+        {
+          "name": "groovy",
+          "weight": 0.204
+        },
+        {
+          "name": "sad",
+          "weight": 0.185
+        },
+        {
+          "name": "nostalgic",
+          "weight": 0.111
+        },
+        {
+          "name": "melancholic",
+          "weight": 0.093
+        },
+        {
+          "name": "calm",
+          "weight": 0.093
+        }
+      ],
+      "tempos": {
+        "medium": 34,
+        "slow": 19,
+        "fast": 1
+      },
+      "recommendedBpm": {
+        "slow": 80,
+        "medium": 120,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of the music piece is lo-fi, featuring guitars and drums. The tempo is medium with a relaxed and dreamy mood.",
+        "The genre of the music piece is lo-fi, the instruments used are acoustic guitar, and the tempo is slow with a melancholic mood.",
+        "The genre of the music piece is lo-fi, the instruments used are acoustic guitar, drums, and human voice, and the tempo is medium with a happy and carefree mood.",
+        "The genre of the music piece is lo-fi, the instruments used are electric guitar, bass, drums, and vocals, and the tempo is medium with a melancholic mood."
+      ]
+    },
+    "new age": {
+      "count": 25,
+      "instruments": [
+        {
+          "name": "synthesizer",
+          "weight": 0.88
+        },
+        {
+          "name": "piano",
+          "weight": 0.2
+        },
+        {
+          "name": "strings",
+          "weight": 0.2
+        },
+        {
+          "name": "flute",
+          "weight": 0.16
+        },
+        {
+          "name": "percussion",
+          "weight": 0.08
+        },
+        {
+          "name": "electric piano",
+          "weight": 0.04
+        },
+        {
+          "name": "cello",
+          "weight": 0.04
+        },
+        {
+          "name": "harp",
+          "weight": 0.04
+        }
+      ],
+      "moods": [
+        {
+          "name": "soothing",
+          "weight": 0.48
+        },
+        {
+          "name": "peaceful",
+          "weight": 0.32
+        },
+        {
+          "name": "calm",
+          "weight": 0.2
+        },
+        {
+          "name": "contemplative",
+          "weight": 0.04
+        },
+        {
+          "name": "mysterious",
+          "weight": 0.04
+        },
+        {
+          "name": "dreamy",
+          "weight": 0.04
+        }
+      ],
+      "tempos": {
+        "medium": 11,
+        "slow": 14
+      },
+      "recommendedBpm": {
+        "slow": 80,
+        "medium": 120,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of the music piece is new age, featuring instruments such as gong, chimes, and birds. The tempo is medium with a peaceful and meditative mood.",
+        "The genre of the music piece is new age, featuring instruments such as gong, chimes, and birds. The tempo is slow, with a meditative and calming mood.",
+        "The genre of the music piece is new age, which is performed by synthesizer and electric piano. The tempo is medium with a calming and soothing mood.",
+        "The genre of the music piece is new age, which is characterized by the use of synthesizers and ethnic instruments. The tempo is medium with a calming and soothing mood."
+      ]
+    },
+    "country": {
+      "count": 46,
+      "instruments": [
+        {
+          "name": "drums",
+          "weight": 0.826
+        },
+        {
+          "name": "bass",
+          "weight": 0.761
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.522
+        },
+        {
+          "name": "acoustic guitar",
+          "weight": 0.457
+        },
+        {
+          "name": "piano",
+          "weight": 0.087
+        },
+        {
+          "name": "organ",
+          "weight": 0.065
+        },
+        {
+          "name": "trumpet",
+          "weight": 0.022
+        },
+        {
+          "name": "saxophone",
+          "weight": 0.022
+        }
+      ],
+      "moods": [
+        {
+          "name": "lively",
+          "weight": 0.739
+        },
+        {
+          "name": "energetic",
+          "weight": 0.457
+        },
+        {
+          "name": "happy",
+          "weight": 0.109
+        },
+        {
+          "name": "sad",
+          "weight": 0.065
+        },
+        {
+          "name": "cheerful",
+          "weight": 0.065
+        },
+        {
+          "name": "romantic",
+          "weight": 0.065
+        }
+      ],
+      "tempos": {
+        "medium": 43,
+        "fast": 3
+      },
+      "recommendedBpm": {
+        "slow": 80,
+        "medium": 120,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of the music piece is country, which is performed by acoustic guitar, electric guitar, bass, and drums. The tempo is medium with a lively and energetic mood.",
+        "The genre of the music piece is country, which is performed by harmonica, acoustic guitar, electric guitar, and drums. The tempo is medium with a lively and positive mood.",
+        "The genre of the music piece is country, which is performed by acoustic guitar and fiddle. The tempo is medium with a sad and longing mood.",
+        "The genre of the music piece is country, which is performed by electric guitar, bass, and drums. The tempo is medium with a lively and energetic mood."
+      ]
+    },
+    "latin": {
+      "count": 30,
+      "instruments": [
+        {
+          "name": "percussion",
+          "weight": 0.633
+        },
+        {
+          "name": "bass",
+          "weight": 0.5
+        },
+        {
+          "name": "piano",
+          "weight": 0.433
+        },
+        {
+          "name": "trumpet",
+          "weight": 0.233
+        },
+        {
+          "name": "drums",
+          "weight": 0.2
+        },
+        {
+          "name": "congas",
+          "weight": 0.167
+        },
+        {
+          "name": "saxophone",
+          "weight": 0.133
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.133
+        }
+      ],
+      "moods": [
+        {
+          "name": "lively",
+          "weight": 0.867
+        },
+        {
+          "name": "energetic",
+          "weight": 0.533
+        },
+        {
+          "name": "upbeat",
+          "weight": 0.167
+        },
+        {
+          "name": "happy",
+          "weight": 0.133
+        },
+        {
+          "name": "cheerful",
+          "weight": 0.1
+        },
+        {
+          "name": "playful",
+          "weight": 0.033
+        }
+      ],
+      "tempos": {
+        "medium": 26,
+        "fast": 4
+      },
+      "recommendedBpm": {
+        "slow": 80,
+        "medium": 120,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of the music piece is Latin, which is performed by percussion, brass, and strings. The tempo is fast with a lively and energetic mood.",
+        "The genre of the music piece is Latin. It is mainly performed by a piano, a trumpet, and a percussion. The tempo is medium with a lively and energetic mood.",
+        "The genre of the music piece is Latin. It is performed by a female voice and a guitar. The tempo is medium with a lively and happy mood.",
+        "The genre of the music piece is Latin. It is performed by percussion instruments such as congas and bongos. The tempo is medium with a lively and energetic mood."
+      ]
+    },
+    "action": {
+      "count": 50,
+      "instruments": [
+        {
+          "name": "percussion",
+          "weight": 0.8
+        },
+        {
+          "name": "strings",
+          "weight": 0.76
+        },
+        {
+          "name": "brass",
+          "weight": 0.62
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.2
+        },
+        {
+          "name": "drums",
+          "weight": 0.16
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.08
+        },
+        {
+          "name": "bass",
+          "weight": 0.06
+        },
+        {
+          "name": "piano",
+          "weight": 0.04
+        }
+      ],
+      "moods": [
+        {
+          "name": "intense",
+          "weight": 0.3
+        },
+        {
+          "name": "dramatic",
+          "weight": 0.18
+        },
+        {
+          "name": "energetic",
+          "weight": 0.16
+        },
+        {
+          "name": "lively",
+          "weight": 0.16
+        },
+        {
+          "name": "exciting",
+          "weight": 0.12
+        },
+        {
+          "name": "fierce",
+          "weight": 0.04
+        }
+      ],
+      "tempos": {
+        "fast": 36,
+        "medium": 14
+      },
+      "recommendedBpm": {
+        "slow": 80,
+        "medium": 120,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of the music piece is action, featuring strings, brass, and percussion. The tempo is fast with a tense and urgent mood.",
+        "The genre of the music piece is action, the instruments used are percussion, brass, and strings, the tempo is fast with a strong and confident mood.",
+        "The genre of the music piece is action, featuring strings, piano, and percussion. The tempo is fast with a tense and determined mood.",
+        "The music genre is action, the instruments include the trumpet, trombone, cymbal, and percussion, and the tempo is fast with a nervous and exciting mood."
+      ]
+    },
+    "disco": {
+      "count": 53,
+      "instruments": [
+        {
+          "name": "synthesizer",
+          "weight": 0.868
+        },
+        {
+          "name": "bass",
+          "weight": 0.811
+        },
+        {
+          "name": "drums",
+          "weight": 0.755
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.528
+        },
+        {
+          "name": "piano",
+          "weight": 0.189
+        },
+        {
+          "name": "electric piano",
+          "weight": 0.151
+        },
+        {
+          "name": "percussion",
+          "weight": 0.113
+        },
+        {
+          "name": "strings",
+          "weight": 0.038
+        }
+      ],
+      "moods": [
+        {
+          "name": "lively",
+          "weight": 0.868
+        },
+        {
+          "name": "energetic",
+          "weight": 0.623
+        },
+        {
+          "name": "upbeat",
+          "weight": 0.472
+        },
+        {
+          "name": "groovy",
+          "weight": 0.113
+        }
+      ],
+      "tempos": {
+        "medium": 49,
+        "fast": 4
+      },
+      "recommendedBpm": {
+        "slow": 80,
+        "medium": 120,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of the music piece is disco, featuring funky electric guitar, bass, and drums. The tempo is medium with a lively and energetic mood.",
+        "The genre of the music piece is disco, which is characterized by the use of synthesizers, electric pianos, and percussion. The tempo is medium with a lively and upbeat mood.",
+        "The genre of the music piece is disco, featuring synthesizers, electric bass, and drums. The tempo is fast with a lively and energetic mood.",
+        "The genre of the music piece is disco, featuring synthesizer, electric guitar, bass, and drums. The tempo is medium with a lively and energetic mood."
+      ]
+    },
+    "avant-garde": {
+      "count": 19,
+      "instruments": [
+        {
+          "name": "human voice",
+          "weight": 0.579
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.368
+        },
+        {
+          "name": "piano",
+          "weight": 0.211
+        },
+        {
+          "name": "drums",
+          "weight": 0.105
+        },
+        {
+          "name": "drum machine",
+          "weight": 0.105
+        },
+        {
+          "name": "bass",
+          "weight": 0.053
+        },
+        {
+          "name": "percussion",
+          "weight": 0.053
+        },
+        {
+          "name": "electric piano",
+          "weight": 0.053
+        }
+      ],
+      "moods": [
+        {
+          "name": "eerie",
+          "weight": 0.316
+        },
+        {
+          "name": "energetic",
+          "weight": 0.105
+        },
+        {
+          "name": "lively",
+          "weight": 0.105
+        },
+        {
+          "name": "dreamy",
+          "weight": 0.053
+        },
+        {
+          "name": "ominous",
+          "weight": 0.053
+        },
+        {
+          "name": "mysterious",
+          "weight": 0.053
+        }
+      ],
+      "tempos": {
+        "slow": 15,
+        "fast": 3,
+        "medium": 1
+      },
+      "recommendedBpm": {
+        "slow": 80,
+        "medium": 120,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of the music piece is avant-garde, featuring a drum set and a human voice. The tempo is slow, with a steady beat and a melancholic mood."
+      ]
+    },
+    "world": {
+      "count": 64,
+      "instruments": [
+        {
+          "name": "percussion",
+          "weight": 0.438
+        },
+        {
+          "name": "flute",
+          "weight": 0.25
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.062
+        },
+        {
+          "name": "strings",
+          "weight": 0.047
+        },
+        {
+          "name": "drums",
+          "weight": 0.047
+        },
+        {
+          "name": "congas",
+          "weight": 0.031
+        },
+        {
+          "name": "clarinet",
+          "weight": 0.031
+        },
+        {
+          "name": "bongos",
+          "weight": 0.016
+        }
+      ],
+      "moods": [
+        {
+          "name": "lively",
+          "weight": 0.391
+        },
+        {
+          "name": "upbeat",
+          "weight": 0.266
+        },
+        {
+          "name": "energetic",
+          "weight": 0.234
+        },
+        {
+          "name": "mysterious",
+          "weight": 0.141
+        },
+        {
+          "name": "groovy",
+          "weight": 0.125
+        },
+        {
+          "name": "contemplative",
+          "weight": 0.062
+        }
+      ],
+      "tempos": {
+        "slow": 2,
+        "medium": 58,
+        "fast": 4
+      },
+      "recommendedBpm": {
+        "slow": 80,
+        "medium": 120,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of the music piece is world music, featuring sitar, tablas, and strings. The tempo is slow with a meditative and spiritual mood.",
+        "The genre of the music piece is world music, which features the marimba, xylophone, and percussion. The tempo is medium with a lively and upbeat mood.",
+        "The genre of the music piece is world music, featuring ethnic instruments such as the sitar, tablas, and synthesizer. The tempo is medium with a mystical and adventurous mood.",
+        "The music genre is world music, which features traditional instruments such as the flute, guitar, and percussion. The tempo is medium with a lively and energetic mood."
+      ]
+    },
+    "orchestral": {
+      "count": 69,
+      "instruments": [
+        {
+          "name": "strings",
+          "weight": 0.942
+        },
+        {
+          "name": "percussion",
+          "weight": 0.899
+        },
+        {
+          "name": "brass",
+          "weight": 0.768
+        },
+        {
+          "name": "choir",
+          "weight": 0.13
+        },
+        {
+          "name": "piano",
+          "weight": 0.087
+        },
+        {
+          "name": "violin",
+          "weight": 0.058
+        },
+        {
+          "name": "cello",
+          "weight": 0.058
+        },
+        {
+          "name": "trumpet",
+          "weight": 0.029
+        }
+      ],
+      "moods": [
+        {
+          "name": "lively",
+          "weight": 0.275
+        },
+        {
+          "name": "dramatic",
+          "weight": 0.261
+        },
+        {
+          "name": "energetic",
+          "weight": 0.203
+        },
+        {
+          "name": "mysterious",
+          "weight": 0.029
+        },
+        {
+          "name": "ominous",
+          "weight": 0.014
+        },
+        {
+          "name": "uplifting",
+          "weight": 0.014
+        }
+      ],
+      "tempos": {
+        "medium": 48,
+        "fast": 20,
+        "slow": 1
+      },
+      "recommendedBpm": {
+        "slow": 80,
+        "medium": 120,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of the music piece is orchestral, featuring piano, strings, brass, and percussion. The tempo is medium with a dramatic and heroic mood.",
+        "The genre of the music piece is orchestral, featuring strings, brass, percussion, and choir. The tempo is medium with a dramatic and heroic mood.",
+        "The genre of the music piece is orchestral, featuring strings, brass, percussion, and choir. The tempo is medium with a dramatic and epic mood.",
+        "The genre of the music piece is orchestral, featuring strings, brass, and percussion. The instruments are playing at a medium tempo with a determined and heroic mood."
+      ]
+    },
+    "traditional": {
+      "count": 27,
+      "instruments": [
+        {
+          "name": "percussion",
+          "weight": 0.074
+        },
+        {
+          "name": "harp",
+          "weight": 0.074
+        },
+        {
+          "name": "drums",
+          "weight": 0.037
+        },
+        {
+          "name": "flute",
+          "weight": 0.037
+        }
+      ],
+      "moods": [
+        {
+          "name": "peaceful",
+          "weight": 0.556
+        },
+        {
+          "name": "sad",
+          "weight": 0.222
+        },
+        {
+          "name": "contemplative",
+          "weight": 0.148
+        },
+        {
+          "name": "lively",
+          "weight": 0.111
+        },
+        {
+          "name": "energetic",
+          "weight": 0.074
+        },
+        {
+          "name": "calm",
+          "weight": 0.037
+        }
+      ],
+      "tempos": {
+        "medium": 8,
+        "slow": 17,
+        "fast": 2
+      },
+      "recommendedBpm": {
+        "slow": 80,
+        "medium": 120,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of the music piece is traditional, which is performed by guzheng. The instruments used are guzheng. The tempo is medium with a calm and peaceful mood.",
+        "The genre of the music piece is traditional, which is performed by the instruments such as erhu, pipa, and Chinese percussion. The tempo is fast with a strong and powerful mood.",
+        "The genre of the music piece is traditional, which is performed by zither. The instruments used are zither. The tempo is medium with a sad and sentimental mood.",
+        "The genre of the music piece is traditional, which is performed by guzheng. The instruments used are guzheng. The tempo is slow, and the mood is peaceful and contemplative."
+      ]
+    },
+    "suspense": {
+      "count": 34,
+      "instruments": [
+        {
+          "name": "synthesizer",
+          "weight": 0.706
+        },
+        {
+          "name": "percussion",
+          "weight": 0.706
+        },
+        {
+          "name": "strings",
+          "weight": 0.588
+        },
+        {
+          "name": "piano",
+          "weight": 0.5
+        },
+        {
+          "name": "bass",
+          "weight": 0.176
+        },
+        {
+          "name": "brass",
+          "weight": 0.147
+        },
+        {
+          "name": "drums",
+          "weight": 0.059
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.059
+        }
+      ],
+      "moods": [
+        {
+          "name": "mysterious",
+          "weight": 0.324
+        },
+        {
+          "name": "ominous",
+          "weight": 0.294
+        },
+        {
+          "name": "dramatic",
+          "weight": 0.118
+        }
+      ],
+      "tempos": {
+        "fast": 1,
+        "medium": 33
+      },
+      "recommendedBpm": {
+        "slow": 80,
+        "medium": 120,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of the music piece is suspense, featuring synthesizer, piano, and strings. The tempo is fast with a nervous and anxious mood.",
+        "The genre of the music piece is suspense, the instruments include synthesizer, piano, bass, and drums. The tempo is medium with a mysterious and suspenseful mood.",
+        "The genre of the music piece is suspense, featuring strings, percussion, and synthesizer. The tempo is medium with a tense and ominous mood.",
+        "The genre of the music piece is suspense, featuring strings, synthesizer, and percussion. The tempo is medium with a tense and fearful mood."
+      ]
+    },
+    "chinese traditional": {
+      "count": 24,
+      "instruments": [
+        {
+          "name": "flute",
+          "weight": 0.083
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.042
+        },
+        {
+          "name": "piano",
+          "weight": 0.042
+        },
+        {
+          "name": "drums",
+          "weight": 0.042
+        }
+      ],
+      "moods": [
+        {
+          "name": "sad",
+          "weight": 0.417
+        },
+        {
+          "name": "lively",
+          "weight": 0.333
+        },
+        {
+          "name": "energetic",
+          "weight": 0.125
+        },
+        {
+          "name": "mysterious",
+          "weight": 0.083
+        },
+        {
+          "name": "passionate",
+          "weight": 0.042
+        },
+        {
+          "name": "peaceful",
+          "weight": 0.042
+        }
+      ],
+      "tempos": {
+        "medium": 19,
+        "slow": 3,
+        "fast": 2
+      },
+      "recommendedBpm": {
+        "slow": 80,
+        "medium": 120,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of the music piece is Chinese Traditional, which is performed by the flute and the piano. The tempo is medium with a sad and sentimental mood.",
+        "The genre of the music piece is Chinese traditional. It is performed by erhu and pipa. The tempo is medium with a sad and sentimental mood.",
+        "The genre of the music piece is Chinese traditional. It is performed by the pipa, erhu, and timpani. The tempo is medium with a sad and mournful mood.",
+        "The genre of the music piece is Chinese traditional. The main instruments are erhu and guzheng. The tempo is slow, and the mood is peaceful and sentimental."
+      ]
+    },
+    "holiday": {
+      "count": 24,
+      "instruments": [
+        {
+          "name": "piano",
+          "weight": 0.5
+        },
+        {
+          "name": "strings",
+          "weight": 0.375
+        },
+        {
+          "name": "bells",
+          "weight": 0.292
+        },
+        {
+          "name": "drums",
+          "weight": 0.25
+        },
+        {
+          "name": "bass",
+          "weight": 0.208
+        },
+        {
+          "name": "choir",
+          "weight": 0.167
+        },
+        {
+          "name": "cello",
+          "weight": 0.125
+        },
+        {
+          "name": "harp",
+          "weight": 0.125
+        }
+      ],
+      "moods": [
+        {
+          "name": "happy",
+          "weight": 0.333
+        },
+        {
+          "name": "lively",
+          "weight": 0.25
+        },
+        {
+          "name": "cheerful",
+          "weight": 0.125
+        },
+        {
+          "name": "playful",
+          "weight": 0.125
+        },
+        {
+          "name": "mysterious",
+          "weight": 0.083
+        },
+        {
+          "name": "somber",
+          "weight": 0.042
+        }
+      ],
+      "tempos": {
+        "slow": 1,
+        "medium": 21,
+        "fast": 2
+      },
+      "recommendedBpm": {
+        "slow": 80,
+        "medium": 120,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of the music piece is holiday, which is performed by the ukulele, piano, and male voice. The tempo is medium with a lively and cheerful mood.",
+        "The genre of the music piece is holiday, the instruments include the cello, flute, harp, organ, and violin, the tempo is medium with a magical mood.",
+        "The genre of the music piece is holiday, which is performed by a harp and a choir. The tempo is medium with a joyful and happy mood.",
+        "The genre of the music piece is holiday, the instruments include celesta, harp, and music box, and the tempo is medium with a mysterious and magical mood."
+      ]
+    },
+    "middle east": {
+      "count": 17,
+      "instruments": [
+        {
+          "name": "cello",
+          "weight": 0.176
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.118
+        },
+        {
+          "name": "violin",
+          "weight": 0.059
+        }
+      ],
+      "moods": [
+        {
+          "name": "sad",
+          "weight": 0.235
+        },
+        {
+          "name": "lively",
+          "weight": 0.176
+        },
+        {
+          "name": "passionate",
+          "weight": 0.176
+        },
+        {
+          "name": "groovy",
+          "weight": 0.176
+        },
+        {
+          "name": "mysterious",
+          "weight": 0.118
+        },
+        {
+          "name": "upbeat",
+          "weight": 0.059
+        }
+      ],
+      "tempos": {
+        "medium": 17
+      },
+      "recommendedBpm": {
+        "slow": 80,
+        "medium": 120,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of the music piece is middle east, which is performed by the oud. The tempo is medium with a sad and emotional mood.",
+        "The genre of the music piece is middle east, which is performed by qanun, ney and darbuka. The tempo is medium with a mysterious and sentimental mood.",
+        "The genre of the music piece is middle east, which is characterized by traditional instruments such as the oud, ney, and kanun. The tempo is medium with a lively and upbeat mood.",
+        "The genre of the music piece is middle east, which is performed by cello, duduk, kanun, darbuka, and ney. The tempo is medium with a mystical and adventurous mood."
+      ]
+    },
+    "corporate": {
+      "count": 16,
+      "instruments": [
+        {
+          "name": "piano",
+          "weight": 1.0
+        },
+        {
+          "name": "drums",
+          "weight": 0.938
+        },
+        {
+          "name": "bass",
+          "weight": 0.875
+        },
+        {
+          "name": "strings",
+          "weight": 0.688
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.5
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.125
+        }
+      ],
+      "moods": [
+        {
+          "name": "uplifting",
+          "weight": 0.562
+        },
+        {
+          "name": "upbeat",
+          "weight": 0.125
+        },
+        {
+          "name": "energetic",
+          "weight": 0.125
+        },
+        {
+          "name": "calm",
+          "weight": 0.062
+        }
+      ],
+      "tempos": {
+        "medium": 14,
+        "slow": 1,
+        "fast": 1
+      },
+      "recommendedBpm": {
+        "slow": 80,
+        "medium": 120,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of the music piece is corporate, the instruments used are piano, synthesizer, strings, bass, drums. The tempo is medium with a motivational mood.",
+        "The genre of the music piece is corporate, the instruments used are piano, guitar, strings, bass, drums. The tempo is medium with a motivational and inspiring mood.",
+        "The genre of the music piece is corporate, the instruments used are piano, guitar, bass, drums, and strings. The tempo is medium with a motivational and inspiring mood.",
+        "The genre of the music piece is corporate, the instruments used are piano, guitar, bass, drums, and strings. The tempo is medium with a motivational and uplifting mood."
+      ]
+    },
+    "indian": {
+      "count": 27,
+      "instruments": [
+        {
+          "name": "human voice",
+          "weight": 0.111
+        }
+      ],
+      "moods": [
+        {
+          "name": "contemplative",
+          "weight": 0.333
+        },
+        {
+          "name": "sad",
+          "weight": 0.185
+        },
+        {
+          "name": "lively",
+          "weight": 0.074
+        },
+        {
+          "name": "energetic",
+          "weight": 0.037
+        },
+        {
+          "name": "groovy",
+          "weight": 0.037
+        },
+        {
+          "name": "happy",
+          "weight": 0.037
+        }
+      ],
+      "tempos": {
+        "slow": 8,
+        "medium": 19
+      },
+      "recommendedBpm": {
+        "slow": 80,
+        "medium": 120,
+        "fast": 140
+      },
+      "exemplars": [
+        "The genre of the music piece is Indian. It is performed using the sitar. The tempo is slow with a sad and contemplative mood.",
+        "The genre of the music piece is Indian. It is performed using instruments such as sitar, tabla, and santur. The tempo is medium with a mystical and spiritual mood.",
+        "The genre of the music piece is Indian. It is composed using the sitar, tabla, and mridangam. The tempo is slow with a contemplative and meditative mood.",
+        "The genre of the music piece is Indian. It is performed using the sitar, tabla, and voice. The tempo is slow with a contemplative and meditative mood."
+      ]
+    }
+  },
+  "moods": {
+    "lively": {
+      "count": 11373,
+      "recommendedInstruments": [
+        {
+          "name": "drums",
+          "weight": 0.532
+        },
+        {
+          "name": "bass",
+          "weight": 0.518
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.407
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.252
+        },
+        {
+          "name": "piano",
+          "weight": 0.228
+        },
+        {
+          "name": "drum machine",
+          "weight": 0.124
+        }
+      ]
+    },
+    "energetic": {
+      "count": 10024,
+      "recommendedInstruments": [
+        {
+          "name": "synthesizer",
+          "weight": 0.594
+        },
+        {
+          "name": "drums",
+          "weight": 0.583
+        },
+        {
+          "name": "bass",
+          "weight": 0.578
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.269
+        },
+        {
+          "name": "drum machine",
+          "weight": 0.233
+        },
+        {
+          "name": "piano",
+          "weight": 0.128
+        }
+      ]
+    },
+    "mysterious": {
+      "count": 6634,
+      "recommendedInstruments": [
+        {
+          "name": "synthesizer",
+          "weight": 0.843
+        },
+        {
+          "name": "piano",
+          "weight": 0.287
+        },
+        {
+          "name": "bass",
+          "weight": 0.273
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.245
+        },
+        {
+          "name": "percussion",
+          "weight": 0.228
+        },
+        {
+          "name": "drums",
+          "weight": 0.218
+        }
+      ]
+    },
+    "sad": {
+      "count": 4872,
+      "recommendedInstruments": [
+        {
+          "name": "piano",
+          "weight": 0.458
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.196
+        },
+        {
+          "name": "cello",
+          "weight": 0.179
+        },
+        {
+          "name": "bass",
+          "weight": 0.113
+        },
+        {
+          "name": "acoustic guitar",
+          "weight": 0.11
+        },
+        {
+          "name": "violin",
+          "weight": 0.104
+        }
+      ]
+    },
+    "groovy": {
+      "count": 4181,
+      "recommendedInstruments": [
+        {
+          "name": "bass",
+          "weight": 0.661
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.619
+        },
+        {
+          "name": "drums",
+          "weight": 0.564
+        },
+        {
+          "name": "drum machine",
+          "weight": 0.264
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.215
+        },
+        {
+          "name": "piano",
+          "weight": 0.14
+        }
+      ]
+    },
+    "somber": {
+      "count": 3523,
+      "recommendedInstruments": [
+        {
+          "name": "piano",
+          "weight": 0.445
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.208
+        },
+        {
+          "name": "cello",
+          "weight": 0.19
+        },
+        {
+          "name": "strings",
+          "weight": 0.134
+        },
+        {
+          "name": "human voice",
+          "weight": 0.117
+        },
+        {
+          "name": "violin",
+          "weight": 0.079
+        }
+      ]
+    },
+    "contemplative": {
+      "count": 3369,
+      "recommendedInstruments": [
+        {
+          "name": "synthesizer",
+          "weight": 0.603
+        },
+        {
+          "name": "piano",
+          "weight": 0.354
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.207
+        },
+        {
+          "name": "strings",
+          "weight": 0.203
+        },
+        {
+          "name": "bass",
+          "weight": 0.197
+        },
+        {
+          "name": "drums",
+          "weight": 0.151
+        }
+      ]
+    },
+    "upbeat": {
+      "count": 2563,
+      "recommendedInstruments": [
+        {
+          "name": "drums",
+          "weight": 0.647
+        },
+        {
+          "name": "bass",
+          "weight": 0.63
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.595
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.289
+        },
+        {
+          "name": "piano",
+          "weight": 0.191
+        },
+        {
+          "name": "drum machine",
+          "weight": 0.184
+        }
+      ]
+    },
+    "playful": {
+      "count": 2038,
+      "recommendedInstruments": [
+        {
+          "name": "piano",
+          "weight": 0.555
+        },
+        {
+          "name": "bass",
+          "weight": 0.199
+        },
+        {
+          "name": "clarinet",
+          "weight": 0.166
+        },
+        {
+          "name": "cello",
+          "weight": 0.162
+        },
+        {
+          "name": "violin",
+          "weight": 0.161
+        },
+        {
+          "name": "drums",
+          "weight": 0.142
+        }
+      ]
+    },
+    "reflective": {
+      "count": 2030,
+      "recommendedInstruments": [
+        {
+          "name": "piano",
+          "weight": 0.561
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.326
+        },
+        {
+          "name": "strings",
+          "weight": 0.217
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.169
+        },
+        {
+          "name": "bass",
+          "weight": 0.161
+        },
+        {
+          "name": "cello",
+          "weight": 0.153
+        }
+      ]
+    },
+    "melancholic": {
+      "count": 1799,
+      "recommendedInstruments": [
+        {
+          "name": "bass",
+          "weight": 0.312
+        },
+        {
+          "name": "acoustic guitar",
+          "weight": 0.308
+        },
+        {
+          "name": "drums",
+          "weight": 0.301
+        },
+        {
+          "name": "piano",
+          "weight": 0.24
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.235
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.227
+        }
+      ]
+    },
+    "dark": {
+      "count": 1661,
+      "recommendedInstruments": [
+        {
+          "name": "synthesizer",
+          "weight": 0.895
+        },
+        {
+          "name": "drums",
+          "weight": 0.367
+        },
+        {
+          "name": "bass",
+          "weight": 0.333
+        },
+        {
+          "name": "drum machine",
+          "weight": 0.281
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.242
+        },
+        {
+          "name": "piano",
+          "weight": 0.131
+        }
+      ]
+    },
+    "happy": {
+      "count": 1648,
+      "recommendedInstruments": [
+        {
+          "name": "bass",
+          "weight": 0.41
+        },
+        {
+          "name": "drums",
+          "weight": 0.36
+        },
+        {
+          "name": "piano",
+          "weight": 0.207
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.191
+        },
+        {
+          "name": "acoustic guitar",
+          "weight": 0.146
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.137
+        }
+      ]
+    },
+    "eerie": {
+      "count": 1429,
+      "recommendedInstruments": [
+        {
+          "name": "synthesizer",
+          "weight": 0.843
+        },
+        {
+          "name": "percussion",
+          "weight": 0.227
+        },
+        {
+          "name": "drum machine",
+          "weight": 0.178
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.176
+        },
+        {
+          "name": "piano",
+          "weight": 0.15
+        },
+        {
+          "name": "drums",
+          "weight": 0.136
+        }
+      ]
+    },
+    "relaxed": {
+      "count": 1368,
+      "recommendedInstruments": [
+        {
+          "name": "bass",
+          "weight": 0.714
+        },
+        {
+          "name": "drums",
+          "weight": 0.607
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.52
+        },
+        {
+          "name": "piano",
+          "weight": 0.289
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.251
+        },
+        {
+          "name": "drum machine",
+          "weight": 0.225
+        }
+      ]
+    },
+    "intense": {
+      "count": 1247,
+      "recommendedInstruments": [
+        {
+          "name": "synthesizer",
+          "weight": 0.661
+        },
+        {
+          "name": "drums",
+          "weight": 0.514
+        },
+        {
+          "name": "bass",
+          "weight": 0.488
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.372
+        },
+        {
+          "name": "drum machine",
+          "weight": 0.355
+        },
+        {
+          "name": "percussion",
+          "weight": 0.078
+        }
+      ]
+    },
+    "ominous": {
+      "count": 1175,
+      "recommendedInstruments": [
+        {
+          "name": "synthesizer",
+          "weight": 0.877
+        },
+        {
+          "name": "bass",
+          "weight": 0.385
+        },
+        {
+          "name": "drums",
+          "weight": 0.29
+        },
+        {
+          "name": "percussion",
+          "weight": 0.234
+        },
+        {
+          "name": "piano",
+          "weight": 0.232
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.2
+        }
+      ]
+    },
+    "passionate": {
+      "count": 945,
+      "recommendedInstruments": [
+        {
+          "name": "bass",
+          "weight": 0.337
+        },
+        {
+          "name": "drums",
+          "weight": 0.311
+        },
+        {
+          "name": "piano",
+          "weight": 0.237
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.186
+        },
+        {
+          "name": "human voice",
+          "weight": 0.151
+        },
+        {
+          "name": "violin",
+          "weight": 0.15
+        }
+      ]
+    },
+    "soothing": {
+      "count": 928,
+      "recommendedInstruments": [
+        {
+          "name": "synthesizer",
+          "weight": 0.577
+        },
+        {
+          "name": "piano",
+          "weight": 0.366
+        },
+        {
+          "name": "bass",
+          "weight": 0.364
+        },
+        {
+          "name": "drums",
+          "weight": 0.274
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.168
+        },
+        {
+          "name": "acoustic guitar",
+          "weight": 0.165
+        }
+      ]
+    },
+    "calm": {
+      "count": 730,
+      "recommendedInstruments": [
+        {
+          "name": "synthesizer",
+          "weight": 0.825
+        },
+        {
+          "name": "piano",
+          "weight": 0.368
+        },
+        {
+          "name": "bass",
+          "weight": 0.295
+        },
+        {
+          "name": "drum machine",
+          "weight": 0.249
+        },
+        {
+          "name": "drums",
+          "weight": 0.171
+        },
+        {
+          "name": "strings",
+          "weight": 0.17
+        }
+      ]
+    },
+    "exciting": {
+      "count": 622,
+      "recommendedInstruments": [
+        {
+          "name": "synthesizer",
+          "weight": 0.646
+        },
+        {
+          "name": "bass",
+          "weight": 0.555
+        },
+        {
+          "name": "drums",
+          "weight": 0.542
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.338
+        },
+        {
+          "name": "drum machine",
+          "weight": 0.323
+        },
+        {
+          "name": "percussion",
+          "weight": 0.053
+        }
+      ]
+    },
+    "dramatic": {
+      "count": 614,
+      "recommendedInstruments": [
+        {
+          "name": "piano",
+          "weight": 0.458
+        },
+        {
+          "name": "cello",
+          "weight": 0.331
+        },
+        {
+          "name": "strings",
+          "weight": 0.331
+        },
+        {
+          "name": "percussion",
+          "weight": 0.309
+        },
+        {
+          "name": "violin",
+          "weight": 0.3
+        },
+        {
+          "name": "synthesizer",
+          "weight": 0.228
+        }
+      ]
+    },
+    "peaceful": {
+      "count": 603,
+      "recommendedInstruments": [
+        {
+          "name": "synthesizer",
+          "weight": 0.539
+        },
+        {
+          "name": "piano",
+          "weight": 0.275
+        },
+        {
+          "name": "bass",
+          "weight": 0.187
+        },
+        {
+          "name": "acoustic guitar",
+          "weight": 0.141
+        },
+        {
+          "name": "strings",
+          "weight": 0.133
+        },
+        {
+          "name": "drums",
+          "weight": 0.119
+        }
+      ]
+    },
+    "dreamy": {
+      "count": 512,
+      "recommendedInstruments": [
+        {
+          "name": "synthesizer",
+          "weight": 0.867
+        },
+        {
+          "name": "drum machine",
+          "weight": 0.346
+        },
+        {
+          "name": "drums",
+          "weight": 0.254
+        },
+        {
+          "name": "bass",
+          "weight": 0.234
+        },
+        {
+          "name": "piano",
+          "weight": 0.195
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.168
+        }
+      ]
+    },
+    "manic": {
+      "count": 421,
+      "recommendedInstruments": [
+        {
+          "name": "synthesizer",
+          "weight": 0.741
+        },
+        {
+          "name": "drums",
+          "weight": 0.373
+        },
+        {
+          "name": "bass",
+          "weight": 0.259
+        },
+        {
+          "name": "electric guitar",
+          "weight": 0.235
+        },
+        {
+          "name": "drum machine",
+          "weight": 0.23
+        },
+        {
+          "name": "human voice",
+          "weight": 0.064
+        }
+      ]
+    }
+  },
+  "instruments": {
+    "synthesizer": {
+      "count": 24231,
+      "compatibleInstruments": [
+        "bass",
+        "drums",
+        "drum machine",
+        "electric guitar",
+        "piano"
+      ]
+    },
+    "bass": {
+      "count": 18171,
+      "compatibleInstruments": [
+        "drums",
+        "synthesizer",
+        "electric guitar",
+        "piano",
+        "drum machine"
+      ]
+    },
+    "drums": {
+      "count": 17285,
+      "compatibleInstruments": [
+        "bass",
+        "synthesizer",
+        "electric guitar",
+        "piano",
+        "human voice"
+      ]
+    },
+    "piano": {
+      "count": 12268,
+      "compatibleInstruments": [
+        "synthesizer",
+        "drums",
+        "bass",
+        "strings",
+        "cello"
+      ]
+    },
+    "electric guitar": {
+      "count": 10536,
+      "compatibleInstruments": [
+        "drums",
+        "bass",
+        "synthesizer",
+        "drum machine",
+        "piano"
+      ]
+    },
+    "drum machine": {
+      "count": 6968,
+      "compatibleInstruments": [
+        "synthesizer",
+        "bass",
+        "piano",
+        "electric guitar",
+        "electric piano"
+      ]
+    },
+    "percussion": {
+      "count": 3971,
+      "compatibleInstruments": [
+        "synthesizer",
+        "strings",
+        "piano",
+        "bass",
+        "drums"
+      ]
+    },
+    "strings": {
+      "count": 3542,
+      "compatibleInstruments": [
+        "synthesizer",
+        "piano",
+        "percussion",
+        "brass",
+        "electric guitar"
+      ]
+    },
+    "cello": {
+      "count": 3506,
+      "compatibleInstruments": [
+        "piano",
+        "violin",
+        "flute",
+        "clarinet",
+        "viola"
+      ]
+    },
+    "human voice": {
+      "count": 3076,
+      "compatibleInstruments": [
+        "drums",
+        "bass",
+        "synthesizer",
+        "electric guitar",
+        "drum machine"
+      ]
+    },
+    "acoustic guitar": {
+      "count": 2636,
+      "compatibleInstruments": [
+        "bass",
+        "drums",
+        "piano",
+        "percussion",
+        "electric guitar"
+      ]
+    },
+    "violin": {
+      "count": 2615,
+      "compatibleInstruments": [
+        "cello",
+        "piano",
+        "flute",
+        "clarinet",
+        "viola"
+      ]
+    },
+    "flute": {
+      "count": 1680,
+      "compatibleInstruments": [
+        "cello",
+        "piano",
+        "clarinet",
+        "violin",
+        "synthesizer"
+      ]
+    },
+    "electric piano": {
+      "count": 1660,
+      "compatibleInstruments": [
+        "piano",
+        "synthesizer",
+        "drum machine",
+        "drums",
+        "strings"
+      ]
+    },
+    "clarinet": {
+      "count": 1096,
+      "compatibleInstruments": [
+        "piano",
+        "flute",
+        "cello",
+        "violin",
+        "trumpet"
+      ]
+    },
+    "trumpet": {
+      "count": 1037,
+      "compatibleInstruments": [
+        "drums",
+        "bass",
+        "piano",
+        "saxophone",
+        "clarinet"
+      ]
+    },
+    "saxophone": {
+      "count": 875,
+      "compatibleInstruments": [
+        "drums",
+        "bass",
+        "trumpet",
+        "piano",
+        "clarinet"
+      ]
+    },
+    "choir": {
+      "count": 651,
+      "compatibleInstruments": [
+        "synthesizer",
+        "piano",
+        "strings",
+        "human voice",
+        "cello"
+      ]
+    },
+    "harp": {
+      "count": 650,
+      "compatibleInstruments": [
+        "cello",
+        "piano",
+        "flute",
+        "violin",
+        "synthesizer"
+      ]
+    },
+    "organ": {
+      "count": 416,
+      "compatibleInstruments": [
+        "bass",
+        "drums",
+        "piano",
+        "synthesizer",
+        "electric guitar"
+      ]
+    },
+    "viola": {
+      "count": 368,
+      "compatibleInstruments": [
+        "cello",
+        "violin",
+        "bass",
+        "piano",
+        "double bass"
+      ]
+    },
+    "brass": {
+      "count": 363,
+      "compatibleInstruments": [
+        "strings",
+        "percussion",
+        "piano",
+        "synthesizer",
+        "choir"
+      ]
+    },
+    "double bass": {
+      "count": 235,
+      "compatibleInstruments": [
+        "bass",
+        "piano",
+        "drums",
+        "cello",
+        "violin"
+      ]
+    },
+    "sound effects": {
+      "count": 114,
+      "compatibleInstruments": [
+        "synthesizer",
+        "drum machine",
+        "piano",
+        "percussion",
+        "drums"
+      ]
+    },
+    "congas": {
+      "count": 36,
+      "compatibleInstruments": [
+        "percussion",
+        "bongos",
+        "bass",
+        "piano",
+        "drums"
+      ]
+    }
+  },
+  "instrumentCooccurrence": {}
+}

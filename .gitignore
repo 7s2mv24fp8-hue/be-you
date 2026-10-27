@@ -53,7 +53,10 @@ logs/
 
 # Groove MIDI training cache (binary data, downloaded on first run)
 data/groove_cache/
-# Raw HF dataset dumps (only max_knowledge.json is needed)
+# Raw HF dataset dumps (only max_knowledge.json and music_tag_model.json are needed)
 data/daw_knowledge_full.json
 data/daw_knowledge_fl.json
+data/MTG-Qwen.json
+data/MAG-Qwen.json
+trained_music_tagger/
 
