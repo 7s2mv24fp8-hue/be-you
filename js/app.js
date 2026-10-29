@@ -98,7 +98,7 @@ class FLStudioApp {
       }
     } else if (curCount > numSteps) {
       while (container.children.length > numSteps) {
-        container.removeChild(container.lastChild);
+        container.removeChild(container.lastElementChild || container.lastChild);
       }
     } else if (curCount === 0) {
       container.innerHTML = '';
@@ -136,21 +136,24 @@ class FLStudioApp {
           btn.addEventListener('contextmenu', e => {
             e.preventDefault();
             showContextMenu([
-              { label: `Velocity: High (100%)`, action: () => { this.sequencer.setStepVelocity(ci, si, 1.0); this._updateStepBtn(btn, ch, si); } },
+              { label: `Velocity: High (100%)`, action: () => { this.sequencer.setStepVelocity(ci, si, 1.0);  this._updateStepBtn(btn, ch, si); } },
               { label: `Velocity: Med (65%)`,   action: () => { this.sequencer.setStepVelocity(ci, si, 0.65); this._updateStepBtn(btn, ch, si); } },
-              { label: `Velocity: Soft (30%)`,  action: () => { this.sequencer.setStepVelocity(ci, si, 0.3);  this._updateStepBtn(btn, ch, si); } },
+              { label: `Velocity: Low (35%)`,   action: () => { this.sequencer.setStepVelocity(ci, si, 0.35); this._updateStepBtn(btn, ch, si); } },
               'separator',
-              { label: 'Clear Step', action: () => { this.sequencer.setStep(ci, si, false); this._updateStepBtn(btn, ch, si); } }
+              { label: ' Randomize channel', action: () => { this.sequencer.randomizeChannel(ci); this._refreshChannelRack(); } },
+              { label: ' Clear channel',     action: () => { this.sequencer.clearChannel(ci); this._refreshChannelRack(); } },
+              { label: ' Clone channel',     action: () => { this.cloneChannel(ci); } },
             ], e.clientX, e.clientY);
           });
 
           // Click toggles step
           btn.addEventListener('click', () => {
-            const next = !ch.steps[si];
-            this.sequencer.setStep(ci, si, next);
+            if (this.audioEngine) this.audioEngine.resume();
+            const wasOn = ch.steps[si];
+            this.sequencer.toggleStep(ci, si);
             this._updateStepBtn(btn, ch, si);
-            if (next && this.audioEngine) {
-              this._auditionChannel(ch);
+            if (!wasOn && ch.steps[si] && this.audioEngine) {
+              this.audioEngine.triggerChannel(ch.name, 0, (ch.velocity[si] || 0.8) * (ch.volume || 1));
             }
           });
 
@@ -160,7 +163,7 @@ class FLStudioApp {
       } else if (newSteps < currentCount) {
         // Remove excess buttons from end
         while (stepsContainer.children.length > newSteps) {
-          stepsContainer.removeChild(stepsContainer.lastChild);
+          stepsContainer.removeChild(stepsContainer.lastElementChild || stepsContainer.lastChild);
         }
       }
 
@@ -180,7 +183,7 @@ class FLStudioApp {
     const duplicateToggle = document.getElementById('rack-extend-duplicate-toggle');
     const isRepeat = options.repeat !== undefined ? !!options.repeat : (duplicateToggle ? duplicateToggle.checked : true);
 
-    this.sequencer.extendPattern(newSteps, { ...options, repeat: isRepeat });
+    this.sequencer.extendPattern(newSteps, { ...options, repeat: isRepeat, skipDOMRebuild: true });
     this._renderStepHeaders(newSteps);
 
     const channelsList = document.getElementById('channels-list');
@@ -335,6 +338,7 @@ class FLStudioApp {
       cutoff: orig.cutoff || 2000,
       muted: false,
       solo: false,
+      isPaused: false,
       steps: [...(orig.steps || new Array(this.sequencer.steps).fill(false))],
       velocity: [...(orig.velocity || new Array(this.sequencer.steps).fill(0.8))],
       stepPitch: orig.stepPitch ? [...orig.stepPitch] : new Array(this.sequencer.steps).fill(0),
@@ -408,10 +412,20 @@ class FLStudioApp {
   }
 
   unmuteAll() {
-    this.sequencer.channels.forEach(ch => {
+    this.sequencer.channels.forEach((ch, ci) => {
       ch.muted = false;
       ch.solo = false;
+      ch.isPaused = false;
       if (ch.volume === 0 || ch.volume === undefined) ch.volume = 0.85;
+      const row = document.querySelector(`.channel-row[data-channel-idx="${ci}"]`);
+      if (row) {
+        row.classList.remove('rack-paused');
+        const pauseBtn = row.querySelector('.ch-pause-btn');
+        if (pauseBtn) {
+          pauseBtn.classList.remove('paused');
+          pauseBtn.title = `Pause ${ch.name} Rack`;
+        }
+      }
     });
     if (this.audioEngine && this.audioEngine.masterGain) {
       this.audioEngine.setMasterVolume(0.85);
@@ -705,6 +719,12 @@ class FLStudioApp {
     rows.forEach((row, ci) => {
       const ch = this.sequencer.channels[ci];
       if (!ch) return;
+      row.classList.toggle('rack-paused', !!ch.isPaused);
+      const pauseBtn = row.querySelector('.ch-pause-btn');
+      if (pauseBtn) {
+        pauseBtn.classList.toggle('paused', !!ch.isPaused);
+        pauseBtn.title = ch.isPaused ? `Resume ${ch.name} (Rack is Paused)` : `Pause ${ch.name} Rack`;
+      }
       const stepsContainer = row.querySelector('.steps-container');
       if (!stepsContainer) return;
       stepsContainer.querySelectorAll('.step-btn').forEach((btn, si) => {
@@ -2808,6 +2828,7 @@ class FLStudioApp {
       pan: 0,
       muted: false,
       solo: false,
+      isPaused: false,
       notes: []
     };
 
@@ -2867,6 +2888,7 @@ class FLStudioApp {
         pan: ch.pan,
         muted: !!ch.muted,
         solo: !!ch.solo,
+        isPaused: !!ch.isPaused,
         notes: ch.notes ? JSON.parse(JSON.stringify(ch.notes)) : [],
         filterFreq: ch.filterFreq || 2000,
         filterRes: ch.filterRes || 1
@@ -2926,6 +2948,7 @@ class FLStudioApp {
         pan: ch.pan !== undefined ? ch.pan : 0,
         muted: !!ch.muted,
         solo: !!ch.solo,
+        isPaused: !!ch.isPaused,
         notes: ch.notes || [],
         filterFreq: ch.filterFreq || 2000,
         filterRes: ch.filterRes || 1

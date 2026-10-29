@@ -161,11 +161,13 @@ class Sequencer {
       this.currentStep = 0;
     }
 
-    if (window.app) {
+    if (window.app && !options.skipDOMRebuild) {
       if (typeof window.app._renderStepHeaders === 'function') {
         window.app._renderStepHeaders(newSteps);
       }
-      if (typeof window.app._buildChannelRack === 'function') {
+      if (typeof window.app._updateChannelRackStepsSmoothly === 'function') {
+        window.app._updateChannelRackStepsSmoothly(newSteps, oldSteps, repeat);
+      } else if (typeof window.app._buildChannelRack === 'function') {
         window.app._buildChannelRack();
       }
       if (window.app.pianoRoll && typeof window.app.pianoRoll.setSteps === 'function') {
