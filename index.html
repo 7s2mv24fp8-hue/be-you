@@ -222,64 +222,85 @@
  </div>
  </div>
  <div class="rack-controls">
- <!-- Channel Rack Loop Transport -->
- <div class="rack-transport-group" title="Channel Rack Pattern Transport">
- <button id="rack-play-btn" class="rack-transport-btn rack-play-btn" title="Play Pattern Loop (Rack)" data-tooltip="Play Rack">
- <svg viewBox="0 0 16 16" width="9" height="9" fill="currentColor"><polygon points="3,2 13,8 3,14"/></svg>
- </button>
- <button id="rack-pause-btn" class="rack-transport-btn rack-pause-btn" title="Pause Pattern Loop (Rack)" data-tooltip="Pause Rack">
- <svg viewBox="0 0 16 16" width="9" height="9" fill="currentColor">
-   <rect x="2.5" y="2" width="3.5" height="12" rx="1"/>
-   <rect x="10" y="2" width="3.5" height="12" rx="1"/>
- </svg>
- <span class="rack-pause-label">Pause</span>
- </button>
- <button id="rack-stop-btn" class="rack-transport-btn rack-stop-btn" title="Stop Pattern Loop" data-tooltip="Stop Rack">
- <svg viewBox="0 0 16 16" width="8" height="8" fill="currentColor"><rect x="3" y="3" width="10" height="10" rx="1"/></svg>
- </button>
- </div>
+      <!-- Channel Rack Loop Transport -->
+      <div class="rack-transport-group" title="Channel Rack Pattern Transport">
+        <button id="rack-play-btn" class="rack-transport-btn rack-play-btn" title="Play Pattern Loop (Rack)" data-tooltip="Play Rack">
+          <svg viewBox="0 0 16 16" width="9" height="9" fill="currentColor"><polygon points="3,2 13,8 3,14"/></svg>
+        </button>
+        <button id="rack-stop-btn" class="rack-transport-btn rack-stop-btn" title="Stop Pattern Loop" data-tooltip="Stop Rack">
+          <svg viewBox="0 0 16 16" width="8" height="8" fill="currentColor"><rect x="3" y="3" width="10" height="10" rx="1"/></svg>
+        </button>
+      </div>
 
- <div class="rack-v-sep" style="width:1px;height:16px;background:var(--border);margin:0 2px;"></div>
+      <div class="rack-v-sep" style="width:1px;height:16px;background:var(--border);margin:0 2px;"></div>
 
- <label style="font-size:10px;color:var(--text-muted);display:flex;align-items:center;gap:4px;">
- <span>Length:</span>
- <select id="rack-step-length-select" class="rack-pattern-select" style="padding:1px 4px;font-size:10px;height:20px;border-color:rgba(255,255,255,0.15);">
- <option value="16">16 Steps (1 Bar)</option>
- <option value="32">32 Steps (2 Bars)</option>
- <option value="48">48 Steps (3 Bars)</option>
- <option value="64">64 Steps (4 Bars)</option>
- <option value="80">80 Steps (5 Bars)</option>
- <option value="96">96 Steps (6 Bars)</option>
- <option value="112">112 Steps (7 Bars)</option>
- <option value="128">128 Steps (8 Bars)</option>
- <option value="custom">Custom / Extend...</option>
- </select>
- </label>
+      <label style="font-size:10px;color:var(--text-muted);display:flex;align-items:center;gap:4px;">
+        <span>Length:</span>
+        <select id="rack-step-length-select" class="rack-pattern-select" style="padding:1px 4px;font-size:10px;height:20px;border-color:rgba(255,255,255,0.15);">
+          <option value="16">16 Steps (1 Bar)</option>
+          <option value="32">32 Steps (2 Bars)</option>
+          <option value="48">48 Steps (3 Bars)</option>
+          <option value="64">64 Steps (4 Bars)</option>
+          <option value="80">80 Steps (5 Bars)</option>
+          <option value="96">96 Steps (6 Bars)</option>
+          <option value="112">112 Steps (7 Bars)</option>
+          <option value="128">128 Steps (8 Bars)</option>
+          <option value="custom">Custom / Extend...</option>
+        </select>
+      </label>
 
- <button id="rack-extend-btn" class="ch-btn rack-extend-btn" title="Extend pattern to length (choose custom steps, bars, or duplicate beat)" style="width:auto;padding:0 6px;font-size:9px;font-weight:600;display:flex;align-items:center;gap:3px;background:rgba(255,255,255,0.06);color:#f4f4f5;border-color:rgba(255,255,255,0.2);">
- <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-   <path d="M2 8h12M10 4l4 4-4 4"/>
- </svg>
- Extend
- </button>
- <button id="rack-double-btn" class="ch-btn rack-double-btn" title="Double pattern length & duplicate beat (2x)" style="width:auto;padding:0 5px;font-size:9px;font-weight:700;color:var(--accent);">
- 2x
- </button>
+      <!-- Smooth Extend Button & Split Dropdown Menu -->
+      <div class="rack-extend-group" style="position:relative;display:inline-flex;align-items:center;">
+        <button id="rack-extend-btn" class="ch-btn rack-extend-btn" title="Click to smoothly extend +1 Bar (+16 steps) or duplicate beat" style="width:auto;padding:0 7px;font-size:9px;font-weight:600;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,0.06);color:#f4f4f5;border-color:rgba(255,255,255,0.2);border-top-right-radius:0;border-bottom-right-radius:0;border-right:none;">
+          <svg viewBox="0 0 16 16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 8h12M10 4l4 4-4 4"/>
+          </svg>
+          <span>Extend</span>
+        </button>
+        <button id="rack-extend-dropdown-btn" class="ch-btn rack-extend-dropdown-btn" title="Extend Options (+1 Bar, +2 Bars, 2x, Custom...)" style="width:16px;padding:0;font-size:8px;background:rgba(255,255,255,0.06);color:#f4f4f5;border-color:rgba(255,255,255,0.2);border-top-left-radius:0;border-bottom-left-radius:0;display:flex;align-items:center;justify-content:center;">
+          <svg viewBox="0 0 10 10" width="7" height="7" fill="currentColor"><path d="M2 3.5l3 3 3-3z"/></svg>
+        </button>
+        <div id="rack-extend-menu" class="rack-extend-menu hidden">
+          <button type="button" class="rack-extend-menu-item" data-action="extend-16">
+            <span>+1 Bar (+16 steps)</span>
+            <span class="menu-hint">Quick</span>
+          </button>
+          <button type="button" class="rack-extend-menu-item" data-action="extend-32">
+            <span>+2 Bars (+32 steps)</span>
+          </button>
+          <button type="button" class="rack-extend-menu-item" data-action="double">
+            <span>2x Double Current</span>
+            <span class="menu-hint" style="color:var(--accent);">2x</span>
+          </button>
+          <div style="height:1px;background:rgba(255,255,255,0.1);margin:2px 0;"></div>
+          <label class="rack-extend-menu-item" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:10px;">Duplicate Groove</span>
+            <input type="checkbox" id="rack-extend-duplicate-toggle" checked style="accent-color:var(--accent);cursor:pointer;margin:0;">
+          </label>
+          <div style="height:1px;background:rgba(255,255,255,0.1);margin:2px 0;"></div>
+          <button type="button" class="rack-extend-menu-item" data-action="custom">
+            <span>Custom Steps / Modal...</span>
+            <span class="menu-hint">⚙</span>
+          </button>
+        </div>
+      </div>
+      <button id="rack-double-btn" class="ch-btn rack-double-btn" title="Double pattern length & duplicate beat (2x)" style="width:auto;padding:0 5px;font-size:9px;font-weight:700;color:var(--accent);">
+        2x
+      </button>
 
- <div style="margin-left:auto;display:flex;gap:4px;">
- <button class="ch-btn" title="Randomize All" onclick="sequencerRandomizeAll()" style="width:auto;padding:0 6px;font-size:9px;">Rand</button>
- <button class="ch-btn" title="Clear All" onclick="sequencerClearAll()" style="width:auto;padding:0 6px;font-size:9px;">Clear</button>
- </div>
- </div>
+      <div style="margin-left:auto;display:flex;gap:4px;">
+        <button class="ch-btn" title="Randomize All" onclick="sequencerRandomizeAll()" style="width:auto;padding:0 6px;font-size:9px;">Rand</button>
+        <button class="ch-btn" title="Clear All" onclick="sequencerClearAll()" style="width:auto;padding:0 6px;font-size:9px;">Clear</button>
+      </div>
+    </div>
 
- <!-- Step headers -->
- <div style="display:flex;align-items:center;height:20px;background:#111;border-bottom:1px solid var(--border);padding:0 4px;overflow:hidden;">
- <div style="width:84px;flex-shrink:0;"></div>
- <div style="width:62px;flex-shrink:0;"></div>
- <div id="rack-step-headers-wrap" style="flex:1;overflow-x:hidden;min-width:0;">
- <div id="rack-step-headers" style="display:flex;gap:2px;padding:0 4px;width:max-content;"></div>
- </div>
- </div>
+    <!-- Step headers -->
+    <div style="display:flex;align-items:center;height:20px;background:#111;border-bottom:1px solid var(--border);padding:0 4px;overflow:hidden;">
+      <div style="width:182px;flex-shrink:0;padding-left:8px;font-size:8.5px;color:var(--text-muted);font-weight:600;letter-spacing:0.5px;display:flex;align-items:center;">RACK CHANNELS</div>
+      <div id="rack-step-headers-wrap" style="flex:1;overflow-x:hidden;min-width:0;">
+        <div id="rack-step-headers" style="display:flex;gap:2px;padding:0 4px;width:max-content;"></div>
+      </div>
+    </div>
 
  <!-- Channel rows -->
  <div id="channels-list"></div>

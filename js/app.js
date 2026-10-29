@@ -85,25 +85,117 @@ class FLStudioApp {
     const container = document.getElementById('rack-step-headers');
     if (!container) return;
     numSteps = numSteps || (this.sequencer ? this.sequencer.steps : 16);
-    container.innerHTML = '';
-    container.style.cssText = 'display:flex;gap:2px;padding:0 4px;width:max-content;';
-    for (let i = 1; i <= numSteps; i++) {
-      const d = document.createElement('div');
-      const isBeatStart = (i % 4 === 1);
-      d.style.cssText = `min-width:20px;max-width:26px;width:22px;text-align:center;font-size:8px;font-family:JetBrains Mono,monospace;color:${isBeatStart ? '#ff7700' : '#555'};flex-shrink:0;`;
-      d.textContent = i;
-      container.appendChild(d);
+    const curCount = container.children.length;
+
+    if (curCount < numSteps) {
+      for (let i = curCount + 1; i <= numSteps; i++) {
+        const d = document.createElement('div');
+        const isBeatStart = (i % 4 === 1);
+        d.style.cssText = `min-width:20px;max-width:26px;width:22px;text-align:center;font-size:8px;font-family:JetBrains Mono,monospace;color:${isBeatStart ? '#ff7700' : '#555'};flex-shrink:0;${isBeatStart ? 'border-left:1px solid rgba(255,255,255,0.15);' : ''}`;
+        d.textContent = i;
+        d.className = 'rack-step-num-slide-in';
+        container.appendChild(d);
+      }
+    } else if (curCount > numSteps) {
+      while (container.children.length > numSteps) {
+        container.removeChild(container.lastChild);
+      }
+    } else if (curCount === 0) {
+      container.innerHTML = '';
+      container.style.cssText = 'display:flex;gap:2px;padding:0 4px;width:max-content;';
+      for (let i = 1; i <= numSteps; i++) {
+        const d = document.createElement('div');
+        const isBeatStart = (i % 4 === 1);
+        d.style.cssText = `min-width:20px;max-width:26px;width:22px;text-align:center;font-size:8px;font-family:JetBrains Mono,monospace;color:${isBeatStart ? '#ff7700' : '#555'};flex-shrink:0;${isBeatStart ? 'border-left:1px solid rgba(255,255,255,0.15);' : ''}`;
+        d.textContent = i;
+        container.appendChild(d);
+      }
     }
+  }
+
+  _updateChannelRackStepsSmoothly(newSteps, oldSteps, isRepeat) {
+    this.sequencer.channels.forEach((ch, ci) => {
+      const row = document.querySelector(`.channel-row[data-channel-idx="${ci}"]`);
+      if (!row) return;
+      const stepsContainer = row.querySelector('.steps-container');
+      if (!stepsContainer) return;
+
+      const currentCount = stepsContainer.children.length;
+
+      if (newSteps > currentCount) {
+        // Append new step buttons smoothly with keyframe animation
+        const frag = document.createDocumentFragment();
+        for (let si = currentCount; si < newSteps; si++) {
+          const btn = document.createElement('button');
+          btn.className = `step-btn${si % 4 === 0 ? ' beat-marker' : ''} step-btn-slide-in`;
+          btn.dataset.step = si;
+          btn.dataset.channelIdx = ci;
+          this._updateStepBtn(btn, ch, si);
+
+          // Right-click for velocity
+          btn.addEventListener('contextmenu', e => {
+            e.preventDefault();
+            showContextMenu([
+              { label: `Velocity: High (100%)`, action: () => { this.sequencer.setStepVelocity(ci, si, 1.0); this._updateStepBtn(btn, ch, si); } },
+              { label: `Velocity: Med (65%)`,   action: () => { this.sequencer.setStepVelocity(ci, si, 0.65); this._updateStepBtn(btn, ch, si); } },
+              { label: `Velocity: Soft (30%)`,  action: () => { this.sequencer.setStepVelocity(ci, si, 0.3);  this._updateStepBtn(btn, ch, si); } },
+              'separator',
+              { label: 'Clear Step', action: () => { this.sequencer.setStep(ci, si, false); this._updateStepBtn(btn, ch, si); } }
+            ], e.clientX, e.clientY);
+          });
+
+          // Click toggles step
+          btn.addEventListener('click', () => {
+            const next = !ch.steps[si];
+            this.sequencer.setStep(ci, si, next);
+            this._updateStepBtn(btn, ch, si);
+            if (next && this.audioEngine) {
+              this._auditionChannel(ch);
+            }
+          });
+
+          frag.appendChild(btn);
+        }
+        stepsContainer.appendChild(frag);
+      } else if (newSteps < currentCount) {
+        // Remove excess buttons from end
+        while (stepsContainer.children.length > newSteps) {
+          stepsContainer.removeChild(stepsContainer.lastChild);
+        }
+      }
+
+      // If repeat was used or existing buttons need state refresh
+      for (let si = 0; si < Math.min(newSteps, currentCount); si++) {
+        const btn = stepsContainer.children[si];
+        if (btn) this._updateStepBtn(btn, ch, si);
+      }
+    });
   }
 
   setPatternLength(newSteps, options = {}) {
     newSteps = parseInt(newSteps, 10) || 16;
-    this.sequencer.extendPattern(newSteps, options);
+    newSteps = Math.max(8, Math.min(128, newSteps));
+    const oldSteps = this.sequencer.steps || 16;
+
+    const duplicateToggle = document.getElementById('rack-extend-duplicate-toggle');
+    const isRepeat = options.repeat !== undefined ? !!options.repeat : (duplicateToggle ? duplicateToggle.checked : true);
+
+    this.sequencer.extendPattern(newSteps, { ...options, repeat: isRepeat });
     this._renderStepHeaders(newSteps);
-    this._buildChannelRack();
+
+    const channelsList = document.getElementById('channels-list');
+    const rows = channelsList ? channelsList.querySelectorAll('.channel-row') : [];
+
+    if (rows.length === this.sequencer.channels.length && rows.length > 0) {
+      this._updateChannelRackStepsSmoothly(newSteps, oldSteps, isRepeat);
+    } else {
+      this._buildChannelRack();
+    }
+
     if (this.pianoRoll && typeof this.pianoRoll.setSteps === 'function') {
       this.pianoRoll.setSteps(newSteps);
     }
+
     const select = document.getElementById('rack-step-length-select');
     if (select) {
       let opt = select.querySelector(`option[value="${newSteps}"]`);
@@ -120,8 +212,21 @@ class FLStudioApp {
       }
       select.value = String(newSteps);
     }
+
+    // Smooth scroll to reveal newly added steps
+    if (newSteps > oldSteps && channelsList) {
+      const scrollTarget = Math.max(0, (newSteps - 16) * 24);
+      setTimeout(() => {
+        channelsList.scrollTo({ left: scrollTarget, behavior: 'smooth' });
+        const headersWrap = document.getElementById('rack-step-headers-wrap');
+        if (headersWrap) {
+          headersWrap.scrollTo({ left: scrollTarget, behavior: 'smooth' });
+        }
+      }, 30);
+    }
+
     const bars = (newSteps / 16).toFixed(1).replace('.0', '');
-    showToast(`Pattern: ${newSteps} steps (${bars} bar${newSteps === 16 ? '' : 's'})${options.repeat ? ' • Groove duplicated' : ''}`);
+    showToast(`Pattern: ${newSteps} steps (${bars} bar${newSteps === 16 ? '' : 's'})${isRepeat ? ' • Groove duplicated' : ''}`);
   }
 
   openExtendPatternModal() {
@@ -244,6 +349,64 @@ class FLStudioApp {
     showToast(`Cloned channel: ${cloned.name}`);
   }
 
+  toggleChannelPause(ci) {
+    const ch = this.sequencer.channels[ci];
+    if (!ch) return;
+    ch.isPaused = !ch.isPaused;
+
+    // Immediately halt active audio on this specific channel
+    if (ch.isPaused && this.audioEngine && typeof this.audioEngine.stopChannel === 'function') {
+      this.audioEngine.stopChannel(ch.name, ci);
+    }
+
+    const row = document.querySelector(`.channel-row[data-channel-idx="${ci}"]`);
+    if (row) {
+      row.classList.toggle('rack-paused', ch.isPaused);
+      const pauseBtn = row.querySelector('.ch-pause-btn');
+      if (pauseBtn) {
+        pauseBtn.classList.toggle('paused', ch.isPaused);
+        pauseBtn.title = ch.isPaused ? `Resume ${ch.name} (Rack is Paused)` : `Pause ${ch.name} Rack`;
+      }
+    }
+
+    showToast(ch.isPaused ? `❚❚ Paused ${ch.name} rack` : `▶ Resumed ${ch.name} rack`, 1800);
+  }
+
+  pauseAllChannels() {
+    this.sequencer.channels.forEach((ch, ci) => {
+      ch.isPaused = true;
+      if (this.audioEngine && typeof this.audioEngine.stopChannel === 'function') {
+        this.audioEngine.stopChannel(ch.name, ci);
+      }
+      const row = document.querySelector(`.channel-row[data-channel-idx="${ci}"]`);
+      if (row) {
+        row.classList.add('rack-paused');
+        const pauseBtn = row.querySelector('.ch-pause-btn');
+        if (pauseBtn) {
+          pauseBtn.classList.add('paused');
+          pauseBtn.title = `Resume ${ch.name} (Rack is Paused)`;
+        }
+      }
+    });
+    showToast('❚❚ Paused all individual racks', 2000);
+  }
+
+  resumeAllChannels() {
+    this.sequencer.channels.forEach((ch, ci) => {
+      ch.isPaused = false;
+      const row = document.querySelector(`.channel-row[data-channel-idx="${ci}"]`);
+      if (row) {
+        row.classList.remove('rack-paused');
+        const pauseBtn = row.querySelector('.ch-pause-btn');
+        if (pauseBtn) {
+          pauseBtn.classList.remove('paused');
+          pauseBtn.title = `Pause ${ch.name} Rack`;
+        }
+      }
+    });
+    showToast('▶ Resumed all racks', 2000);
+  }
+
   unmuteAll() {
     this.sequencer.channels.forEach(ch => {
       ch.muted = false;
@@ -321,7 +484,7 @@ class FLStudioApp {
 
   _buildChannelRow(ch, ci) {
     const row = document.createElement('div');
-    row.className = 'channel-row';
+    row.className = 'channel-row' + (ch.isPaused ? ' rack-paused' : '');
     row.dataset.channelIdx = ci;
 
     // Color bar - clicking auditions the channel
@@ -340,14 +503,35 @@ class FLStudioApp {
     const auditionBtn = document.createElement('button');
     auditionBtn.className = 'ch-audition-btn';
     auditionBtn.textContent = '▶';
-    auditionBtn.title = `Audition ${ch.name}`;
+    auditionBtn.title = `Audition / Play ${ch.name}`;
     auditionBtn.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (ch.isPaused) {
+        this.toggleChannelPause(ci);
+      }
       this._auditionChannel(ch);
       auditionBtn.classList.add('auditioning');
       setTimeout(() => auditionBtn.classList.remove('auditioning'), 180);
     });
     row.appendChild(auditionBtn);
+
+    // Dedicated Pause Button for this specific rack (❚❚)
+    const pauseBtn = document.createElement('button');
+    pauseBtn.className = 'ch-pause-btn' + (ch.isPaused ? ' paused' : '');
+    pauseBtn.title = ch.isPaused ? `Resume ${ch.name} (Rack is Paused)` : `Pause ${ch.name} Rack`;
+    pauseBtn.setAttribute('data-action', 'pause');
+    pauseBtn.setAttribute('data-channel-idx', ci);
+    pauseBtn.innerHTML = `
+      <svg viewBox="0 0 16 16" width="7" height="7" fill="currentColor">
+        <rect x="2.5" y="2" width="3.5" height="12" rx="1"/>
+        <rect x="10" y="2" width="3.5" height="12" rx="1"/>
+      </svg>
+    `;
+    pauseBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggleChannelPause(ci);
+    });
+    row.appendChild(pauseBtn);
 
     // Label (click → audition & open piano roll for synth, or preview for audio)
     const label = document.createElement('div');
@@ -464,6 +648,8 @@ class FLStudioApp {
       if (e.target === row || e.target === label) {
         e.preventDefault();
         showContextMenu([
+          { label: ch.isPaused ? `▶ Resume ${ch.name} Rack` : `❚❚ Pause ${ch.name} Rack`, action: () => this.toggleChannelPause(ci) },
+          'separator',
           { label: ' Duplicate / Clone Channel', action: () => this.cloneChannel(ci) },
           { label: ' Randomize', action: () => { this.sequencer.randomizeChannel(ci); this._refreshChannelRack(); } },
           { label: ' Clear',     action: () => { this.sequencer.clearChannel(ci); this._refreshChannelRack(); } },
@@ -483,6 +669,8 @@ class FLStudioApp {
           { label: ' Set Pattern: 48 Steps (3 Bars)', action: () => this.setPatternLength(48) },
           { label: ' Set Pattern: 64 Steps (4 Bars)', action: () => this.setPatternLength(64) },
           'separator',
+          { label: '❚❚ Pause All Racks', action: () => this.pauseAllChannels() },
+          { label: '▶ Resume All Racks', action: () => this.resumeAllChannels() },
           { label: ' Unmute All Channels & Reset Master', action: () => this.unmuteAll() },
           'separator',
           { label: ' Import Sound to this slot', action: () => {
@@ -689,6 +877,8 @@ class FLStudioApp {
     const rackPauseBtn  = document.getElementById('rack-pause-btn');
     const rackStopBtn   = document.getElementById('rack-stop-btn');
     const rackExtendBtn = document.getElementById('rack-extend-btn');
+    const rackExtendDropdownBtn = document.getElementById('rack-extend-dropdown-btn');
+    const rackExtendMenu = document.getElementById('rack-extend-menu');
     const rackDoubleBtn = document.getElementById('rack-double-btn');
 
     const handlePlay = async (preferredMode) => {
@@ -730,11 +920,84 @@ class FLStudioApp {
     rackPauseBtn?.addEventListener('click', () => handlePause());
     rackStopBtn?.addEventListener('click', () => handleStop());
 
-    rackExtendBtn?.addEventListener('click', () => this.openExtendPatternModal());
+    const handleQuickExtend = (stepIncrement = 16) => {
+      const curSteps = this.sequencer.steps || 16;
+      if (curSteps >= 128) {
+        showToast('Maximum pattern length reached (128 steps / 8 Bars)');
+        return;
+      }
+      const nextSteps = Math.min(128, curSteps + stepIncrement);
+      rackExtendBtn?.classList.add('extending');
+      setTimeout(() => rackExtendBtn?.classList.remove('extending'), 220);
+      this.setPatternLength(nextSteps);
+    };
+
+    rackExtendBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      handleQuickExtend(16);
+    });
+
+    rackExtendDropdownBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (rackExtendMenu) {
+        const isHidden = rackExtendMenu.classList.contains('hidden');
+        rackExtendMenu.classList.toggle('hidden', !isHidden);
+        rackExtendDropdownBtn.classList.toggle('active', isHidden);
+      }
+    });
+
+    rackExtendBtn?.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (rackExtendMenu) {
+        rackExtendMenu.classList.remove('hidden');
+        rackExtendDropdownBtn?.classList.add('active');
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (rackExtendMenu && !rackExtendMenu.classList.contains('hidden')) {
+        if (!e.target.closest('.rack-extend-group')) {
+          rackExtendMenu.classList.add('hidden');
+          rackExtendDropdownBtn?.classList.remove('active');
+        }
+      }
+    });
+
+    rackExtendMenu?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.rack-extend-menu-item');
+      if (!btn) return;
+      const action = btn.dataset.action;
+      if (!action) return;
+
+      rackExtendMenu.classList.add('hidden');
+      rackExtendDropdownBtn?.classList.remove('active');
+
+      if (action === 'extend-16') {
+        handleQuickExtend(16);
+      } else if (action === 'extend-32') {
+        handleQuickExtend(32);
+      } else if (action === 'double') {
+        const curSteps = this.sequencer.steps || 16;
+        const nextSteps = Math.min(128, curSteps * 2);
+        if (nextSteps > curSteps) {
+          rackExtendBtn?.classList.add('extending');
+          setTimeout(() => rackExtendBtn?.classList.remove('extending'), 220);
+          this.setPatternLength(nextSteps, { repeat: true });
+        } else {
+          showToast('Maximum pattern length reached (128 steps)');
+        }
+      } else if (action === 'custom') {
+        this.openExtendPatternModal();
+      }
+    });
+
     rackDoubleBtn?.addEventListener('click', () => {
       const curSteps = this.sequencer.steps || 16;
       const nextSteps = Math.min(128, curSteps * 2);
       if (nextSteps > curSteps) {
+        rackDoubleBtn.classList.add('extending');
+        setTimeout(() => rackDoubleBtn.classList.remove('extending'), 220);
         this.setPatternLength(nextSteps, { repeat: true });
       } else {
         showToast('Maximum pattern length reached (128 steps)');
@@ -792,10 +1055,14 @@ class FLStudioApp {
 
   // ── Step callback ─────────────────────────────────────────────
   _onStep(step, songStep) {
-    // Highlight current step in channel rack
-    document.querySelectorAll('.step-btn').forEach(btn => {
-      const s = parseInt(btn.dataset.step, 10);
-      btn.classList.toggle('playing', s === step);
+    // Highlight current step in channel rack (skip paused racks)
+    document.querySelectorAll('.channel-row').forEach((row, ci) => {
+      const ch = this.sequencer.channels[ci];
+      const isPaused = ch && ch.isPaused;
+      row.querySelectorAll('.step-btn').forEach(btn => {
+        const s = parseInt(btn.dataset.step, 10);
+        btn.classList.toggle('playing', !isPaused && s === step);
+      });
     });
 
     // Update piano roll playhead
@@ -1838,6 +2105,7 @@ class FLStudioApp {
 
       stopPlayback();
       genBtn?.classList.add('generating');
+      extendBtn?.classList.add('extending');
       cancelBtn?.classList.remove('hidden');
       loadingEl?.classList.remove('hidden');
       if (loadingTxt) loadingTxt.textContent = 'Extending track pattern & concatenating audio...';
@@ -1872,6 +2140,7 @@ class FLStudioApp {
         showToast(`Extension error: ${err.message}`, 3500);
       } finally {
         genBtn?.classList.remove('generating');
+        extendBtn?.classList.remove('extending');
         cancelBtn?.classList.add('hidden');
         loadingEl?.classList.add('hidden');
       }

@@ -344,19 +344,20 @@ canvas { display: block; }
 }
 
 .ch-audition-btn {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 3px;
   background: rgba(255, 255, 255, 0.06);
   color: #a1a1aa;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  font-size: 9px;
+  font-size: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  margin-right: 4px;
+  margin-right: 2px;
   transition: all 0.12s;
+  flex-shrink: 0;
 }
 .ch-audition-btn:hover {
   background: rgba(255, 119, 0, 0.25);
@@ -367,7 +368,47 @@ canvas { display: block; }
   background: #00e676 !important;
   color: #000000 !important;
   border-color: #00e676 !important;
-  transform: scale(1.15);
+  transform: scale(1.12);
+}
+
+/* Individual Rack Pause Button */
+.ch-pause-btn {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #a1a1aa;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-right: 4px;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+.ch-pause-btn:hover {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border-color: #f59e0b;
+}
+.ch-pause-btn.paused {
+  background: #f59e0b !important;
+  color: #18181b !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.7);
+  animation: tb-pulse-pause 1.6s infinite ease-in-out;
+}
+.channel-row.rack-paused {
+  background: rgba(245, 158, 11, 0.04);
+}
+.channel-row.rack-paused .channel-label {
+  color: #f59e0b !important;
+}
+.channel-row.rack-paused .step-btn {
+  opacity: 0.45 !important;
+  filter: saturate(0.4);
 }
 
 .master-knob-wrap {
@@ -603,15 +644,110 @@ canvas { display: block; }
   letter-spacing: 0.3px;
 }
 
-/* Extend & Double pattern buttons */
+/* Extend group & smooth popover menu */
+.rack-extend-group {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.rack-extend-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
 .rack-extend-btn:hover {
   background: rgba(255, 255, 255, 0.12) !important;
   border-color: rgba(255, 255, 255, 0.35) !important;
   color: #ffffff !important;
 }
+.rack-extend-btn:active, .rack-extend-btn.extending {
+  transform: scale(0.96);
+  background: var(--accent) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 10px var(--accent-glow) !important;
+}
+.rack-extend-dropdown-btn {
+  transition: all 0.15s ease !important;
+}
+.rack-extend-dropdown-btn:hover, .rack-extend-dropdown-btn.active {
+  background: rgba(255, 255, 255, 0.16) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  color: #ffffff !important;
+}
+.rack-extend-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 6px;
+  padding: 4px;
+  min-width: 175px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.85), 0 0 1px 1px rgba(255, 255, 255, 0.1);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: menu-pop-in 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.rack-extend-menu.hidden {
+  display: none !important;
+}
+@keyframes menu-pop-in {
+  0% { opacity: 0; transform: translateY(-6px) scale(0.96); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.rack-extend-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 8px;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: #e4e4e7;
+  border-radius: 4px;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  transition: background 0.1s, color 0.1s;
+}
+.rack-extend-menu-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+.rack-extend-menu-item .menu-hint {
+  font-size: 9px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
 .rack-double-btn:hover {
   background: var(--accent-hover) !important;
   color: #ffffff !important;
+}
+
+/* Smooth step button entrance animations */
+@keyframes step-slide-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) translateY(3px);
+  }
+  65% {
+    opacity: 0.95;
+    transform: scale(1.05) translateY(-1px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+.step-btn-slide-in {
+  animation: step-slide-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.rack-step-num-slide-in {
+  animation: step-slide-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* Modal Pattern Extension Presets */

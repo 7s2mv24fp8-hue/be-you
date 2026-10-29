@@ -53,7 +53,7 @@ class Sequencer {
       const steps = Array(this.steps || 16).fill(false);
       const velocity = Array(this.steps || 16).fill(0.8);
       defaults.forEach(i => { if (i < steps.length) steps[i] = true; });
-      return { name, color, steps, velocity, volume: 1, pan: 0, muted: false, solo: false, type, notes: [], filterFreq: 2000, filterRes: 1 };
+      return { name, color, steps, velocity, volume: 1, pan: 0, muted: false, solo: false, isPaused: false, type, notes: [], filterFreq: 2000, filterRes: 1 };
     };
 
     return [
@@ -354,6 +354,7 @@ class Sequencer {
 
     this.channels.forEach((ch, idx) => {
       if (ch.muted) return;
+      if (ch.isPaused) return; // Individual rack paused
       if (hasSolo && !ch.solo) return;
 
       // In Song Mode, check if channel has an active block on this bar in the playlist arrangement
@@ -372,12 +373,12 @@ class Sequencer {
       const stepCutoff = (ch.stepCutoff && ch.stepCutoff[patternStep] !== undefined) ? ch.stepCutoff[patternStep] : (ch.filterFreq || 2000);
 
       if (ch.type === 'drum') {
-        this.engine.triggerChannel(ch.name, playTime, vel, { pitchOffset: stepPitch, pan: stepPan, cutoff: stepCutoff });
+        this.engine.triggerChannel(ch.name, playTime, vel, { pitchOffset: stepPitch, pan: stepPan, cutoff: stepCutoff, channelKey: ch.name });
       } else if (ch.type === 'audio' && ch.audioBuffer) {
         // Play recorded vocal / audio clip with pitch & pan
         try {
           const src = this.engine.ctx.createBufferSource();
-          if (this.engine._trackNode) this.engine._trackNode(src);
+          if (this.engine._trackNode) this.engine._trackNode(src, ch.name);
           src.buffer = ch.audioBuffer;
           if (stepPitch !== 0) {
             src.playbackRate.value = Math.pow(2, stepPitch / 12);
@@ -408,9 +409,9 @@ class Sequencer {
             if (stepPitch !== 0) freq *= Math.pow(2, stepPitch / 12);
             const dur = (n.length || 1) * this.stepDuration;
             if (ch.name === 'Bass') {
-              this.engine.playBass(playTime, { freq, gain: vel * 0.5, duration: dur, filterFreq: stepCutoff });
+              this.engine.playBass(playTime, { freq, gain: vel * 0.5, duration: dur, filterFreq: stepCutoff, channelKey: ch.name });
             } else {
-              this.engine.playSynth(playTime, { freq, gain: vel * 0.35, duration: dur, filterFreq: stepCutoff });
+              this.engine.playSynth(playTime, { freq, gain: vel * 0.35, duration: dur, filterFreq: stepCutoff, channelKey: ch.name });
             }
           });
         } else {
@@ -419,9 +420,9 @@ class Sequencer {
           let freq = (defaultFreqs[ch.name] || 220) * Math.pow(2, stepPitch / 12);
           const dur = this.stepDuration;
           if (ch.name === 'Bass') {
-            this.engine.playBass(playTime, { freq, gain: vel * 0.4, duration: dur, filterFreq: stepCutoff });
+            this.engine.playBass(playTime, { freq, gain: vel * 0.4, duration: dur, filterFreq: stepCutoff, channelKey: ch.name });
           } else {
-            this.engine.playSynth(playTime, { freq, gain: vel * 0.25, duration: dur, filterFreq: stepCutoff });
+            this.engine.playSynth(playTime, { freq, gain: vel * 0.25, duration: dur, filterFreq: stepCutoff, channelKey: ch.name });
           }
         }
       }
@@ -489,6 +490,14 @@ class Sequencer {
   setChannelSolo(idx, val) {
     // Toggle solo — only one channel soloed at a time
     this.channels.forEach((c, i) => { c.solo = i === idx ? val : false; });
+  }
+
+  setChannelPause(idx, val) {
+    if (this.channels[idx]) {
+      this.channels[idx].isPaused = (val !== undefined) ? !!val : !this.channels[idx].isPaused;
+      return this.channels[idx].isPaused;
+    }
+    return false;
   }
 
   setBPM(bpm) {

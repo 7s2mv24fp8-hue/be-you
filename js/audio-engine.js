@@ -296,9 +296,12 @@ class AudioEngine {
     }
   }
 
-  _trackNode(node) {
+  _trackNode(node, channelKey = null) {
     if (!node) return node;
     if (!this._activeNodes) this._activeNodes = new Set();
+    if (channelKey !== null && channelKey !== undefined) {
+      node._channelKey = String(channelKey).toLowerCase();
+    }
     this._activeNodes.add(node);
     const onEnded = () => {
       if (this._activeNodes) this._activeNodes.delete(node);
@@ -309,6 +312,24 @@ class AudioEngine {
       node.onended = onEnded;
     }
     return node;
+  }
+
+  stopChannel(channelName, channelIdx) {
+    if (!this._activeNodes) return;
+    const nameKey = channelName ? String(channelName).toLowerCase() : null;
+    const idxKey = (channelIdx !== undefined && channelIdx !== null) ? String(channelIdx) : null;
+    for (const node of this._activeNodes) {
+      if (!node._channelKey) continue;
+      const nk = node._channelKey;
+      if ((nameKey && (nk === nameKey || nameKey.includes(nk) || nk.includes(nameKey))) ||
+          (idxKey && nk === idxKey)) {
+        try {
+          if (typeof node.stop === 'function') node.stop(0);
+          if (typeof node.disconnect === 'function') node.disconnect();
+        } catch (_) {}
+        this._activeNodes.delete(node);
+      }
+    }
   }
 
   stopAll() {
@@ -565,11 +586,11 @@ class AudioEngine {
 
   // ── 808 Kick ─────────────────────────────────────────────────
   playKick(time, options = {}) {
-    const { freq = 58, gain = 0.9, pitch = 1 } = options;
+    const { freq = 58, gain = 0.9, pitch = 1, channelKey = 'kick' } = options;
     const t = time || this.ctx.currentTime;
 
     // Sub oscillator
-    const osc = this._trackNode(this.ctx.createOscillator());
+    const osc = this._trackNode(this.ctx.createOscillator(), channelKey);
     osc.type = 'sine';
     osc.frequency.setValueAtTime(freq * pitch * 3.5, t);
     osc.frequency.exponentialRampToValueAtTime(freq * pitch, t + 0.05);
@@ -593,7 +614,7 @@ class AudioEngine {
 
   // ── Snare ────────────────────────────────────────────────────
   playSnare(time, options = {}) {
-    const { gain = 0.7 } = options;
+    const { gain = 0.7, channelKey = 'snare' } = options;
     const t = time || this.ctx.currentTime;
 
     // Noise component
@@ -602,7 +623,7 @@ class AudioEngine {
     const data = buffer.getChannelData(0);
     for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1);
 
-    const noise = this._trackNode(this.ctx.createBufferSource());
+    const noise = this._trackNode(this.ctx.createBufferSource(), channelKey);
     noise.buffer = buffer;
 
     const noiseFilter = this.ctx.createBiquadFilter();
@@ -615,7 +636,7 @@ class AudioEngine {
     noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
 
     // Tone component
-    const osc = this._trackNode(this.ctx.createOscillator());
+    const osc = this._trackNode(this.ctx.createOscillator(), channelKey);
     osc.type = 'triangle';
     osc.frequency.setValueAtTime(220, t);
     osc.frequency.exponentialRampToValueAtTime(160, t + 0.1);
@@ -654,7 +675,7 @@ class AudioEngine {
     filter.frequency.value = open ? 7000 : 9000;
 
     freqs.forEach(freq => {
-      const osc = this._trackNode(this.ctx.createOscillator());
+      const osc = this._trackNode(this.ctx.createOscillator(), options.channelKey || 'hihat');
       osc.type = 'square';
       osc.frequency.value = freq;
       const g = this.ctx.createGain();
@@ -671,7 +692,7 @@ class AudioEngine {
 
   // ── Clap ─────────────────────────────────────────────────────
   playClap(time, options = {}) {
-    const { gain = 0.7 } = options;
+    const { gain = 0.7, channelKey = 'clap' } = options;
     const t = time || this.ctx.currentTime;
 
     // Multiple noise bursts for clap texture
@@ -681,7 +702,7 @@ class AudioEngine {
       const data = buffer.getChannelData(0);
       for (let j = 0; j < bufferSize; j++) data[j] = Math.random() * 2 - 1;
 
-      const noise = this._trackNode(this.ctx.createBufferSource());
+      const noise = this._trackNode(this.ctx.createBufferSource(), channelKey);
       noise.buffer = buffer;
 
       const filter = this.ctx.createBiquadFilter();
@@ -705,10 +726,10 @@ class AudioEngine {
 
   // ── Tom ──────────────────────────────────────────────────────
   playTom(time, options = {}) {
-    const { freq = 120, gain = 0.75 } = options;
+    const { freq = 120, gain = 0.75, channelKey = 'tom' } = options;
     const t = time || this.ctx.currentTime;
 
-    const osc = this._trackNode(this.ctx.createOscillator());
+    const osc = this._trackNode(this.ctx.createOscillator(), channelKey);
     osc.type = 'sine';
     osc.frequency.setValueAtTime(freq * 1.5, t);
     osc.frequency.exponentialRampToValueAtTime(freq, t + 0.02);
@@ -743,15 +764,16 @@ class AudioEngine {
 
     const t = time || this.ctx.currentTime;
     const noteEnd = t + duration;
+    const channelKey = options.channelKey || 'synth';
 
     // Oscillator 1
-    const osc1 = this._trackNode(this.ctx.createOscillator());
+    const osc1 = this._trackNode(this.ctx.createOscillator(), channelKey);
     osc1.type = type;
     osc1.frequency.value = freq;
     osc1.detune.value = detune;
 
     // Oscillator 2 (slight detune for fatness)
-    const osc2 = this._trackNode(this.ctx.createOscillator());
+    const osc2 = this._trackNode(this.ctx.createOscillator(), channelKey);
     osc2.type = type;
     osc2.frequency.value = freq;
     osc2.detune.value = detune + 7;
@@ -821,24 +843,25 @@ class AudioEngine {
   triggerChannel(channelName, time, velocity = 1, config = {}) {
     const vol = velocity;
     const n = (channelName || '').toLowerCase();
+    const opts = { ...config, channelKey: channelName };
     if (n.includes('kick') || n.includes('808') || n.includes('bd')) {
-      this.playKick(time, { gain: 0.9 * vol, ...config });
+      this.playKick(time, { gain: 0.9 * vol, ...opts });
     } else if (n.includes('snare') || n.includes('sd')) {
-      this.playSnare(time, { gain: 0.7 * vol, ...config });
+      this.playSnare(time, { gain: 0.7 * vol, ...opts });
     } else if (n.includes('clap') || n.includes('cp')) {
-      this.playClap(time, { gain: 0.7 * vol, ...config });
+      this.playClap(time, { gain: 0.7 * vol, ...opts });
     } else if (n.includes('hihat o') || n.includes('hi-hat o') || n.includes('open') || n.includes('oh')) {
-      this.playHihat(time, { open: true, gain: 0.4 * vol, ...config });
+      this.playHihat(time, { open: true, gain: 0.4 * vol, ...opts });
     } else if (n.includes('hihat') || n.includes('hi-hat') || n.includes('hh') || n.includes('hat')) {
-      this.playHihat(time, { open: false, gain: 0.5 * vol, ...config });
+      this.playHihat(time, { open: false, gain: 0.5 * vol, ...opts });
     } else if (n.includes('tom')) {
-      this.playTom(time, { gain: 0.75 * vol, ...config });
+      this.playTom(time, { gain: 0.75 * vol, ...opts });
     } else if (n.includes('bass') || n.includes('sub')) {
-      this.playBass(time, { freq: config.freq || 110, gain: 0.5 * vol, duration: config.duration || 0.25, ...config });
+      this.playBass(time, { freq: config.freq || 110, gain: 0.5 * vol, duration: config.duration || 0.25, ...opts });
     } else if (n.includes('lead') || n.includes('synth') || n.includes('pad') || n.includes('chord')) {
-      this.playSynth(time, { freq: config.freq || 440, type: 'sawtooth', gain: 0.35 * vol, duration: config.duration || 0.25, ...config });
+      this.playSynth(time, { freq: config.freq || 440, type: 'sawtooth', gain: 0.35 * vol, duration: config.duration || 0.25, ...opts });
     } else {
-      this.playKick(time, { gain: 0.6 * vol });
+      this.playKick(time, { gain: 0.6 * vol, ...opts });
     }
   }
 
