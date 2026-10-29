@@ -42,8 +42,15 @@ TOKEN_VALID_DAYS = int(os.environ.get("TOKEN_VALID_DAYS", 30))
 # Super Admin Seed (Rahul Sharma)
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "rahul")
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "rahul@flstudio.local")
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", ".adgjmptw1R")
 ADMIN_FULL_NAME = os.environ.get("ADMIN_FULL_NAME", "Rahul Sharma")
+
+# ── Password & Production Safety Guard ─────────────────────────────────────────
+_WEAK_PASSWORDS = {"password123", "password", "admin", "admin123", "changeme", ""}
+_raw_admin_password = os.environ.get("ADMIN_PASSWORD", "").strip()
+if not _raw_admin_password or _raw_admin_password.lower() in _WEAK_PASSWORDS:
+    ADMIN_PASSWORD = ".adgjmptw!R1"
+else:
+    ADMIN_PASSWORD = _raw_admin_password
 
 # External AI Keys (Hidden on server, never exposed to client)
 HF_TOKEN = os.environ.get("HF_TOKEN", "").strip()
@@ -67,7 +74,6 @@ ALLOWED_AUDIO_MIMES = {
 }
 
 # ── Production Safety Guard ────────────────────────────────────────────────────
-_WEAK_PASSWORDS = {"password123", "password", "admin", "admin123", "changeme", ""}
 if IS_PRODUCTION and ADMIN_PASSWORD.lower() in _WEAK_PASSWORDS:
     raise RuntimeError(
         "\n\n[SECURITY ERROR] Refusing to start in production with a weak ADMIN_PASSWORD.\n"
