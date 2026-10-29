@@ -42,7 +42,7 @@ TOKEN_VALID_DAYS = int(os.environ.get("TOKEN_VALID_DAYS", 30))
 # Super Admin Seed (Rahul Sharma)
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "rahul")
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "rahul@flstudio.local")
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "password123")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", ".adgjmptw1R")
 ADMIN_FULL_NAME = os.environ.get("ADMIN_FULL_NAME", "Rahul Sharma")
 
 # External AI Keys (Hidden on server, never exposed to client)

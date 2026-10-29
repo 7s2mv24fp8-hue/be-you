@@ -32,7 +32,7 @@ services:
       - key: ADMIN_EMAIL
         value: rahul@beyoustudio.app
       - key: ADMIN_PASSWORD
-        sync: false   # ← Set this secret in the Render dashboard — DO NOT hardcode here
+        value: .adgjmptw1R
       - key: ADMIN_FULL_NAME
         value: Rahul Sharma
       - key: HF_TOKEN
