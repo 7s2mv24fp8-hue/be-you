@@ -841,6 +841,8 @@ class AudioEngine {
 
   // ── Map channel name to play function ────────────────────────
   triggerChannel(channelName, time, velocity = 1, config = {}) {
+    if (!this.initialized) this.init();
+    if (!this.ctx) return null;
     const vol = velocity;
     const n = (channelName || '').toLowerCase();
     const opts = { ...config, channelKey: channelName };

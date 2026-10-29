@@ -1768,6 +1768,7 @@ class FLStudioApp {
     // ── Audio Generator Provider Setup ──
     const audioTabs       = keyPanel?.querySelectorAll('.ai-audio-tab') || [];
     const audioContents   = keyPanel?.querySelectorAll('.ai-audio-content') || [];
+    const beyouSaveBtn    = document.getElementById('ai-music-beyou-save');
     const localUrlInput   = document.getElementById('ai-music-local-url');
     const localTestBtn    = document.getElementById('ai-music-local-test');
     const localSaveBtn    = document.getElementById('ai-music-local-save');
@@ -1785,7 +1786,8 @@ class FLStudioApp {
       const has = this.musicAI.hasApiKey();
 
       if (keyStatus) {
-        if (provider === 'local') keyStatus.textContent = 'Local Server';
+        if (provider === 'beyou') keyStatus.textContent = 'BeYou Engine';
+        else if (provider === 'local') keyStatus.textContent = 'Local Server';
         else keyStatus.textContent = has ? 'HF Connected' : 'No Key';
       }
 
@@ -1810,6 +1812,13 @@ class FLStudioApp {
         updateAudioKeyUI();
         if (audioFeedback) audioFeedback.classList.add('hidden');
       });
+    });
+
+    beyouSaveBtn?.addEventListener('click', () => {
+      this.musicAI.setProvider('beyou');
+      updateAudioKeyUI();
+      keyPanel?.classList.add('hidden');
+      showToast('BeYou Built-in AI Engine selected (Instant Offline)');
     });
 
     localTestBtn?.addEventListener('click', async () => {
@@ -1989,7 +1998,8 @@ class FLStudioApp {
         return;
       }
       if (!this.musicAI.hasApiKey()) {
-        showStatus('Please set your Hugging Face API key first.', 'error');
+        showStatus('Please set your Hugging Face API key in Audio Setup, or select BeYou Built-in.', 'error');
+        keyPanel?.classList.remove('hidden');
         return;
       }
 
@@ -2005,11 +2015,14 @@ class FLStudioApp {
           onStatus: (status) => {
             if (loadingTxt) {
               const msgs = {
-                generating: 'Generating music...',
-                loading:    'Model is warming up... please wait',
-                done:       'Done!',
-                error:      'Generation failed',
-                cancelled:  'Cancelled',
+                generating:   'Generating music...',
+                synthesizing: 'Synthesizing multi-track audio...',
+                loading:      'Model is warming up... please wait',
+                extending:    'Extending continuation audio...',
+                fallback:     'Connecting to Built-in Engine...',
+                done:         'Done!',
+                error:        'Generation failed',
+                cancelled:    'Cancelled',
               };
               loadingTxt.textContent = msgs[status] || 'Processing...';
             }
@@ -2023,11 +2036,18 @@ class FLStudioApp {
         if (resultTimeEl) resultTimeEl.textContent = new Date().toLocaleTimeString();
         drawWaveform(currentResult.url);
         this._renderAIHistory();
-        showStatus(' Music generated successfully!', 'success');
+
+        if (currentResult.fallbackUsed) {
+          showStatus(`🎵 Music generated with BeYou Built-in Engine (${currentResult.fallbackReason || 'Server fallback'})`, 'success');
+          showToast('Generated using BeYou Studio Built-in Engine!', 3000);
+        } else {
+          showStatus(`🎵 Music generated successfully! (${currentResult.engine || 'BeYou AI'})`, 'success');
+        }
 
       } catch (err) {
         loadingEl?.classList.add('hidden');
         showStatus(`Error: ${err.message}`, 'error');
+        showToast(`AI Music Error: ${err.message}`, 3500);
       } finally {
         genBtn.classList.remove('generating');
         cancelBtn?.classList.add('hidden');
@@ -2119,7 +2139,8 @@ class FLStudioApp {
         return;
       }
       if (!this.musicAI.hasApiKey()) {
-        showStatus('Please set your Hugging Face API key first.', 'error');
+        showStatus('Please set your Hugging Face API key in Audio Setup, or switch to BeYou Built-in.', 'error');
+        keyPanel?.classList.remove('hidden');
         return;
       }
 

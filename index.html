@@ -596,43 +596,55 @@
  </div>
 
  <!-- Audio Generator setup (collapsible) -->
- <div id="ai-music-key-panel" class="ai-music-key-panel hidden">
- <div class="ai-key-panel-inner">
- <div class="ai-provider-nav">
- <button type="button" class="ai-audio-tab active" data-audio-provider="local"> Local Audio Server (MusicGen / AudioCraft)</button>
- <button type="button" class="ai-audio-tab" data-audio-provider="hf"> Hugging Face Cloud</button>
- </div>
+				<div id="ai-music-key-panel" class="ai-music-key-panel hidden">
+					<div class="ai-key-panel-inner">
+						<div class="ai-provider-nav">
+							<button type="button" class="ai-audio-tab active" data-audio-provider="beyou">⚡ BeYou Built-in (Instant Offline)</button>
+							<button type="button" class="ai-audio-tab" data-audio-provider="local"> Local Audio Server (MusicGen / Python)</button>
+							<button type="button" class="ai-audio-tab" data-audio-provider="hf"> Hugging Face Cloud</button>
+						</div>
 
- <!-- Local Audio Tab -->
- <div class="ai-audio-content active" id="ai-audio-tab-local">
- <label class="ai-key-label">Local Audio Generation Server URL</label>
- <div class="ai-key-input-row">
- <input type="text" id="ai-music-local-url" class="ai-key-input" value="http://localhost:8000" placeholder="http://localhost:8000">
- <button type="button" id="ai-music-local-test" class="ai-action-btn secondary"> Test Ping</button>
- <button type="button" id="ai-music-local-save" class="ai-key-save-btn">Save & Use Local</button>
- </div>
- <div class="ai-key-hint">
- Run <code>python scripts/local_music_server.py</code> to start your offline generator.
- </div>
- </div>
+						<!-- BeYou Built-in Tab -->
+						<div class="ai-audio-content active" id="ai-audio-tab-beyou">
+							<div class="aip-ready-badge" style="display:inline-flex;align-items:center;gap:6px;color:#4ade80;font-weight:600;margin-bottom:8px;">
+								<span>✓</span> Ready — Built-in Procedural AI Music Engine
+							</div>
+							<p style="color:#a1a1aa;font-size:12px;margin:0 0 12px 0;line-height:1.5;">
+								Generates rich multi-track grooves (drums, 808 bass, chord harmony, leads, vinyl atmosphere) directly in your browser via math & Web Audio. Zero setup, works 100% offline, zero API keys needed.
+							</p>
+							<button type="button" id="ai-music-beyou-save" class="ai-key-save-btn" style="width:100%;">Use BeYou Built-in Engine</button>
+						</div>
 
- <!-- HF Tab -->
- <div class="ai-audio-content" id="ai-audio-tab-hf">
- <label class="ai-key-label">Hugging Face API Token</label>
- <div class="ai-key-input-row">
- <input type="password" id="ai-music-key-input" class="ai-key-input" placeholder="hf_xxxxxxxxxxxx" autocomplete="off">
- <button type="button" id="ai-music-key-save" class="ai-key-save-btn">Save & Use HF</button>
- </div>
- <div class="ai-key-hint">
- Get a free token at <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener">huggingface.co/settings/tokens</a>
- </div>
- </div>
+						<!-- Local Audio Tab -->
+						<div class="ai-audio-content" id="ai-audio-tab-local">
+							<label class="ai-key-label">Local Audio Generation Server URL</label>
+							<div class="ai-key-input-row">
+								<input type="text" id="ai-music-local-url" class="ai-key-input" value="http://localhost:8000" placeholder="http://localhost:8000">
+								<button type="button" id="ai-music-local-test" class="ai-action-btn secondary"> Test Ping</button>
+								<button type="button" id="ai-music-local-save" class="ai-key-save-btn">Save & Use Local</button>
+							</div>
+							<div class="ai-key-hint">
+								Run <code>python server.py</code> or <code>python scripts/local_music_server.py</code> to start your local generator on port 8000.
+							</div>
+						</div>
 
- <div id="ai-music-status-feedback" class="ai-status-feedback hidden"></div>
- </div>
- </div>
+						<!-- HF Tab -->
+						<div class="ai-audio-content" id="ai-audio-tab-hf">
+							<label class="ai-key-label">Hugging Face API Token</label>
+							<div class="ai-key-input-row">
+								<input type="password" id="ai-music-key-input" class="ai-key-input" placeholder="hf_xxxxxxxxxxxx" autocomplete="off">
+								<button type="button" id="ai-music-key-save" class="ai-key-save-btn">Save & Use HF</button>
+							</div>
+							<div class="ai-key-hint">
+								Uses <code>facebook/musicgen-small</code>. Free token at <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener">huggingface.co/settings/tokens</a>
+							</div>
+						</div>
 
- <!-- Main body -->
+						<div id="ai-music-status-feedback" class="ai-status-feedback hidden"></div>
+					</div>
+				</div>
+
+				<!-- Main body -->
  <div id="ai-music-body">
 
  <!-- Left: Prompt builder -->
@@ -676,7 +688,7 @@
 
  <!-- Generate button -->
  <div class="ai-generate-section">
- <button id="ai-music-generate" class="ai-generate-btn" disabled>
+ <button id="ai-music-generate" class="ai-generate-btn">
  <span class="ai-gen-icon"></span>
  <span class="ai-gen-text">Generate Music</span>
  <span class="ai-gen-spinner"></span>
