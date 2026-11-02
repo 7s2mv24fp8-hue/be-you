@@ -732,22 +732,18 @@ canvas { display: block; }
 @keyframes step-slide-in {
   0% {
     opacity: 0;
-    transform: scale(0.7) translateY(3px);
-  }
-  65% {
-    opacity: 0.95;
-    transform: scale(1.05) translateY(-1px);
+    transform: scaleX(0.85);
   }
   100% {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: scaleX(1);
   }
 }
 .step-btn-slide-in {
-  animation: step-slide-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: step-slide-in 0.16s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .rack-step-num-slide-in {
-  animation: step-slide-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: step-slide-in 0.16s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* Modal Pattern Extension Presets */

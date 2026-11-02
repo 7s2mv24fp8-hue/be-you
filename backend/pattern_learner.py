@@ -81,15 +81,28 @@ def blend_patterns(
     """
     result = {}
     for ch in CHANNELS:
-        r_steps = rule_based.get(ch, [0] * 16)
-        l_steps = learned.get(ch, [0] * 16)
-        if ch in ('Bass', 'Lead'):
-            result[ch] = list(r_steps)
+        r_steps = list(rule_based.get(ch, [0] * 16))
+        l_steps = list(learned.get(ch, [0] * 16)) if learned else []
+        if ch in ('Bass', 'Lead') or not l_steps:
+            result[ch] = r_steps
         else:
-            result[ch] = [
+            blended = [
                 l_steps[i] if random.random() < blend else r_steps[i]
                 for i in range(16)
             ]
+            # Musical integrity guard: prevent empty kicks or wall of noise
+            hits = sum(blended)
+            if ch == 'Kick':
+                if hits < 2 or hits > 8:
+                    blended = r_steps
+                elif r_steps[0] == 1 and random.random() < 0.75:
+                    blended[0] = 1 # Keep downbeat punch
+            elif ch in ('Snare', 'Clap'):
+                if hits > 8:
+                    blended = r_steps
+            elif ch == 'Tom' and hits > 6:
+                blended = r_steps
+            result[ch] = blended
     return result
 
 

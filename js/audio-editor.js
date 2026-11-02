@@ -332,10 +332,12 @@ class AudioEditor {
 
   /* ── Playback Engine ───────────────────────────────────── */
 
-  play(from = null) {
+  async play(from = null) {
     if (this.playing) this.pause();
     const ctx = this.audioCtx;
-    if (ctx.state === 'suspended') ctx.resume();
+    if (ctx && ctx.state === 'suspended') {
+      try { await ctx.resume(); } catch (_) {}
+    }
 
     const startFrom = (from !== null) ? from : (this.selStart > 0 ? this.selStart : this.playPos);
     const now = ctx.currentTime;
@@ -853,15 +855,20 @@ class AudioEditor {
   /* ── Canvas Rendering Engine ───────────────────────────── */
 
   _resize() {
+    if (!this._tabCanvas) {
+      this._tabCanvas = document.getElementById('ae-tab-waveform-canvas');
+      if (this._tabCanvas) this._attachCanvasInteractions(this._tabCanvas);
+    }
     const canvas = this._tabCanvas;
     if (!canvas) return;
     const parent = canvas.parentElement;
     if (!parent) return;
-    const w = Math.max(300, Math.floor(parent.clientWidth || 500));
-    const h = Math.max(140, Math.floor(parent.clientHeight || 240));
+    const rect = parent.getBoundingClientRect();
+    const w = Math.max(300, Math.floor(parent.clientWidth || rect.width || 600));
+    const h = Math.max(140, Math.floor(parent.clientHeight || rect.height || 260));
     const dpr = window.devicePixelRatio || 1;
-    canvas.width  = w * dpr;
-    canvas.height = h * dpr;
+    canvas.width  = Math.floor(w * dpr);
+    canvas.height = Math.floor(h * dpr);
     canvas.style.width = `${w}px`;
     canvas.style.height = `${h}px`;
   }

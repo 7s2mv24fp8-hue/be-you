@@ -277,6 +277,29 @@ class BrowserMusicGenerator {
     let reesePhase1 = 0.0;
     let reesePhase2 = 0.0;
 
+    // High quality Schroeder Stereo Reverb network (4 parallel combs + 2 allpasses)
+    const combLengthsL = [1116, 1188, 1277, 1356];
+    const combLengthsR = [1138, 1210, 1293, 1378];
+    const combsL = combLengthsL.map(len => new Float32Array(len));
+    const combsR = combLengthsR.map(len => new Float32Array(len));
+    const combIndicesL = [0, 0, 0, 0];
+    const combIndicesR = [0, 0, 0, 0];
+    const combFeedback = 0.72;
+
+    const allpassLenL = [556, 441];
+    const allpassLenR = [572, 453];
+    const allpassL = allpassLenL.map(len => new Float32Array(len));
+    const allpassR = allpassLenR.map(len => new Float32Array(len));
+    const allpassIndicesL = [0, 0];
+    const allpassIndicesR = [0, 0];
+    const allpassFeedback = 0.5;
+
+    // Ping-pong delay buffer for leads (3/16th tempo synced)
+    const delaySamples = Math.floor(samplesPerStep * 3);
+    const delayBufL = new Float32Array(delaySamples);
+    const delayBufR = new Float32Array(delaySamples);
+    let delayIdx = 0;
+
     for (let i = 0; i < totalSamples; i++) {
       const t = i / sr;
       const stepIdx = Math.floor(i / samplesPerStep);
@@ -289,46 +312,88 @@ class BrowserMusicGenerator {
 
       // ── 1. DRUMS ──
       let drumL = 0, drumR = 0;
-      if (cfg.kick[stepMod16] && timeInStep < 0.28) {
-        const pitchEnv = 145.0 * Math.exp(-timeInStep * 38.0) + 48.0;
-        const ampEnv = Math.exp(-timeInStep * 13.0);
-        const kVal = Math.tanh(Math.sin(2 * Math.PI * pitchEnv * timeInStep) * ampEnv * 1.5) * 0.75;
+
+      // Realistic 3-layer Kick (Transient Click + Pitch Drop + Sub Weight + Saturation)
+      if (cfg.kick[stepMod16] && timeInStep < 0.35) {
+        // Layer 1: Transient click (0-6ms spike for punch through any speaker)
+        const clickEnv = Math.exp(-timeInStep * 700.0);
+        const click = (rng() * 2.0 - 1.0) * clickEnv * 0.45;
+
+        // Layer 2: Pitch drop body
+        const pitchEnv = 160.0 * Math.exp(-timeInStep * 32.0) + 48.0;
+        const ampEnv = Math.exp(-timeInStep * 9.5);
+        const bodySine = Math.sin(2 * Math.PI * pitchEnv * timeInStep) * ampEnv;
+
+        // Layer 3: Sub bass punch (harmonic saturation)
+        const subSine = Math.sin(2 * Math.PI * (pitchEnv * 0.5) * timeInStep) * ampEnv * 0.4;
+        const kVal = Math.tanh((bodySine * 1.6 + click + subSine) * 1.25) * 0.88;
         drumL += kVal;
         drumR += kVal;
       }
-      if (cfg.snare[stepMod16] && timeInStep < 0.24) {
-        const toneEnv = Math.exp(-timeInStep * 28.0);
-        const noiseEnv = Math.exp(-timeInStep * 18.0);
-        const sTone = Math.sin(2 * Math.PI * 185.0 * timeInStep) * toneEnv * 0.4;
-        const sNoise = (rng() * 2.0 - 1.0) * noiseEnv * 0.55;
-        const sVal = sTone + sNoise;
-        drumL += sVal * 0.6;
-        drumR += sVal * 0.6;
-      }
-      if (cfg.hihat[stepMod16] && timeInStep < 0.065) {
-        const hEnv = Math.exp(-timeInStep * 75.0);
-        const hNoise = (rng() * 2.0 - 1.0) * hEnv * 0.26;
-        drumL += hNoise * 0.18;
-        drumR += hNoise * 0.26;
+
+      // Realistic Snare / Clap (185Hz Body Tone + 2.4kHz Bandpass Noise + Stereo Sizzle)
+      if (cfg.snare[stepMod16] && timeInStep < 0.28) {
+        const toneEnv = Math.exp(-timeInStep * 26.0);
+        const sTone = Math.sin(2 * Math.PI * 185.0 * timeInStep) * toneEnv * 0.42;
+
+        const noiseEnv = Math.exp(-timeInStep * 16.0);
+        const rawNoise = (rng() * 2.0 - 1.0);
+        // Simple bandpass filter approximation around 2.2kHz
+        const bpFilter = Math.sin(2 * Math.PI * 2200.0 * timeInStep) * rawNoise * noiseEnv * 0.65;
+
+        const snapEnv = Math.exp(-timeInStep * 120.0);
+        const snap = (rng() * 2.0 - 1.0) * snapEnv * 0.3;
+
+        const sValL = sTone + bpFilter + snap + (rng() * 0.08);
+        const sValR = sTone + bpFilter + snap - (rng() * 0.08);
+        drumL += sValL * 0.72;
+        drumR += sValR * 0.72;
       }
 
-      // ── 2. BASS ──
+      // Realistic Hi-Hat (Metallic 6-Oscillator Cluster + Highpass Noise Burst)
+      if (cfg.hihat[stepMod16] && timeInStep < 0.09) {
+        const hEnv = Math.exp(-timeInStep * 65.0);
+        // Inharmonic metallic square clusters
+        const m1 = Math.sign(Math.sin(2 * Math.PI * 3420.0 * t));
+        const m2 = Math.sign(Math.sin(2 * Math.PI * 4780.0 * t));
+        const m3 = Math.sign(Math.sin(2 * Math.PI * 6150.0 * t));
+        const metalRing = (m1 + m2 + m3) * 0.18;
+        const hNoise = (rng() * 2.0 - 1.0) * 0.45;
+        const accent = (stepMod16 % 4 === 2) ? 1.2 : 0.85;
+
+        const hatSignal = (metalRing + hNoise) * hEnv * 0.26 * accent;
+        drumL += hatSignal * 0.75;
+        drumR += hatSignal * 1.15; // Natural stereo offset
+      }
+
+      // ── 2. BASS & 808 ──
       let bassL = 0, bassR = 0;
       const bassType = cfg.bassType || 'sub_warm';
       if (bassType.includes('808')) {
         const freq = midiToFreq(rootMidi);
-        const glide = ([0, 8, 10].includes(stepMod16)) ? Math.exp(-timeInStep * 8.0) * 16.0 : 0.0;
-        let bVal = Math.sin(2 * Math.PI * (freq + glide) * t);
-        if (bassType.includes('distorted')) bVal = Math.tanh(bVal * 1.8) * 0.65;
-        bassL += bVal * 0.65;
-        bassR += bVal * 0.65;
+        const glide = ([0, 8, 10].includes(stepMod16)) ? Math.exp(-timeInStep * 6.0) * 20.0 : 0.0;
+        const bFreq = freq + glide;
+
+        // Sub fundamental + 2nd harmonic for audibility on smaller speakers
+        const sub = Math.sin(2 * Math.PI * bFreq * t);
+        const harm2 = Math.sin(2 * Math.PI * bFreq * 2.0 * t) * 0.35;
+        let bVal = sub + harm2;
+
+        if (bassType.includes('distorted')) {
+          bVal = Math.tanh(bVal * 2.2) * 0.75;
+        } else {
+          bVal = Math.tanh(bVal * 1.4) * 0.80;
+        }
+        bassL += bVal;
+        bassR += bVal;
       } else if (bassType === 'rolling_saw_arp') {
         const arpNotes = [rootMidi, rootMidi + 7, rootMidi + 12, rootMidi + 7];
         const currNote = arpNotes[stepMod16 % 4];
         const freq = midiToFreq(currNote);
         const saw = 2.0 * ((t * freq) % 1.0) - 1.0;
-        const env = Math.exp(-timeInStep * 14.0);
-        const bVal = saw * env * 0.45;
+        const sub = Math.sin(2 * Math.PI * (freq * 0.5) * t) * 0.5;
+        const env = Math.exp(-timeInStep * 12.0);
+        const bVal = Math.tanh((saw * 0.5 + sub) * 1.3) * env * 0.65;
         bassL += bVal;
         bassR += bVal;
       } else if (bassType === 'reese_lfo') {
@@ -336,55 +401,123 @@ class BrowserMusicGenerator {
         const freq2 = midiToFreq(rootMidi) + 1.2;
         reesePhase1 += (2 * Math.PI * freq1) / sr;
         reesePhase2 += (2 * Math.PI * freq2) / sr;
-        const lfo = 0.5 + 0.5 * Math.sin(2 * Math.PI * 1.5 * t);
-        const bVal = (Math.sin(reesePhase1) + Math.sin(reesePhase2) * 0.8) * 0.3 * (0.6 + 0.4 * lfo);
+        const lfo = 0.5 + 0.5 * Math.sin(2 * Math.PI * 1.8 * t);
+        const saw1 = 2.0 * ((reesePhase1 / (2 * Math.PI)) % 1.0) - 1.0;
+        const saw2 = 2.0 * ((reesePhase2 / (2 * Math.PI)) % 1.0) - 1.0;
+        const bVal = Math.tanh((saw1 * 0.5 + saw2 * 0.5) * (0.8 + 0.6 * lfo)) * 0.55;
         bassL += bVal * 1.1;
         bassR += bVal * 0.9;
       } else {
         const freq = midiToFreq(rootMidi);
-        const bVal = Math.sin(2 * Math.PI * freq * t) * 0.55;
+        const sub = Math.sin(2 * Math.PI * freq * t);
+        const harm = Math.sin(2 * Math.PI * freq * 2.0 * t) * 0.25;
+        const bVal = Math.tanh((sub + harm) * 1.2) * 0.65;
         bassL += bVal;
         bassR += bVal;
       }
 
-      // ── 3. CHORDS & HARMONY ──
+      // ── 3. CHORDS & HARMONY (Lush Analog Pads / Keys with Chorus) ──
       let chordL = 0, chordR = 0;
       const timeInChord = ((stepIdx % stepsPerChord) * samplesPerStep + (i % Math.floor(samplesPerStep))) / sr;
-      const chordEnv = Math.exp(-timeInChord * 0.65) * 0.26;
+      const chordEnv = (1.0 - Math.exp(-timeInChord * 14.0)) * Math.exp(-timeInChord * 0.45) * 0.30;
+
       for (let idx = 0; idx < currentChord.length; idx++) {
         const cFreq = midiToFreq(currentChord[idx]);
-        const phase = (t * cFreq) % 1.0;
-        const voice = 4.0 * Math.abs(phase - 0.5) - 1.0;
-        const panMult = 0.8 + 0.4 * (idx % 2);
-        chordL += voice * chordEnv * panMult;
-        chordR += voice * chordEnv * (2.0 - panMult);
+        // Dual detuned oscillators for lush analog chorus
+        const phaseA = (t * cFreq) % 1.0;
+        const phaseB = (t * (cFreq * 1.0035)) % 1.0;
+        // Warm band-limited triangle / soft saw
+        const voiceA = 4.0 * Math.abs(phaseA - 0.5) - 1.0;
+        const voiceB = 2.0 * phaseB - 1.0;
+        const voice = (voiceA * 0.75 + voiceB * 0.25);
+
+        // Wide stereo panning per voice
+        const panL = 0.6 + 0.5 * (idx % 2 === 0 ? 1 : 0);
+        const panR = 0.6 + 0.5 * (idx % 2 === 1 ? 1 : 0);
+        chordL += voice * chordEnv * panL;
+        chordR += voice * chordEnv * panR;
       }
 
-      // ── 4. MELODIC LEAD / MOTIF ──
-      let leadL = 0, leadR = 0;
+      // ── 4. MELODIC LEAD / MOTIF with Echo & Vibrato ──
+      let dryLeadL = 0, dryLeadR = 0;
       if ([2, 6, 8, 11, 14].includes(stepMod16)) {
         const motifIdx = (stepMod16 * 3) % currentChord.length;
         const leadMidi = currentChord[motifIdx] + 12;
         const lFreq = midiToFreq(leadMidi);
-        const lEnv = Math.exp(-timeInStep * 12.0);
-        const leadWave = Math.sin(2 * Math.PI * lFreq * t);
-        leadL += leadWave * lEnv * 0.22;
-        leadR += leadWave * lEnv * 0.15;
+        // Subtle expressive pitch vibrato (5.5Hz)
+        const vibrato = Math.sin(2 * Math.PI * 5.5 * t) * 2.2;
+        const lEnv = (1.0 - Math.exp(-timeInStep * 40.0)) * Math.exp(-timeInStep * 10.0);
+        const leadWave = Math.sin(2 * Math.PI * (lFreq + vibrato) * t);
+        const leadSaw = (2.0 * ((t * (lFreq + vibrato)) % 1.0) - 1.0) * 0.25;
+        const fullLead = (leadWave + leadSaw) * lEnv * 0.26;
+        dryLeadL += fullLead * 0.85;
+        dryLeadR += fullLead * 1.15;
       }
+
+      // Ping-pong delay tap
+      const echoL = delayBufR[delayIdx] * 0.38;
+      const echoR = delayBufL[delayIdx] * 0.38;
+      delayBufL[delayIdx] = dryLeadL + echoL * 0.3;
+      delayBufR[delayIdx] = dryLeadR + echoR * 0.3;
+      delayIdx = (delayIdx + 1) % delaySamples;
+
+      const leadL = dryLeadL + echoL;
+      const leadR = dryLeadR + echoR;
 
       // ── 5. VINYL CRACKLE & TEXTURE ──
       if (cfg.vinylNoise > 0) {
-        const vCrack = (rng() * 2.0 - 1.0) * cfg.vinylNoise * (rng() > 0.96 ? 0.9 : 0.2);
+        const vCrack = (rng() * 2.0 - 1.0) * cfg.vinylNoise * (rng() > 0.96 ? 0.9 : 0.15);
         drumL += vCrack;
         drumR += vCrack;
       }
 
-      // ── 6. MASTER MIX & STEREO LIMITER ──
-      const mixL = drumL + bassL + chordL + leadL;
-      const mixR = drumR + bassR + chordR + leadR;
+      // ── 6. STEREO SCHROEDER REVERB BUS ──
+      // Send chords and lead through reverb network for studio space
+      const revInL = (chordL + leadL) * 0.35;
+      const revInR = (chordR + leadR) * 0.35;
 
-      const finalL = Math.tanh(mixL * 1.15);
-      const finalR = Math.tanh(mixR * 1.15);
+      let revOutL = 0;
+      let revOutR = 0;
+      for (let c = 0; c < 4; c++) {
+        const idxL = combIndicesL[c];
+        const outL = combsL[c][idxL];
+        combsL[c][idxL] = revInL + outL * combFeedback;
+        combIndicesL[c] = (idxL + 1) % combLengthsL[c];
+        revOutL += outL;
+
+        const idxR = combIndicesR[c];
+        const outR = combsR[c][idxR];
+        combsR[c][idxR] = revInR + outR * combFeedback;
+        combIndicesR[c] = (idxR + 1) % combLengthsR[c];
+        revOutR += outR;
+      }
+      revOutL *= 0.25;
+      revOutR *= 0.25;
+
+      // Allpass diffusers
+      for (let a = 0; a < 2; a++) {
+        const idxL = allpassIndicesL[a];
+        const bufValL = allpassL[a][idxL];
+        const inL = revOutL;
+        revOutL = -allpassFeedback * inL + bufValL;
+        allpassL[a][idxL] = inL + allpassFeedback * revOutL;
+        allpassIndicesL[a] = (idxL + 1) % allpassLenL[a];
+
+        const idxR = allpassIndicesR[a];
+        const bufValR = allpassR[a][idxR];
+        const inR = revOutR;
+        revOutR = -allpassFeedback * inR + bufValR;
+        allpassR[a][idxR] = inR + allpassFeedback * revOutR;
+        allpassIndicesR[a] = (idxR + 1) % allpassLenR[a];
+      }
+
+      // ── 7. MASTER BUS & ANALOG SATURATION LIMITER ──
+      const mixL = drumL + bassL + chordL + leadL + revOutL * 0.42;
+      const mixR = drumR + bassR + chordR + leadR + revOutR * 0.42;
+
+      // Smooth soft-knee saturation
+      const finalL = Math.tanh(mixL * 1.10);
+      const finalR = Math.tanh(mixR * 1.10);
 
       const sL = Math.floor(Math.max(-1.0, Math.min(1.0, finalL)) * 30000);
       const sR = Math.floor(Math.max(-1.0, Math.min(1.0, finalR)) * 30000);

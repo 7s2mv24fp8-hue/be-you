@@ -216,16 +216,12 @@ class FLStudioApp {
       select.value = String(newSteps);
     }
 
-    // Smooth scroll to reveal newly added steps
+    // Smooth scroll to reveal newly added steps seamlessly
     if (newSteps > oldSteps && channelsList) {
       const scrollTarget = Math.max(0, (newSteps - 16) * 24);
       setTimeout(() => {
         channelsList.scrollTo({ left: scrollTarget, behavior: 'smooth' });
-        const headersWrap = document.getElementById('rack-step-headers-wrap');
-        if (headersWrap) {
-          headersWrap.scrollTo({ left: scrollTarget, behavior: 'smooth' });
-        }
-      }, 30);
+      }, 40);
     }
 
     const bars = (newSteps / 16).toFixed(1).replace('.0', '');
@@ -370,6 +366,9 @@ class FLStudioApp {
       if (pauseBtn) {
         pauseBtn.classList.toggle('paused', ch.isPaused);
         pauseBtn.title = ch.isPaused ? `Resume ${ch.name} (Rack is Paused)` : `Pause ${ch.name} Rack`;
+        pauseBtn.innerHTML = ch.isPaused
+          ? `<svg viewBox="0 0 16 16" width="7" height="7" fill="currentColor"><polygon points="3,2 14,8 3,14"/></svg>`
+          : `<svg viewBox="0 0 16 16" width="7" height="7" fill="currentColor"><rect x="2.5" y="2" width="3.5" height="12" rx="1"/><rect x="10" y="2" width="3.5" height="12" rx="1"/></svg>`;
       }
     }
 
@@ -389,6 +388,7 @@ class FLStudioApp {
         if (pauseBtn) {
           pauseBtn.classList.add('paused');
           pauseBtn.title = `Resume ${ch.name} (Rack is Paused)`;
+          pauseBtn.innerHTML = `<svg viewBox="0 0 16 16" width="7" height="7" fill="currentColor"><polygon points="3,2 14,8 3,14"/></svg>`;
         }
       }
     });
@@ -405,6 +405,7 @@ class FLStudioApp {
         if (pauseBtn) {
           pauseBtn.classList.remove('paused');
           pauseBtn.title = `Pause ${ch.name} Rack`;
+          pauseBtn.innerHTML = `<svg viewBox="0 0 16 16" width="7" height="7" fill="currentColor"><rect x="2.5" y="2" width="3.5" height="12" rx="1"/><rect x="10" y="2" width="3.5" height="12" rx="1"/></svg>`;
         }
       }
     });
@@ -529,18 +530,15 @@ class FLStudioApp {
     });
     row.appendChild(auditionBtn);
 
-    // Dedicated Pause Button for this specific rack (❚❚)
+    // Dedicated Pause Button for this specific rack (❚❚ / ▶)
     const pauseBtn = document.createElement('button');
     pauseBtn.className = 'ch-pause-btn' + (ch.isPaused ? ' paused' : '');
     pauseBtn.title = ch.isPaused ? `Resume ${ch.name} (Rack is Paused)` : `Pause ${ch.name} Rack`;
     pauseBtn.setAttribute('data-action', 'pause');
     pauseBtn.setAttribute('data-channel-idx', ci);
-    pauseBtn.innerHTML = `
-      <svg viewBox="0 0 16 16" width="7" height="7" fill="currentColor">
-        <rect x="2.5" y="2" width="3.5" height="12" rx="1"/>
-        <rect x="10" y="2" width="3.5" height="12" rx="1"/>
-      </svg>
-    `;
+    pauseBtn.innerHTML = ch.isPaused
+      ? `<svg viewBox="0 0 16 16" width="7" height="7" fill="currentColor"><polygon points="3,2 14,8 3,14"/></svg>`
+      : `<svg viewBox="0 0 16 16" width="7" height="7" fill="currentColor"><rect x="2.5" y="2" width="3.5" height="12" rx="1"/><rect x="10" y="2" width="3.5" height="12" rx="1"/></svg>`;
     pauseBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       this.toggleChannelPause(ci);
