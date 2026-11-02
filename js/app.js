@@ -662,10 +662,20 @@ class FLStudioApp {
         showContextMenu([
           { label: ch.isPaused ? `▶ Resume ${ch.name} Rack` : `❚❚ Pause ${ch.name} Rack`, action: () => this.toggleChannelPause(ci) },
           'separator',
+          { label: ' Send Rack Pattern to Piano Roll', action: () => this.sendRackPatternToPianoRoll(ci) },
+          { label: ' Send Pattern to Audio Editor (Bounce)', action: () => this.sendRackPatternToAudioEditor(ci) },
+          { label: ' Edit in Graph Editor (F4)', action: () => {
+            if (window.flGraphEditor) {
+              window.flGraphEditor.setChannel(ci);
+              if (!window.flGraphEditor.visible) window.flGraphEditor.toggle(ci);
+              else window.flGraphEditor.render();
+            }
+          }},
+          'separator',
           { label: ' Duplicate / Clone Channel', action: () => this.cloneChannel(ci) },
           { label: ' Randomize', action: () => { this.sequencer.randomizeChannel(ci); this._refreshChannelRack(); } },
           { label: ' Clear',     action: () => { this.sequencer.clearChannel(ci); this._refreshChannelRack(); } },
-          { label: ' Piano Roll', action: () => { this._selectPianoRollChannel(ci); this._switchTab('piano-roll'); } },
+          { label: ' Open in Piano Roll', action: () => { this._selectPianoRollChannel(ci); this._switchTab('piano-roll'); } },
           'separator',
           { label: ' Channel FX (Reverb · Delay · EQ…)', action: () => {
             if (window.flFeatures) { window.flFeatures.channelFX.getChainInput(ci); window.flFeatures.fxUI.open(ci, row); }
@@ -699,7 +709,7 @@ class FLStudioApp {
 
   _updateStepBtn(btn, ch, si) {
     const isOn = ch.steps[si];
-    const vel  = ch.velocity[si] || 0.8;
+    const vel  = (ch.velocity && ch.velocity[si] !== undefined) ? ch.velocity[si] : 0.8;
     btn.classList.toggle('active', isOn);
     if (isOn) {
       btn.style.background = ch.color;
@@ -3447,6 +3457,7 @@ class FLStudioApp {
 
 }
 
+window.FLStudioApp = FLStudioApp;
 
 // ── Drum Machine Initializer (added to FLStudioApp prototype) ──
 FLStudioApp.prototype._initDrumMachine = function() {
@@ -3561,13 +3572,46 @@ FLStudioApp.prototype._initAudioEditor = function() {
 
   // Metronome toggle button
   const metroBtn = document.getElementById('btn-metronome');
+  const toggleMetronome = () => {
+    if (this.audioEngine) this.audioEngine.resume();
+    this.sequencer.metronomeEnabled = !this.sequencer.metronomeEnabled;
+    if (metroBtn) metroBtn.classList.toggle('active', this.sequencer.metronomeEnabled);
+    if (this.sequencer.metronomeEnabled && this.audioEngine && this.audioEngine.playMetronome) {
+      this.audioEngine.playMetronome(0);
+    }
+    showToast(this.sequencer.metronomeEnabled ? 'Metronome ON (Click Active)' : 'Metronome OFF', 1000);
+  };
   if (metroBtn) {
-    metroBtn.addEventListener('click', () => {
-      this.sequencer.metronomeEnabled = !this.sequencer.metronomeEnabled;
-      metroBtn.classList.toggle('active', this.sequencer.metronomeEnabled);
-      showToast(this.sequencer.metronomeEnabled ? 'Metronome ON' : 'Metronome OFF', 1000);
-    });
+    metroBtn.addEventListener('click', toggleMetronome);
   }
+  // Keyboard shortcut Ctrl+T / Cmd+T for Metronome
+  window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && (e.key === 't' || e.key === 'T')) {
+      e.preventDefault();
+      toggleMetronome();
+    }
+  });
+
+  // Graph Editor launcher (Toolbar & Rack buttons)
+  const toggleGraphEditor = () => {
+    if (window.flGraphEditor) {
+      window.flGraphEditor.toggle(this.sequencer.pianoRollChannel || 0);
+    }
+  };
+  document.getElementById('tb-btn-graph-editor')?.addEventListener('click', toggleGraphEditor);
+  document.getElementById('rack-graph-editor-btn')?.addEventListener('click', toggleGraphEditor);
+
+  // Send Rack to Piano Roll button
+  document.getElementById('rack-to-piano-btn')?.addEventListener('click', () => {
+    const ci = (this.sequencer.pianoRollChannel !== undefined && this.sequencer.pianoRollChannel !== null)
+      ? this.sequencer.pianoRollChannel : 0;
+    this.sendRackPatternToPianoRoll(ci);
+  });
+
+  // Send Rack to Audio Editor button
+  document.getElementById('rack-to-editor-btn')?.addEventListener('click', () => {
+    this.sendRackPatternToAudioEditor();
+  });
 
   // Soundgoodizer launcher
   document.getElementById('tb-btn-soundgoodizer')?.addEventListener('click', () => {
@@ -3767,6 +3811,223 @@ FLStudioApp.prototype._importFileToApp = async function(file) {
   } catch(err) {
     console.error('Failed to import audio:', err);
     showToast(`Could not decode ${file.name || 'audio'}: ${err.message || 'unsupported format'}`, 3500);
+  }
+};
+
+// ── Put Rack Patterns in Piano Roll ──────────────────────────────────────────
+FLStudioApp.prototype.sendRackPatternToPianoRoll = function(channelIdx) {
+  const ci = (channelIdx !== undefined && channelIdx !== null) ? channelIdx : (this.sequencer.pianoRollChannel || 0);
+  const ch = this.sequencer.channels[ci];
+  if (!ch) {
+    showToast('No channel selected to send to Piano Roll', 2000);
+    return;
+  }
+
+  // Determine appropriate root MIDI note for the instrument
+  let baseMidi = 60; // C5 Middle C
+  const nameLow = (ch.name || '').toLowerCase();
+  if (nameLow.includes('bass') || nameLow.includes('808') || nameLow.includes('sub')) {
+    baseMidi = 36; // C3
+  } else if (nameLow.includes('kick') || nameLow.includes('bd')) {
+    baseMidi = 36; // C3
+  } else if (nameLow.includes('snare') || nameLow.includes('sd')) {
+    baseMidi = 38; // D3
+  } else if (nameLow.includes('clap') || nameLow.includes('cp')) {
+    baseMidi = 39; // D#3
+  } else if (nameLow.includes('hat') || nameLow.includes('hh')) {
+    baseMidi = 42; // F#3
+  } else if (nameLow.includes('tom')) {
+    baseMidi = 45; // A3
+  } else if (nameLow.includes('lead') || nameLow.includes('synth') || nameLow.includes('piano')) {
+    baseMidi = 60; // C5
+  }
+
+  const stepCount = (ch.steps && ch.steps.length) || 16;
+  const notes = [];
+  for (let s = 0; s < stepCount; s++) {
+    if (ch.steps[s]) {
+      const pitchOffset = (ch.stepPitch && ch.stepPitch[s] !== undefined) ? ch.stepPitch[s] : 0;
+      const vel = (ch.velocity && ch.velocity[s] !== undefined) ? ch.velocity[s] : 0.8;
+      const noteMidi = Math.max(0, Math.min(95, baseMidi + pitchOffset));
+      notes.push({
+        step: s,
+        midi: noteMidi,
+        length: 1,
+        velocity: vel
+      });
+    }
+  }
+
+  // Assign notes to channel
+  ch.notes = notes;
+
+  // Select channel in Piano Roll and switch tab
+  this._selectPianoRollChannel(ci);
+  this._switchTab('piano-roll');
+  if (this.pianoRoll) {
+    this.pianoRoll.setChannel(ci);
+    this.pianoRoll.render();
+  }
+  showToast(`Converted ${ch.name} rack pattern (${notes.length} notes) into Piano Roll!`, 2500);
+};
+
+// ── Put Rack Patterns in Audio Editor (Bounce) ──────────────────────────────
+FLStudioApp.prototype.sendRackPatternToAudioEditor = async function(channelIdx = null) {
+  if (!this.audioEngine.initialized) this.audioEngine.init();
+  if (this.audioEngine.ctx && this.audioEngine.ctx.state === 'suspended') {
+    try { await this.audioEngine.ctx.resume(); } catch (_) {}
+  }
+
+  showToast('Bouncing Rack Pattern to Audio Editor…', 2000);
+
+  const bpm = this.sequencer.bpm || 140;
+  const stepCount = this.sequencer.steps || 16;
+  const stepDur = 60 / bpm / 4;
+  const totalDur = stepDur * stepCount;
+  const sampleRate = (this.audioEngine.ctx && this.audioEngine.ctx.sampleRate) ? this.audioEngine.ctx.sampleRate : 44100;
+
+  // Determine target channels
+  let targetChannels = [];
+  let layerName = '';
+  let layerColor = '#00ffff';
+
+  if (channelIdx !== null && typeof channelIdx === 'number' && this.sequencer.channels[channelIdx]) {
+    const ch = this.sequencer.channels[channelIdx];
+    targetChannels = [ch];
+    layerName = `${ch.name} Pattern Bounce`;
+    layerColor = ch.color || '#ff8800';
+  } else {
+    // Entire rack mix
+    targetChannels = this.sequencer.channels.filter(c => !c.muted && !c.isPaused && c.steps.some(Boolean));
+    if (!targetChannels.length) targetChannels = this.sequencer.channels.filter(c => c.steps.some(Boolean));
+    layerName = `Rack Mix (${stepCount} Steps)`;
+    layerColor = '#ffaa00';
+  }
+
+  if (!targetChannels.length) {
+    showToast('No active pattern steps found in Channel Rack to bounce', 2500);
+    return;
+  }
+
+  try {
+    const offlineCtx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(
+      2,
+      Math.max(1, Math.ceil(sampleRate * (totalDur + 0.35))),
+      sampleRate
+    );
+
+    const masterGain = offlineCtx.createGain();
+    masterGain.gain.value = 0.9;
+    masterGain.connect(offlineCtx.destination);
+
+    for (const ch of targetChannels) {
+      const chGain = offlineCtx.createGain();
+      chGain.gain.value = (ch.volume !== undefined ? ch.volume : 0.85);
+
+      let destNode = chGain;
+      if (ch.pan && offlineCtx.createStereoPanner) {
+        try {
+          const panner = offlineCtx.createStereoPanner();
+          panner.pan.value = Math.max(-1, Math.min(1, ch.pan));
+          chGain.connect(panner);
+          destNode = panner;
+        } catch (_) {}
+      }
+      destNode.connect(masterGain);
+
+      for (let s = 0; s < stepCount; s++) {
+        if (!ch.steps[s]) continue;
+        const hitTime = s * stepDur;
+        const vel = (ch.velocity && ch.velocity[s] !== undefined ? ch.velocity[s] : 0.8);
+        const pitch = (ch.stepPitch && ch.stepPitch[s] !== undefined ? ch.stepPitch[s] : 0);
+
+        if (ch.type === 'audio' && ch.audioBuffer) {
+          const src = offlineCtx.createBufferSource();
+          src.buffer = ch.audioBuffer;
+          if (pitch !== 0) src.playbackRate.value = Math.pow(2, pitch / 12);
+          src.connect(chGain);
+          src.start(hitTime);
+        } else {
+          const n = (ch.name || '').toLowerCase();
+          if (n.includes('kick') || n.includes('808')) {
+            const osc = offlineCtx.createOscillator();
+            const g = offlineCtx.createGain();
+            osc.frequency.setValueAtTime(60 * Math.pow(2, pitch / 12), hitTime);
+            osc.frequency.exponentialRampToValueAtTime(30, hitTime + 0.25);
+            g.gain.setValueAtTime(0.9 * vel, hitTime);
+            g.gain.exponentialRampToValueAtTime(0.001, hitTime + 0.35);
+            osc.connect(g);
+            g.connect(chGain);
+            osc.start(hitTime);
+            osc.stop(hitTime + 0.36);
+          } else if (n.includes('snare') || n.includes('clap')) {
+            const noiseLen = Math.floor(sampleRate * 0.2);
+            const noiseBuf = offlineCtx.createBuffer(1, noiseLen, sampleRate);
+            const data = noiseBuf.getChannelData(0);
+            for (let i = 0; i < noiseLen; i++) data[i] = Math.random() * 2 - 1;
+            const noise = offlineCtx.createBufferSource();
+            noise.buffer = noiseBuf;
+            const g = offlineCtx.createGain();
+            g.gain.setValueAtTime(0.7 * vel, hitTime);
+            g.gain.exponentialRampToValueAtTime(0.001, hitTime + 0.18);
+            noise.connect(g);
+            g.connect(chGain);
+            noise.start(hitTime);
+            noise.stop(hitTime + 0.2);
+          } else if (n.includes('hat')) {
+            const noiseLen = Math.floor(sampleRate * 0.08);
+            const noiseBuf = offlineCtx.createBuffer(1, noiseLen, sampleRate);
+            const data = noiseBuf.getChannelData(0);
+            for (let i = 0; i < noiseLen; i++) data[i] = Math.random() * 2 - 1;
+            const noise = offlineCtx.createBufferSource();
+            noise.buffer = noiseBuf;
+            const filt = offlineCtx.createBiquadFilter();
+            filt.type = 'highpass';
+            filt.frequency.value = 6000;
+            const g = offlineCtx.createGain();
+            g.gain.setValueAtTime(0.5 * vel, hitTime);
+            g.gain.exponentialRampToValueAtTime(0.001, hitTime + 0.07);
+            noise.connect(filt);
+            filt.connect(g);
+            g.connect(chGain);
+            noise.start(hitTime);
+            noise.stop(hitTime + 0.08);
+          } else {
+            const osc = offlineCtx.createOscillator();
+            const g = offlineCtx.createGain();
+            osc.type = n.includes('bass') ? 'sawtooth' : 'sine';
+            const baseF = n.includes('bass') ? 110 : 440;
+            osc.frequency.setValueAtTime(baseF * Math.pow(2, pitch / 12), hitTime);
+            g.gain.setValueAtTime(0.4 * vel, hitTime);
+            g.gain.exponentialRampToValueAtTime(0.001, hitTime + 0.3);
+            osc.connect(g);
+            g.connect(chGain);
+            osc.start(hitTime);
+            osc.stop(hitTime + 0.32);
+          }
+        }
+      }
+    }
+
+    const renderedBuffer = await offlineCtx.startRendering();
+
+    if (!this.audioEditor && window.AudioEditor) {
+      const aeCanvas = document.getElementById('audio-editor-canvas');
+      if (aeCanvas) this.audioEditor = new AudioEditor(aeCanvas);
+    }
+
+    if (this.audioEditor) {
+      this.audioEditor.addLayer(renderedBuffer, layerName, layerColor);
+      this._switchTab('audio-editor');
+      this.audioEditor._renderLayerList();
+      this.audioEditor._draw();
+      showToast(`Bounced to Audio Editor: "${layerName}"!`, 3000);
+    } else {
+      showToast('Audio Editor initialized and layer saved!', 2000);
+    }
+  } catch (err) {
+    console.error('[App] Failed to bounce pattern to audio editor:', err);
+    showToast('Error bouncing pattern: ' + err.message, 3000);
   }
 };
 

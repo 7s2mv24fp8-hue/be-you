@@ -222,20 +222,37 @@ class AudioEngine {
   playMetronome(step, time) {
     if (!this.initialized) this.init();
     if (!this.ctx) return;
-    const t = time || this.ctx.currentTime;
-    const isDownbeat = (step === 0);
+    if (this.ctx.state === 'suspended') {
+      try { this.ctx.resume(); } catch (_) {}
+    }
+    const t = Math.max(time || this.ctx.currentTime, this.ctx.currentTime);
+    const isDownbeat = (step === 0 || step % 16 === 0);
+
+    // FL Studio signature wooden click metronome
+    // High woodblock tick: 2400Hz -> 800Hz for downbeat, 1600Hz -> 600Hz for offbeats
     const osc = this._trackNode(this.ctx.createOscillator());
     const gain = this.ctx.createGain();
 
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(isDownbeat ? 1600 : 950, t);
-    gain.gain.setValueAtTime(isDownbeat ? 0.35 : 0.2, t);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.035);
+    osc.type = 'triangle'; // Rich harmonics so it punches through drums & bass
+    const startFreq = isDownbeat ? 2400 : 1600;
+    const endFreq   = isDownbeat ? 800 : 600;
+
+    osc.frequency.setValueAtTime(startFreq, t);
+    osc.frequency.exponentialRampToValueAtTime(endFreq, t + 0.025);
+
+    // Punchy transient envelope with safe Web Audio ramp
+    const initialVol = isDownbeat ? 0.65 : 0.45;
+    gain.gain.cancelScheduledValues(t);
+    gain.gain.setValueAtTime(initialVol, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.038);
 
     osc.connect(gain);
-    gain.connect(this.masterGain);
+    // Connect to masterCompressor / masterGain, fallback to destination
+    const dest = this.masterCompressor || this.masterGain || this.ctx.destination;
+    gain.connect(dest);
+
     osc.start(t);
-    osc.stop(t + 0.04);
+    osc.stop(t + 0.045);
   }
 
   playChime(isSuccess = true) {
@@ -360,11 +377,23 @@ class AudioEngine {
   }
 
   // ── Shared util ──────────────────────────────────────────────
-  _connectToMaster(node, gainDb = 0) {
+  _connectToMaster(node, gainDb = 0, options = {}) {
     const gain = this.ctx.createGain();
     gain.gain.value = Math.pow(10, gainDb / 20);
     node.connect(gain);
-    gain.connect(this.masterCompressor);
+
+    let lastNode = gain;
+    const panVal = typeof options === 'number' ? options : (options && options.pan !== undefined ? options.pan : 0);
+    if (panVal !== 0 && this.ctx.createStereoPanner) {
+      try {
+        const panner = this.ctx.createStereoPanner();
+        panner.pan.setValueAtTime(Math.max(-1, Math.min(1, panVal)), this.ctx.currentTime);
+        gain.connect(panner);
+        lastNode = panner;
+      } catch (_) {}
+    }
+
+    lastNode.connect(this.masterCompressor || this.masterGain || this.ctx.destination);
     return gain;
   }
 
@@ -606,7 +635,7 @@ class AudioEngine {
 
     osc.connect(dist);
     dist.connect(gainNode);
-    this._connectToMaster(gainNode, 2);
+    this._connectToMaster(gainNode, 2, options);
 
     osc.start(t);
     osc.stop(t + 0.55);
@@ -649,8 +678,8 @@ class AudioEngine {
     noiseFilter.connect(noiseGain);
     osc.connect(toneGain);
 
-    this._connectToMaster(noiseGain);
-    this._connectToMaster(toneGain);
+    this._connectToMaster(noiseGain, 0, options);
+    this._connectToMaster(toneGain, 0, options);
 
     noise.start(t);
     noise.stop(t + 0.25);
@@ -687,7 +716,7 @@ class AudioEngine {
     });
 
     filter.connect(gainNode);
-    this._connectToMaster(gainNode, -3);
+    this._connectToMaster(gainNode, -3, options);
   }
 
   // ── Clap ─────────────────────────────────────────────────────
@@ -717,7 +746,7 @@ class AudioEngine {
 
       noise.connect(filter);
       filter.connect(g);
-      this._connectToMaster(g);
+      this._connectToMaster(g, 0, options);
 
       noise.start(t + offset);
       noise.stop(t + offset + fadeTime + 0.01);
@@ -740,7 +769,7 @@ class AudioEngine {
     gainNode.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
 
     osc.connect(gainNode);
-    this._connectToMaster(gainNode);
+    this._connectToMaster(gainNode, 0, options);
 
     osc.start(t);
     osc.stop(t + 0.35);
@@ -803,7 +832,7 @@ class AudioEngine {
     oscGain1.connect(filter);
     oscGain2.connect(filter);
     filter.connect(gainNode);
-    this._connectToMaster(gainNode);
+    this._connectToMaster(gainNode, 0, options);
 
     osc1.start(t);
     osc2.start(t);

@@ -411,9 +411,9 @@ class Sequencer {
             if (stepPitch !== 0) freq *= Math.pow(2, stepPitch / 12);
             const dur = (n.length || 1) * this.stepDuration;
             if (ch.name === 'Bass') {
-              this.engine.playBass(playTime, { freq, gain: vel * 0.5, duration: dur, filterFreq: stepCutoff, channelKey: ch.name });
+              this.engine.playBass(playTime, { freq, gain: vel * 0.5, duration: dur, filterFreq: stepCutoff, pan: stepPan, channelKey: ch.name });
             } else {
-              this.engine.playSynth(playTime, { freq, gain: vel * 0.35, duration: dur, filterFreq: stepCutoff, channelKey: ch.name });
+              this.engine.playSynth(playTime, { freq, gain: vel * 0.35, duration: dur, filterFreq: stepCutoff, pan: stepPan, channelKey: ch.name });
             }
           });
         } else {
@@ -422,9 +422,9 @@ class Sequencer {
           let freq = (defaultFreqs[ch.name] || 220) * Math.pow(2, stepPitch / 12);
           const dur = this.stepDuration;
           if (ch.name === 'Bass') {
-            this.engine.playBass(playTime, { freq, gain: vel * 0.4, duration: dur, filterFreq: stepCutoff, channelKey: ch.name });
+            this.engine.playBass(playTime, { freq, gain: vel * 0.4, duration: dur, filterFreq: stepCutoff, pan: stepPan, channelKey: ch.name });
           } else {
-            this.engine.playSynth(playTime, { freq, gain: vel * 0.25, duration: dur, filterFreq: stepCutoff, channelKey: ch.name });
+            this.engine.playSynth(playTime, { freq, gain: vel * 0.25, duration: dur, filterFreq: stepCutoff, pan: stepPan, channelKey: ch.name });
           }
         }
       }
@@ -482,7 +482,17 @@ class Sequencer {
   }
 
   setChannelVolume(idx, vol) {
-    this.channels[idx].volume = Math.max(0, Math.min(1.5, vol));
+    if (this.channels[idx]) {
+      this.channels[idx].volume = Math.max(0, Math.min(1.5, vol));
+    }
+  }
+
+  setChannelPan(idx, pan) {
+    if (this.channels[idx]) {
+      // Normalize pan from -100..100 or -1..1
+      const p = typeof pan === 'number' && Math.abs(pan) > 1 ? pan / 100 : pan;
+      this.channels[idx].pan = Math.max(-1, Math.min(1, p || 0));
+    }
   }
 
   setChannelMute(idx, val) {

@@ -25,10 +25,10 @@ class Mixer {
     const seqChannels = this.sequencer.channels.map((c, i) => ({
       name: c.name,
       color: c.color,
-      volume: 100,
-      pan: 0,
-      muted: false,
-      solo: false,
+      volume: c.volume !== undefined ? Math.round(c.volume * 100) : 80,
+      pan: c.pan !== undefined ? Math.round(c.pan * 100) : 0,
+      muted: !!c.muted,
+      solo: !!c.solo,
       seqIdx: i,
     }));
     const master = {
@@ -65,10 +65,10 @@ class Mixer {
       return {
         name: c.name,
         color: c.color || '#ffffff',
-        volume: prev ? prev.volume : Math.round((c.volume !== undefined ? c.volume : 0.8) * 100),
-        pan: prev ? prev.pan : (c.pan || 0),
-        muted: prev ? prev.muted : (c.muted || false),
-        solo: prev ? prev.solo : (c.solo || false),
+        volume: c.volume !== undefined ? Math.round(c.volume * 100) : (prev ? prev.volume : 80),
+        pan: c.pan !== undefined ? Math.round(c.pan * 100) : (prev ? prev.pan : 0),
+        muted: c.muted !== undefined ? !!c.muted : (prev ? prev.muted : false),
+        solo: c.solo !== undefined ? !!c.solo : (prev ? prev.solo : false),
         seqIdx: i,
       };
     });
@@ -203,8 +203,17 @@ class Mixer {
     soloBtn.title = 'Solo';
     soloBtn.addEventListener('click', () => {
       ch.solo = !ch.solo;
-      soloBtn.classList.toggle('soloed', ch.solo);
-      if (ch.seqIdx >= 0) this.sequencer.setChannelSolo(ch.seqIdx, ch.solo);
+      if (ch.seqIdx >= 0) {
+        this.sequencer.setChannelSolo(ch.seqIdx, ch.solo);
+        // Sync solo buttons visually across all channels in the mixer
+        this.channels.forEach((otherCh, otherIdx) => {
+          if (otherIdx !== idx && !otherCh.isMaster) otherCh.solo = false;
+        });
+        const allSoloBtns = this.container.querySelectorAll('.mixer-channel .mix-btn:last-child');
+        allSoloBtns.forEach((btn, i) => {
+          btn.classList.toggle('soloed', !!(this.channels[i] && this.channels[i].solo));
+        });
+      }
     });
 
     btns.appendChild(muteBtn);
@@ -273,8 +282,14 @@ class Mixer {
       const onMove = (me) => {
         const delta = (startY - me.clientY) * 0.8;
         ch[prop] = Math.max(min, Math.min(max, Math.round(startVal + delta)));
-        if (prop === 'volume' && ch.seqIdx >= 0) {
-          this.sequencer.setChannelVolume(ch.seqIdx, ch.volume / 100);
+        if (prop === 'volume') {
+          if (ch.isMaster && this.engine.masterGain) {
+            this.engine.masterGain.gain.value = (ch.volume / 100) * 0.85;
+          } else if (ch.seqIdx >= 0) {
+            this.sequencer.setChannelVolume(ch.seqIdx, ch.volume / 100);
+          }
+        } else if (prop === 'pan' && ch.seqIdx >= 0) {
+          this.sequencer.setChannelPan(ch.seqIdx, ch.pan / 100);
         }
         onChange();
       };
@@ -287,6 +302,15 @@ class Mixer {
     });
     canvas.addEventListener('dblclick', () => {
       ch[prop] = prop === 'pan' ? 0 : 85;
+      if (prop === 'volume') {
+        if (ch.isMaster && this.engine.masterGain) {
+          this.engine.masterGain.gain.value = (ch.volume / 100) * 0.85;
+        } else if (ch.seqIdx >= 0) {
+          this.sequencer.setChannelVolume(ch.seqIdx, ch.volume / 100);
+        }
+      } else if (prop === 'pan' && ch.seqIdx >= 0) {
+        this.sequencer.setChannelPan(ch.seqIdx, ch.pan / 100);
+      }
       onChange();
     });
   }
@@ -333,6 +357,12 @@ class Mixer {
       ch.volume = Math.round((1 - y / h) * 130);
       ch.volume = Math.max(0, Math.min(130, ch.volume));
       this._updateFaderUI(fill, thumb, ch, idx);
+
+      if (ch.isMaster && this.engine.masterGain) {
+        this.engine.masterGain.gain.value = (ch.volume / 100) * 0.85;
+      } else if (ch.seqIdx >= 0) {
+        this.sequencer.setChannelVolume(ch.seqIdx, ch.volume / 100);
+      }
     });
   }
 

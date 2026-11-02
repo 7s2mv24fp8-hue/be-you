@@ -122,6 +122,15 @@
  </svg>
  Goodizer
  </button>
+ <button class="view-btn plugin-launch-btn" id="tb-btn-graph-editor" title="Graph Editor (F4) — Step Velocity, Pitch, Pan, Cutoff">
+ <svg viewBox="0 0 16 16" width="13" fill="currentColor">
+   <rect x="2" y="8" width="2" height="6"/>
+   <rect x="6" y="4" width="2" height="10"/>
+   <rect x="10" y="2" width="2" height="12"/>
+   <rect x="14" y="6" width="2" height="8"/>
+ </svg>
+ Graph
+ </button>
  <button class="view-btn plugin-launch-btn" id="tb-btn-export-stems" title="Export Track Stems (WAV)">
  <svg viewBox="0 0 16 16" width="13" fill="currentColor">
  <path d="M8 2v8m-4-4l4 4 4-4M2 14h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
@@ -286,6 +295,25 @@
       </div>
       <button id="rack-double-btn" class="ch-btn rack-double-btn" title="Double pattern length & duplicate beat (2x)" style="width:auto;padding:0 5px;font-size:9px;font-weight:700;color:var(--accent);">
         2x
+      </button>
+
+      <!-- Put Rack Patterns in Piano Roll, Audio Editor & Graph Editor Buttons -->
+      <button id="rack-to-piano-btn" class="ch-btn" title="Send selected Rack channel pattern into Piano Roll notes" style="width:auto;padding:0 6px;font-size:9px;font-weight:600;display:inline-flex;align-items:center;gap:3px;color:#a1a1aa;">
+        <svg viewBox="0 0 16 16" width="9" height="9" fill="currentColor"><path d="M1 2h14v12H1V2zm2 1v6h2V3H3zm3 0v6h2V3H6zm3 0v6h2V3H9z"/></svg>
+        <span>To Piano</span>
+      </button>
+      <button id="rack-to-editor-btn" class="ch-btn" title="Bounce Rack pattern into Audio Editor as an audio layer" style="width:auto;padding:0 6px;font-size:9px;font-weight:600;display:inline-flex;align-items:center;gap:3px;color:#a1a1aa;">
+        <svg viewBox="0 0 16 16" width="9" height="9" fill="currentColor"><path d="M2 3h12v10H2V3zm2 5h8v2H4V8z"/></svg>
+        <span>To Editor</span>
+      </button>
+      <button id="rack-graph-editor-btn" class="ch-btn" title="Graph Editor (F4) — Tweak step Velocity, Pitch, Pan, Cutoff" style="width:auto;padding:0 6px;font-size:9px;font-weight:700;display:inline-flex;align-items:center;gap:3px;">
+        <svg viewBox="0 0 16 16" width="9" height="9" fill="currentColor">
+          <rect x="2" y="8" width="2" height="6"/>
+          <rect x="6" y="4" width="2" height="10"/>
+          <rect x="10" y="2" width="2" height="12"/>
+          <rect x="14" y="6" width="2" height="8"/>
+        </svg>
+        <span>Graph</span>
       </button>
 
       <div style="margin-left:auto;display:flex;gap:4px;">

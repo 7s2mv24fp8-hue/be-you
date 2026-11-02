@@ -25,58 +25,113 @@ class FLGraphEditor {
   }
 
   _initUI() {
-    // Inject graph editor container under channel rack if not present
     const channelRack = document.getElementById('channel-rack');
     if (!channelRack) return;
 
-    const geWrap = document.createElement('div');
-    geWrap.id = 'fl-graph-editor-wrap';
-    geWrap.className = 'fl-ge-wrap hidden';
-    geWrap.innerHTML = `
-      <div class="fl-ge-header">
-        <span class="fl-ge-title">Graph Editor</span>
-        <select id="fl-ge-channel-select" class="fl-ge-channel-select" style="background:#18181b;color:#e4e4e7;border:1px solid #3f3f46;border-radius:4px;font-size:10px;padding:2px 6px;margin-left:6px;cursor:pointer;">
-        </select>
-        <div class="fl-ge-tabs">
-          <button class="fl-ge-tab active" data-mode="velocity">Velocity</button>
-          <button class="fl-ge-tab" data-mode="pitch">Pitch</button>
-          <button class="fl-ge-tab" data-mode="pan">Pan</button>
-          <button class="fl-ge-tab" data-mode="cutoff">Cutoff</button>
+    // Check if already injected
+    let geWrap = document.getElementById('fl-graph-editor-wrap');
+    if (!geWrap) {
+      geWrap = document.createElement('div');
+      geWrap.id = 'fl-graph-editor-wrap';
+      geWrap.className = 'fl-ge-wrap hidden';
+      geWrap.innerHTML = `
+        <div class="fl-ge-header">
+          <span class="fl-ge-title">Graph Editor</span>
+          <select id="fl-ge-channel-select" class="fl-ge-channel-select" style="background:#18181b;color:#e4e4e7;border:1px solid #3f3f46;border-radius:4px;font-size:10px;padding:2px 6px;margin-left:6px;cursor:pointer;">
+          </select>
+          <div class="fl-ge-tabs">
+            <button class="fl-ge-tab active" data-mode="velocity">Velocity</button>
+            <button class="fl-ge-tab" data-mode="pitch">Pitch</button>
+            <button class="fl-ge-tab" data-mode="pan">Pan</button>
+            <button class="fl-ge-tab" data-mode="cutoff">Cutoff</button>
+          </div>
+          <button class="fl-ge-close" id="fl-ge-close-btn" title="Close Graph Editor (F4)">✕</button>
         </div>
-        <button class="fl-ge-close" id="fl-ge-close-btn" title="Close Graph Editor (F4)">✕</button>
-      </div>
-      <div class="fl-ge-body">
-        <canvas id="fl-ge-canvas" height="90"></canvas>
-      </div>
-    `;
+        <div class="fl-ge-body">
+          <canvas id="fl-ge-canvas" height="90"></canvas>
+        </div>
+      `;
 
-    channelRack.appendChild(geWrap);
+      // Insert right before rack footer actions so it sits directly below channel steps
+      const footerActions = channelRack.querySelector('.rack-footer-actions');
+      if (footerActions) {
+        channelRack.insertBefore(geWrap, footerActions);
+      } else {
+        channelRack.appendChild(geWrap);
+      }
+    }
 
     this.container = geWrap;
     this.canvas = document.getElementById('fl-ge-canvas');
     if (this.canvas) this.ctx = this.canvas.getContext('2d');
 
-    // Add toggle button to channel rack controls header
+    // Add toggle button to channel rack controls header if not present
     const rackControls = channelRack.querySelector('.rack-controls');
-    if (rackControls) {
+    if (rackControls && !document.getElementById('rack-graph-editor-btn')) {
       const geToggleBtn = document.createElement('button');
+      geToggleBtn.id = 'rack-graph-editor-btn';
       geToggleBtn.className = 'ch-btn';
       geToggleBtn.title = 'Graph Editor (F4) — Tweak step Velocity, Pitch, Pan, Cutoff';
-      geToggleBtn.style.cssText = 'width:auto;padding:0 8px;font-size:10px;font-weight:700;margin-left:4px;';
-      geToggleBtn.textContent = 'Graph Editor';
+      geToggleBtn.style.cssText = 'width:auto;padding:0 7px;font-size:9px;font-weight:700;display:inline-flex;align-items:center;gap:3px;';
+      geToggleBtn.innerHTML = `
+        <svg viewBox="0 0 16 16" width="10" height="10" fill="currentColor">
+          <rect x="2" y="8" width="2" height="6"/>
+          <rect x="6" y="4" width="2" height="10"/>
+          <rect x="10" y="2" width="2" height="12"/>
+          <rect x="14" y="6" width="2" height="8"/>
+        </svg>
+        <span>Graph</span>
+      `;
       geToggleBtn.addEventListener('click', () => this.toggle());
-      rackControls.appendChild(geToggleBtn);
+
+      // Insert before the last right-aligned group (Rand/Clear)
+      const lastGroup = rackControls.querySelector('div[style*="margin-left:auto"]');
+      if (lastGroup) {
+        rackControls.insertBefore(geToggleBtn, lastGroup);
+      } else {
+        rackControls.appendChild(geToggleBtn);
+      }
     }
 
     this._attachEvents();
   }
 
-  toggle() {
-    this.visible = !this.visible;
+  toggle(channelIdx = null) {
+    if (channelIdx !== null && typeof channelIdx === 'number') {
+      this.selectedChannel = channelIdx;
+      this.visible = true;
+    } else {
+      this.visible = !this.visible;
+    }
+
+    if (!this.container) {
+      this._initUI();
+    }
+
     if (this.container) {
       this.container.classList.toggle('hidden', !this.visible);
-      if (this.visible) this.render();
+
+      // Sync active state on toolbar and rack buttons
+      const tbBtn = document.getElementById('tb-btn-graph-editor');
+      if (tbBtn) tbBtn.classList.toggle('active', this.visible);
+      const rackBtn = document.getElementById('rack-graph-editor-btn');
+      if (rackBtn) rackBtn.classList.toggle('active', this.visible);
+
+      if (this.visible) {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            this.render();
+          });
+        });
+      }
     }
+  }
+
+  setChannel(channelIdx) {
+    this.selectedChannel = channelIdx;
+    const chSelect = document.getElementById('fl-ge-channel-select');
+    if (chSelect) chSelect.value = channelIdx;
+    if (this.visible) this.render();
   }
 
   _attachEvents() {
@@ -84,11 +139,15 @@ class FLGraphEditor {
 
     // Close button
     const closeBtn = document.getElementById('fl-ge-close-btn');
-    if (closeBtn) closeBtn.addEventListener('click', () => this.toggle());
+    if (closeBtn && !closeBtn._bound) {
+      closeBtn._bound = true;
+      closeBtn.addEventListener('click', () => this.toggle());
+    }
 
     // Channel dropdown
     const chSelect = document.getElementById('fl-ge-channel-select');
-    if (chSelect) {
+    if (chSelect && !chSelect._bound) {
+      chSelect._bound = true;
       chSelect.addEventListener('change', (e) => {
         this.selectedChannel = parseInt(e.target.value, 10) || 0;
         this.render();
@@ -98,6 +157,8 @@ class FLGraphEditor {
     // Mode tabs
     const tabs = this.container.querySelectorAll('.fl-ge-tab');
     tabs.forEach(tab => {
+      if (tab._bound) return;
+      tab._bound = true;
       tab.addEventListener('click', (e) => {
         tabs.forEach(t => t.classList.remove('active'));
         e.currentTarget.classList.add('active');
@@ -107,15 +168,19 @@ class FLGraphEditor {
     });
 
     // F4 keyboard shortcut
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'F4') {
-        e.preventDefault();
-        this.toggle();
-      }
-    });
+    if (!window._flGraphEditorKeyBound) {
+      window._flGraphEditorKeyBound = true;
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'F4') {
+          e.preventDefault();
+          this.toggle();
+        }
+      });
+    }
 
     // Canvas interactivity
-    if (this.canvas) {
+    if (this.canvas && !this.canvas._bound) {
+      this.canvas._bound = true;
       this.canvas.addEventListener('mousedown', (e) => {
         this.isDragging = true;
         this._handleCanvasPointer(e);
@@ -129,26 +194,29 @@ class FLGraphEditor {
     }
 
     // Resize observer
-    if (window.ResizeObserver && this.canvas) {
-      const ro = new ResizeObserver(() => this.render());
-      ro.observe(this.canvas.parentElement);
+    if (window.ResizeObserver && this.canvas && !this.canvas._roBound) {
+      this.canvas._roBound = true;
+      const ro = new ResizeObserver(() => {
+        if (this.visible) this.render();
+      });
+      if (this.canvas.parentElement) ro.observe(this.canvas.parentElement);
     }
   }
 
   _handleCanvasPointer(e) {
     if (!window.app || !this.canvas) return;
     const rect = this.canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    const channel = window.app.sequencer.channels[this.selectedChannel];
+    const channel = window.app.sequencer.channels[this.selectedChannel] || window.app.sequencer.channels[0];
     if (!channel) return;
 
     const stepCount = channel.steps.length || 16;
     const barWidth = rect.width / stepCount;
-    const stepIdx = Math.floor(x / barWidth);
-
-    if (stepIdx < 0 || stepIdx >= stepCount) return;
+    const stepIdx = Math.max(0, Math.min(stepCount - 1, Math.floor(x / barWidth)));
 
     // Calculate normalized value from Y pointer position (top=1.0, bottom=0.0)
     const norm = Math.max(0, Math.min(1, 1 - y / rect.height));
@@ -158,6 +226,7 @@ class FLGraphEditor {
       channel.velocity[stepIdx] = Math.round(norm * 100) / 100;
       // Enable step if velocity set > 0
       if (norm > 0.05) channel.steps[stepIdx] = true;
+      else if (norm <= 0.01) channel.steps[stepIdx] = false;
     } else if (this.currentMode === 'pitch') {
       if (!channel.stepPitch) channel.stepPitch = Array(stepCount).fill(0);
       // Map norm 0..1 to -12..+12 semitones
@@ -182,9 +251,12 @@ class FLGraphEditor {
     if (!this.visible || !this.canvas || !this.ctx || !window.app) return;
 
     const parent = this.canvas.parentElement;
-    if (parent) {
-      this.canvas.width = parent.clientWidth || 300;
-      this.canvas.height = 90;
+    const targetW = (parent && parent.clientWidth > 50) ? parent.clientWidth : (this.container ? this.container.clientWidth : 340);
+    const targetH = (parent && parent.clientHeight > 30) ? parent.clientHeight : 90;
+
+    if (this.canvas.width !== targetW || this.canvas.height !== targetH) {
+      this.canvas.width = targetW;
+      this.canvas.height = targetH;
     }
 
     const w = this.canvas.width;
@@ -222,8 +294,8 @@ class FLGraphEditor {
     // Grid lines & step numbers
     for (let i = 0; i < stepCount; i++) {
       const bx = i * barWidth;
-      ctx.strokeStyle = i % 4 === 0 ? '#27272a' : '#18181b';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = i % 4 === 0 ? '#27272a' : '#141417';
+      ctx.lineWidth = i % 4 === 0 ? 1.5 : 1;
       ctx.beginPath();
       ctx.moveTo(bx, 0);
       ctx.lineTo(bx, h);
@@ -234,16 +306,19 @@ class FLGraphEditor {
     if (this.currentMode === 'pitch' || this.currentMode === 'pan') {
       ctx.strokeStyle = '#3f3f46';
       ctx.lineWidth = 1;
+      ctx.setLineDash([2, 2]);
       ctx.beginPath();
       ctx.moveTo(0, h / 2);
       ctx.lineTo(w, h / 2);
       ctx.stroke();
+      ctx.setLineDash([]);
     }
 
     // Render bars for each step
+    const chColor = channel.color || '#ff8800';
     for (let i = 0; i < stepCount; i++) {
       const bx = i * barWidth;
-      const bw = barWidth - 4;
+      const bw = Math.max(3, barWidth - 3);
       const active = channel.steps[i];
 
       let norm = 0.8;
@@ -260,21 +335,24 @@ class FLGraphEditor {
         norm = (Math.log(freq) - Math.log(100)) / (Math.log(20000) - Math.log(100));
       }
 
-      const barH = norm * h;
+      const barH = Math.max(2, norm * (h - 4));
 
       if (this.currentMode === 'pitch' || this.currentMode === 'pan') {
         const midY = h / 2;
-        const targetY = h - barH;
-        ctx.fillStyle = active ? '#ffffff' : '#3f3f46';
-        ctx.fillRect(bx + 2, Math.min(midY, targetY), bw, Math.abs(midY - targetY) || 2);
+        const targetY = h - (norm * h);
+        ctx.fillStyle = active ? chColor : '#3f3f46';
+        ctx.fillRect(bx + 1.5, Math.min(midY, targetY), bw, Math.max(2, Math.abs(midY - targetY)));
       } else {
-        ctx.fillStyle = active ? '#ffffff' : '#27272a';
-        ctx.fillRect(bx + 2, h - barH, bw, barH);
+        ctx.fillStyle = active ? chColor : '#27272a';
+        ctx.fillRect(bx + 1.5, h - barH, bw, barH);
       }
 
       // Top bar cap handle
       ctx.fillStyle = active ? '#ffffff' : '#52525b';
-      ctx.fillRect(bx + 2, h - barH - 2, bw, 3);
+      const capY = (this.currentMode === 'pitch' || this.currentMode === 'pan')
+        ? (h - (norm * h) - 1.5)
+        : (h - barH - 1.5);
+      ctx.fillRect(bx + 1.5, Math.max(0, Math.min(h - 3, capY)), bw, 3);
     }
   }
 }
@@ -282,6 +360,8 @@ class FLGraphEditor {
 function initFLGraphEditor() {
   if (!window.flGraphEditor) {
     window.flGraphEditor = new FLGraphEditor();
+  } else if (!window.flGraphEditor.container) {
+    window.flGraphEditor._initUI();
   }
 }
 
@@ -290,3 +370,8 @@ if (document.readyState === 'loading') {
 } else {
   initFLGraphEditor();
 }
+
+// Also re-check once window fully loads
+window.addEventListener('load', () => {
+  initFLGraphEditor();
+});
