@@ -1,0 +1,571 @@
+{
+  "metadata": {
+    "name": "BeYou Music Visualization & Classification Pipeline Model",
+    "dataset": "introvoyz041/Results-For-Music-Visualization-Generation-Pipeline",
+    "axesCount": 15,
+    "totalGenres": 34,
+    "totalMoods": 27,
+    "license": "MIT"
+  },
+  "ontology": {
+    "moods": [
+      "happy",
+      "exciting",
+      "peaceful",
+      "hopeful",
+      "uplifting",
+      "powerful",
+      "love",
+      "epic",
+      "carefree",
+      "mysterious",
+      "groovy",
+      "sad",
+      "dramatic",
+      "playful",
+      "tense",
+      "scary",
+      "serious",
+      "sexy",
+      "dark",
+      "angry",
+      "funny",
+      "nostalgic",
+      "empowering",
+      "romantic",
+      "inspirational",
+      "reflective",
+      "anxious"
+    ],
+    "genres": [
+      "cinematic",
+      "corporate",
+      "funk",
+      "hip hop",
+      "classical",
+      "jazz",
+      "lofi & chill beats",
+      "ambient",
+      "lounge",
+      "children",
+      "acoustic",
+      "country",
+      "indie",
+      "folk",
+      "soul & RnB",
+      "latin",
+      "retro",
+      "pop",
+      "world",
+      "electronic",
+      "rock",
+      "blues",
+      "reggae",
+      "fantasy",
+      "singer-songwriter",
+      "worship",
+      "holiday",
+      "afrobeat",
+      "k-pop",
+      "bollywood",
+      "middle eastern",
+      "celtic",
+      "native american",
+      "caribbean"
+    ],
+    "valence": [
+      "positive affect",
+      "negative affect",
+      "neutral affect"
+    ],
+    "arousal": [
+      "high arousal",
+      "low arousal"
+    ],
+    "dominance": [
+      "high dominance",
+      "low dominance"
+    ],
+    "energyLevels": [
+      "high energy",
+      "medium energy",
+      "low energy"
+    ],
+    "tempos": [
+      "slow",
+      "medium",
+      "fast"
+    ],
+    "rhythms": [
+      "simple",
+      "syncopated",
+      "complex",
+      "polyrhythmic"
+    ],
+    "keyTonalities": [
+      "major",
+      "minor",
+      "modal",
+      "atonal"
+    ],
+    "dynamics": [
+      "loud",
+      "soft",
+      "gradual build-up",
+      "sudden shifts"
+    ],
+    "productionCharacteristics": [
+      "lo-fi",
+      "hi-fi",
+      "live",
+      "studio-produced",
+      "minimalistic",
+      "layered"
+    ]
+  },
+  "vadMusicalMapping": {
+    "positive affect": {
+      "scale_preference": [
+        "major",
+        "lydian",
+        "pentatonic_maj"
+      ],
+      "harmonic_brightness": 1.25,
+      "tempo_bias": 1.1,
+      "filter_cutoff_mult": 1.3,
+      "reverb_room_size": "medium_bright"
+    },
+    "negative affect": {
+      "scale_preference": [
+        "minor",
+        "harmonic_minor",
+        "phrygian"
+      ],
+      "harmonic_brightness": 0.75,
+      "tempo_bias": 0.95,
+      "filter_cutoff_mult": 0.7,
+      "reverb_room_size": "dark_cavern"
+    },
+    "neutral affect": {
+      "scale_preference": [
+        "dorian",
+        "mixolydian"
+      ],
+      "harmonic_brightness": 1.0,
+      "tempo_bias": 1.0,
+      "filter_cutoff_mult": 1.0,
+      "reverb_room_size": "ambient_plate"
+    },
+    "high arousal": {
+      "energy_level": 0.9,
+      "kick_density": "high",
+      "snare_velocity_boost": 0.2,
+      "saturation_drive": 1.6,
+      "accent_frequency": 2
+    },
+    "low arousal": {
+      "energy_level": 0.35,
+      "kick_density": "sparse",
+      "snare_velocity_boost": -0.15,
+      "saturation_drive": 1.0,
+      "accent_frequency": 4
+    },
+    "high dominance": {
+      "sub_bass_weight": 1.4,
+      "master_compression_threshold": -12.0,
+      "stereo_width": 1.25
+    },
+    "low dominance": {
+      "sub_bass_weight": 0.8,
+      "master_compression_threshold": -6.0,
+      "stereo_width": 0.9
+    }
+  },
+  "genreRhythmCatalog": {
+    "cinematic": {
+      "defaultBpm": 78,
+      "rhythmCategory": "expressive_rubato",
+      "tonalityOptions": [
+        "minor",
+        "major"
+      ]
+    },
+    "corporate": {
+      "defaultBpm": 100,
+      "rhythmCategory": "simple",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "funk": {
+      "defaultBpm": 90,
+      "rhythmCategory": "syncopated",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "hip hop": {
+      "defaultBpm": 90,
+      "rhythmCategory": "syncopated",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "classical": {
+      "defaultBpm": 78,
+      "rhythmCategory": "expressive_rubato",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "jazz": {
+      "defaultBpm": 96,
+      "rhythmCategory": "polyrhythmic_swing",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "lofi & chill beats": {
+      "defaultBpm": 92,
+      "rhythmCategory": "syncopated",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "ambient": {
+      "defaultBpm": 78,
+      "rhythmCategory": "expressive_rubato",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "lounge": {
+      "defaultBpm": 100,
+      "rhythmCategory": "simple",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "children": {
+      "defaultBpm": 100,
+      "rhythmCategory": "simple",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "acoustic": {
+      "defaultBpm": 100,
+      "rhythmCategory": "simple",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "country": {
+      "defaultBpm": 100,
+      "rhythmCategory": "simple",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "indie": {
+      "defaultBpm": 100,
+      "rhythmCategory": "simple",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "folk": {
+      "defaultBpm": 100,
+      "rhythmCategory": "simple",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "soul & RnB": {
+      "defaultBpm": 100,
+      "rhythmCategory": "simple",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "latin": {
+      "defaultBpm": 96,
+      "rhythmCategory": "polyrhythmic_swing",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "retro": {
+      "defaultBpm": 100,
+      "rhythmCategory": "simple",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "pop": {
+      "defaultBpm": 120,
+      "rhythmCategory": "driving_straight",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "world": {
+      "defaultBpm": 100,
+      "rhythmCategory": "simple",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "electronic": {
+      "defaultBpm": 126,
+      "rhythmCategory": "driving_straight",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "rock": {
+      "defaultBpm": 120,
+      "rhythmCategory": "driving_straight",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "blues": {
+      "defaultBpm": 100,
+      "rhythmCategory": "simple",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "reggae": {
+      "defaultBpm": 96,
+      "rhythmCategory": "polyrhythmic_swing",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "fantasy": {
+      "defaultBpm": 100,
+      "rhythmCategory": "simple",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "singer-songwriter": {
+      "defaultBpm": 100,
+      "rhythmCategory": "simple",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "worship": {
+      "defaultBpm": 100,
+      "rhythmCategory": "simple",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "holiday": {
+      "defaultBpm": 100,
+      "rhythmCategory": "simple",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "afrobeat": {
+      "defaultBpm": 104,
+      "rhythmCategory": "syncopated",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "k-pop": {
+      "defaultBpm": 120,
+      "rhythmCategory": "driving_straight",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "bollywood": {
+      "defaultBpm": 100,
+      "rhythmCategory": "simple",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "middle eastern": {
+      "defaultBpm": 100,
+      "rhythmCategory": "simple",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "celtic": {
+      "defaultBpm": 100,
+      "rhythmCategory": "simple",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "native american": {
+      "defaultBpm": 100,
+      "rhythmCategory": "simple",
+      "tonalityOptions": [
+        "minor"
+      ]
+    },
+    "caribbean": {
+      "defaultBpm": 96,
+      "rhythmCategory": "polyrhythmic_swing",
+      "tonalityOptions": [
+        "minor"
+      ]
+    }
+  },
+  "songStructureArrangement": {
+    "8_bar_loop": [
+      {
+        "bar": 1,
+        "intensity": "intro_low",
+        "elements": [
+          "pad",
+          "lead_motif"
+        ]
+      },
+      {
+        "bar": 3,
+        "intensity": "build",
+        "elements": [
+          "hihat",
+          "kick_sparse"
+        ]
+      },
+      {
+        "bar": 5,
+        "intensity": "peak_drop",
+        "elements": [
+          "kick",
+          "snare",
+          "bass",
+          "lead",
+          "chords"
+        ]
+      },
+      {
+        "bar": 7,
+        "intensity": "variation_fill",
+        "elements": [
+          "kick",
+          "snare",
+          "bass",
+          "percussion_fill"
+        ]
+      }
+    ],
+    "16_bar_arrangement": [
+      {
+        "bars": "1-4",
+        "name": "Intro / Exposition",
+        "dynamics": "soft_building",
+        "prominent": "Piano / Atmosphere"
+      },
+      {
+        "bars": "5-8",
+        "name": "Groove Inception",
+        "dynamics": "steady_beat",
+        "prominent": "Drums & Bass"
+      },
+      {
+        "bars": "9-12",
+        "name": "Full Chorus / Climax",
+        "dynamics": "peak_intensity",
+        "prominent": "Full Instrumentation"
+      },
+      {
+        "bars": "13-16",
+        "name": "Outro / Decrescendo",
+        "dynamics": "taper_off",
+        "prominent": "Atmospheric tail"
+      }
+    ]
+  },
+  "visualReactiveGuidance": {
+    "sub_bass_pulse": {
+      "param": "kick_and_bass",
+      "visual": "Radial pulse & camera shake",
+      "scale_range": [
+        1.0,
+        1.35
+      ]
+    },
+    "mid_harmonic_wave": {
+      "param": "chords_and_pads",
+      "visual": "Color gradient hue shift",
+      "colors": [
+        "#00d2d3",
+        "#1e90ff",
+        "#ff4757"
+      ]
+    },
+    "high_freq_shimmer": {
+      "param": "hihats_and_shaker",
+      "visual": "Particle sparkle burst",
+      "density": 45
+    },
+    "styles": [
+      "Realistic and detailed",
+      "Simplistic or minimalistic",
+      "Surreal or abstract",
+      "Cartoonish or exaggerated",
+      "Monochromatic or limited color palette"
+    ],
+    "settings": [
+      "Urban",
+      "Natural"
+    ],
+    "focus": [
+      "Single focal point or character",
+      "Multiple focal points or characters",
+      "Detailed background or environment",
+      "Abstract shapes or patterns",
+      "Negative space or minimal detail"
+    ]
+  },
+  "segmentTransitions": {
+    "instrumental intensity": [
+      "Very soft or minimal (almost no percussion)",
+      "Low intensity but steady rhythm",
+      "Moderate intensity with a clear beat",
+      "High energy and full instrumentation",
+      "Peak intensity with multiple layers and heavy percussion"
+    ],
+    "prominent element": [
+      "Percussion/drums",
+      "Guitar or bass",
+      "Synths or electronic sounds",
+      "String or orchestral elements",
+      "Atmospheric pads or ambient effects"
+    ],
+    "dynamic shift": [
+      "It stays uniformly quiet/soft",
+      "It stays uniformly loud/energetic",
+      "It builds gradually from soft to louder",
+      "It fades gradually from loud to softer",
+      "It fluctuates multiple times within the segment"
+    ],
+    "rhythm": [
+      "Simple 4/4 beat (straightforward)",
+      "Syncopated/funky groove",
+      "Driving dance or electronic beat",
+      "Swing or shuffled feel",
+      "Irregular or changing time signatures"
+    ],
+    "function in transitioning": [
+      "It cleanly continues the energy from the previous segment",
+      "It acts as a noticeable break or \u201cbreather\u201d",
+      "It dramatically shifts the energy or mood",
+      "It slowly fades out or prepares for a drop",
+      "It features a sudden drop or pause before the next section"
+    ]
+  }
+}

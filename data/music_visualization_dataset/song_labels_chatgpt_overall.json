@@ -1,0 +1,36 @@
+{
+    "instrumental energy": [
+        "It stays consistently energetic from beginning to end.",
+        "It gradually builds energy and finishes strong.",
+        "It starts strong and tapers off gradually.",
+        "It has multiple peaks and valleys throughout."
+    ],
+    "instrumental palette": [
+        "Traditional band setup (guitars, bass, drums)",
+        "Electronic/synth-driven",
+        "Orchestral or cinematic instruments",
+        "Acoustic or minimal instrumentation",
+        "A hybrid of multiple styles"
+    ],
+    "tempo range": [
+        "Slow to mid-tempo (60–90 BPM)",
+        "Mid-tempo (90–110 BPM)",
+        "Up-tempo (120–140 BPM)",
+        "Very fast (140+ BPM)",
+        "Variable or changes significantly across sections"
+    ],
+    "production quality": [
+        "Very polished, glossy, and modern",
+        "Moderately produced but somewhat organic",
+        "Raw and unrefined (garage-like)",
+        "Lo-fi or retro-inspired",
+        "Experimental with noticeable production effects"
+    ],
+    "mood": [
+        "Dark and moody",
+        "Uplifting and bright",
+        "Dreamy or ethereal",
+        "Urgent and intense",
+        "Mellow and reflective"
+    ]
+}

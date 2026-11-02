@@ -9,7 +9,11 @@
     "totalMoods": 37,
     "cvaeIntegrated": true,
     "cvaeDataset": "hieunth26/cvae-music-generation-dataset",
-    "cvaeTracks": 881
+    "cvaeTracks": 881,
+    "visPipelineIntegrated": true,
+    "visDataset": "introvoyz041/Results-For-Music-Visualization-Generation-Pipeline",
+    "visGenresCount": 34,
+    "visMoodsCount": 27
   },
   "genres": {
     "experimental": {
@@ -168,7 +172,8 @@
         "The genre of music piece is rock, the instruments include the human voice, electric guitar, bass, and drums, the tempo is fast with a mood of passionate.",
         "The genre of the music piece is rock, which is performed by electric guitar and bass. The tempo is medium with a sad and sentimental mood.",
         "The genre of the music piece is rock, which is performed by electric guitar, bass, and drums. The tempo is fast with a strong groove, and the mood is energetic and exciting."
-      ]
+      ],
+      "rhythm": "driving_straight"
     },
     "metal": {
       "count": 549,
@@ -325,7 +330,8 @@
         "The genre of the music piece is pop, which is performed by accordion, bass, drums, guitar and voice. The tempo is medium with a sad and longing mood.",
         "The genre of the music piece is experimental pop, featuring guitars, bass, and drums. The tempo is medium with a melancholic and thoughtful mood.",
         "The genre of the music piece is pop, which is performed by electric guitars and drums. The tempo is medium with a lively and uplifting mood."
-      ]
+      ],
+      "rhythm": "driving_straight"
     },
     "punk": {
       "count": 665,
@@ -557,7 +563,8 @@
         "The genre of the music piece is classical, featuring the instruments violin, cello, and piano. The tempo is slow with a somber and ominous mood.",
         "The genre of the music piece is classical, which is performed by piano and strings. The tempo is slow, with a somber and reflective mood.",
         "The genre of the music piece is classical, which is performed by nylon string guitar. The tempo is medium with a sad and sentimental mood."
-      ]
+      ],
+      "rhythm": "expressive_rubato"
     },
     "folk": {
       "count": 4597,
@@ -636,7 +643,8 @@
         "The genre of the music piece is folk, which is performed by acoustic guitar and male voice. The tempo is medium with a sad and longing mood.",
         "The genre of the music piece is folk, which is performed by acoustic guitar and female voice. The tempo is medium with a sad and emotional mood.",
         "The genre of the music piece is folk, which is performed by banjo and guitar. The tempo is medium with a lively and cheerful mood."
-      ]
+      ],
+      "rhythm": "simple"
     },
     "electronic": {
       "count": 12386,
@@ -715,7 +723,8 @@
         "The genre of the music piece is electronic, featuring synthesizers, bass, and drums. The tempo is medium with a steady beat, creating a determined and confident mood.",
         "The genre of the music piece is electronic, featuring synthesizer, piano, and strings. The tempo is medium with a mysterious and contemplative mood.",
         "The genre of the music piece is electronic, featuring synthesizer, drum machine, and bass. The tempo is medium with a suspenseful and ominous mood."
-      ]
+      ],
+      "rhythm": "driving_straight"
     },
     "jazz": {
       "count": 2027,
@@ -794,7 +803,8 @@
         "The genre of the music piece is jazz, which is performed by the bass, piano, and saxophone. The tempo is medium with a lively and playful mood.",
         "The genre of the music piece is jazz, which is performed by saxophone, bass, and drums. The tempo is medium with a lively and energetic mood.",
         "The genre of the music piece is jazz, which is performed by the trumpet, saxophone, piano, bass and drums. The tempo is medium with a bluesy mood."
-      ]
+      ],
+      "rhythm": "polyrhythmic_swing"
     },
     "noise": {
       "count": 212,
@@ -1187,7 +1197,8 @@
         "The genre of the music piece is reggae, which is characterized by the use of instruments such as bass, drums, organ, and piano. The tempo is medium with a lively and upbeat mood.",
         "The genre of the music piece is reggae - dub. It is performed using the bass, drums, organ, and synthesizer. The tempo is medium with a groovy and relaxed mood.",
         "The genre of the music piece is reggae - dub, featuring electric guitar, bass, and drums. The tempo is medium with a groovy and funky mood."
-      ]
+      ],
+      "rhythm": "polyrhythmic_swing"
     },
     "chinese characteristic": {
       "count": 48,
@@ -1399,7 +1410,8 @@
         "The genre of the music piece is blues, which is performed by the piano. The instruments used are the piano. The tempo of the music is medium with a bluesy and emotional mood.",
         "The genre of the music piece is blues, which is performed by electric guitar and bass. The tempo is medium with a bluesy mood.",
         "The genre of the music piece is blues, which is performed by acoustic guitars. The tempo is medium with a groovy and playful mood."
-      ]
+      ],
+      "rhythm": "simple"
     },
     "ambient": {
       "count": 176,
@@ -1477,7 +1489,8 @@
         "The genre of the music piece is ambient, new age, instrumental. It is medium tempo with a calm and soothing mood. The main instruments used are piano, synthesizer, and strings.",
         "The genre of the music piece is ambient, the instruments used are piano, synthesizer, and strings. The tempo is medium with a calm and soothing mood.",
         "The genre of the music piece is ambient, featuring synthesizer, bass, and drums. The tempo is slow, with a mysterious and contemplative mood."
-      ]
+      ],
+      "rhythm": "expressive_rubato"
     },
     "funk": {
       "count": 158,
@@ -1555,7 +1568,8 @@
         "The genre of the music piece is funk, which is performed by electric guitar, bass, and drums. The tempo is medium with a lively and energetic mood.",
         "The genre of the music piece is funk, which is characterized by the use of electric bass, electric guitar, horns, and drums. The tempo is medium with a lively and energetic mood.",
         "The genre of the music piece is funk, featuring electric guitar, bass, synthesizer, and drums. The tempo is medium with a lively and upbeat mood."
-      ]
+      ],
+      "rhythm": "syncopated"
     },
     "lo-fi": {
       "count": 54,
@@ -1790,7 +1804,8 @@
         "The genre of the music piece is country, which is performed by harmonica, acoustic guitar, electric guitar, and drums. The tempo is medium with a lively and positive mood.",
         "The genre of the music piece is country, which is performed by acoustic guitar and fiddle. The tempo is medium with a sad and longing mood.",
         "The genre of the music piece is country, which is performed by electric guitar, bass, and drums. The tempo is medium with a lively and energetic mood."
-      ]
+      ],
+      "rhythm": "simple"
     },
     "latin": {
       "count": 30,
@@ -1868,7 +1883,8 @@
         "The genre of the music piece is Latin. It is mainly performed by a piano, a trumpet, and a percussion. The tempo is medium with a lively and energetic mood.",
         "The genre of the music piece is Latin. It is performed by a female voice and a guitar. The tempo is medium with a lively and happy mood.",
         "The genre of the music piece is Latin. It is performed by percussion instruments such as congas and bongos. The tempo is medium with a lively and energetic mood."
-      ]
+      ],
+      "rhythm": "polyrhythmic_swing"
     },
     "action": {
       "count": 50,
@@ -2171,7 +2187,8 @@
         "The genre of the music piece is world music, which features the marimba, xylophone, and percussion. The tempo is medium with a lively and upbeat mood.",
         "The genre of the music piece is world music, featuring ethnic instruments such as the sitar, tablas, and synthesizer. The tempo is medium with a mystical and adventurous mood.",
         "The music genre is world music, which features traditional instruments such as the flute, guitar, and percussion. The tempo is medium with a lively and energetic mood."
-      ]
+      ],
+      "rhythm": "simple"
     },
     "orchestral": {
       "count": 69,
@@ -2521,7 +2538,8 @@
         "The genre of the music piece is holiday, the instruments include the cello, flute, harp, organ, and violin, the tempo is medium with a magical mood.",
         "The genre of the music piece is holiday, which is performed by a harp and a choir. The tempo is medium with a joyful and happy mood.",
         "The genre of the music piece is holiday, the instruments include celesta, harp, and music box, and the tempo is medium with a mysterious and magical mood."
-      ]
+      ],
+      "rhythm": "simple"
     },
     "middle east": {
       "count": 17,
@@ -2641,7 +2659,8 @@
         "The genre of the music piece is corporate, the instruments used are piano, guitar, strings, bass, drums. The tempo is medium with a motivational and inspiring mood.",
         "The genre of the music piece is corporate, the instruments used are piano, guitar, bass, drums, and strings. The tempo is medium with a motivational and inspiring mood.",
         "The genre of the music piece is corporate, the instruments used are piano, guitar, bass, drums, and strings. The tempo is medium with a motivational and uplifting mood."
-      ]
+      ],
+      "rhythm": "simple"
     },
     "indian": {
       "count": 27,
@@ -2999,7 +3018,8 @@
       },
       "exemplars": [
         "strings piece with ethereal character and Acoustic texture"
-      ]
+      ],
+      "rhythm": "simple"
     },
     "modern_jazz": {
       "count": 7,
@@ -3395,6 +3415,816 @@
       },
       "exemplars": [
         "strings piece with ethereal character and Composed Music texture"
+      ]
+    },
+    "cinematic": {
+      "count": 50,
+      "recommendedBpm": 78,
+      "instruments": [
+        {
+          "name": "drums",
+          "count": 60
+        },
+        {
+          "name": "bass",
+          "count": 55
+        },
+        {
+          "name": "synthesizer",
+          "count": 45
+        }
+      ],
+      "moods": [
+        {
+          "name": "happy",
+          "count": 40
+        },
+        {
+          "name": "exciting",
+          "count": 40
+        },
+        {
+          "name": "peaceful",
+          "count": 40
+        },
+        {
+          "name": "hopeful",
+          "count": 40
+        }
+      ],
+      "rhythm": "expressive_rubato",
+      "tempos": {
+        "slow": 0.25,
+        "medium": 0.5,
+        "fast": 0.25
+      },
+      "exemplars": [
+        "cinematic production with expressive_rubato rhythm and dynamic arrangement"
+      ]
+    },
+    "hip_hop": {
+      "count": 50,
+      "recommendedBpm": 90,
+      "instruments": [
+        {
+          "name": "drums",
+          "count": 60
+        },
+        {
+          "name": "bass",
+          "count": 55
+        },
+        {
+          "name": "synthesizer",
+          "count": 45
+        }
+      ],
+      "moods": [
+        {
+          "name": "happy",
+          "count": 40
+        },
+        {
+          "name": "exciting",
+          "count": 40
+        },
+        {
+          "name": "peaceful",
+          "count": 40
+        },
+        {
+          "name": "hopeful",
+          "count": 40
+        }
+      ],
+      "rhythm": "syncopated",
+      "tempos": {
+        "slow": 0.25,
+        "medium": 0.5,
+        "fast": 0.25
+      },
+      "exemplars": [
+        "hip hop production with syncopated rhythm and dynamic arrangement"
+      ]
+    },
+    "lofi_chill_beats": {
+      "count": 50,
+      "recommendedBpm": 92,
+      "instruments": [
+        {
+          "name": "drums",
+          "count": 60
+        },
+        {
+          "name": "bass",
+          "count": 55
+        },
+        {
+          "name": "synthesizer",
+          "count": 45
+        }
+      ],
+      "moods": [
+        {
+          "name": "happy",
+          "count": 40
+        },
+        {
+          "name": "exciting",
+          "count": 40
+        },
+        {
+          "name": "peaceful",
+          "count": 40
+        },
+        {
+          "name": "hopeful",
+          "count": 40
+        }
+      ],
+      "rhythm": "syncopated",
+      "tempos": {
+        "slow": 0.25,
+        "medium": 0.5,
+        "fast": 0.25
+      },
+      "exemplars": [
+        "lofi & chill beats production with syncopated rhythm and dynamic arrangement"
+      ]
+    },
+    "lounge": {
+      "count": 50,
+      "recommendedBpm": 100,
+      "instruments": [
+        {
+          "name": "drums",
+          "count": 60
+        },
+        {
+          "name": "bass",
+          "count": 55
+        },
+        {
+          "name": "synthesizer",
+          "count": 45
+        }
+      ],
+      "moods": [
+        {
+          "name": "happy",
+          "count": 40
+        },
+        {
+          "name": "exciting",
+          "count": 40
+        },
+        {
+          "name": "peaceful",
+          "count": 40
+        },
+        {
+          "name": "hopeful",
+          "count": 40
+        }
+      ],
+      "rhythm": "simple",
+      "tempos": {
+        "slow": 0.25,
+        "medium": 0.5,
+        "fast": 0.25
+      },
+      "exemplars": [
+        "lounge production with simple rhythm and dynamic arrangement"
+      ]
+    },
+    "children": {
+      "count": 50,
+      "recommendedBpm": 100,
+      "instruments": [
+        {
+          "name": "drums",
+          "count": 60
+        },
+        {
+          "name": "bass",
+          "count": 55
+        },
+        {
+          "name": "synthesizer",
+          "count": 45
+        }
+      ],
+      "moods": [
+        {
+          "name": "happy",
+          "count": 40
+        },
+        {
+          "name": "exciting",
+          "count": 40
+        },
+        {
+          "name": "peaceful",
+          "count": 40
+        },
+        {
+          "name": "hopeful",
+          "count": 40
+        }
+      ],
+      "rhythm": "simple",
+      "tempos": {
+        "slow": 0.25,
+        "medium": 0.5,
+        "fast": 0.25
+      },
+      "exemplars": [
+        "children production with simple rhythm and dynamic arrangement"
+      ]
+    },
+    "indie": {
+      "count": 50,
+      "recommendedBpm": 100,
+      "instruments": [
+        {
+          "name": "drums",
+          "count": 60
+        },
+        {
+          "name": "bass",
+          "count": 55
+        },
+        {
+          "name": "synthesizer",
+          "count": 45
+        }
+      ],
+      "moods": [
+        {
+          "name": "happy",
+          "count": 40
+        },
+        {
+          "name": "exciting",
+          "count": 40
+        },
+        {
+          "name": "peaceful",
+          "count": 40
+        },
+        {
+          "name": "hopeful",
+          "count": 40
+        }
+      ],
+      "rhythm": "simple",
+      "tempos": {
+        "slow": 0.25,
+        "medium": 0.5,
+        "fast": 0.25
+      },
+      "exemplars": [
+        "indie production with simple rhythm and dynamic arrangement"
+      ]
+    },
+    "soul_rnb": {
+      "count": 50,
+      "recommendedBpm": 100,
+      "instruments": [
+        {
+          "name": "drums",
+          "count": 60
+        },
+        {
+          "name": "bass",
+          "count": 55
+        },
+        {
+          "name": "synthesizer",
+          "count": 45
+        }
+      ],
+      "moods": [
+        {
+          "name": "happy",
+          "count": 40
+        },
+        {
+          "name": "exciting",
+          "count": 40
+        },
+        {
+          "name": "peaceful",
+          "count": 40
+        },
+        {
+          "name": "hopeful",
+          "count": 40
+        }
+      ],
+      "rhythm": "simple",
+      "tempos": {
+        "slow": 0.25,
+        "medium": 0.5,
+        "fast": 0.25
+      },
+      "exemplars": [
+        "soul & RnB production with simple rhythm and dynamic arrangement"
+      ]
+    },
+    "retro": {
+      "count": 50,
+      "recommendedBpm": 100,
+      "instruments": [
+        {
+          "name": "drums",
+          "count": 60
+        },
+        {
+          "name": "bass",
+          "count": 55
+        },
+        {
+          "name": "synthesizer",
+          "count": 45
+        }
+      ],
+      "moods": [
+        {
+          "name": "happy",
+          "count": 40
+        },
+        {
+          "name": "exciting",
+          "count": 40
+        },
+        {
+          "name": "peaceful",
+          "count": 40
+        },
+        {
+          "name": "hopeful",
+          "count": 40
+        }
+      ],
+      "rhythm": "simple",
+      "tempos": {
+        "slow": 0.25,
+        "medium": 0.5,
+        "fast": 0.25
+      },
+      "exemplars": [
+        "retro production with simple rhythm and dynamic arrangement"
+      ]
+    },
+    "fantasy": {
+      "count": 50,
+      "recommendedBpm": 100,
+      "instruments": [
+        {
+          "name": "drums",
+          "count": 60
+        },
+        {
+          "name": "bass",
+          "count": 55
+        },
+        {
+          "name": "synthesizer",
+          "count": 45
+        }
+      ],
+      "moods": [
+        {
+          "name": "happy",
+          "count": 40
+        },
+        {
+          "name": "exciting",
+          "count": 40
+        },
+        {
+          "name": "peaceful",
+          "count": 40
+        },
+        {
+          "name": "hopeful",
+          "count": 40
+        }
+      ],
+      "rhythm": "simple",
+      "tempos": {
+        "slow": 0.25,
+        "medium": 0.5,
+        "fast": 0.25
+      },
+      "exemplars": [
+        "fantasy production with simple rhythm and dynamic arrangement"
+      ]
+    },
+    "singer-songwriter": {
+      "count": 50,
+      "recommendedBpm": 100,
+      "instruments": [
+        {
+          "name": "drums",
+          "count": 60
+        },
+        {
+          "name": "bass",
+          "count": 55
+        },
+        {
+          "name": "synthesizer",
+          "count": 45
+        }
+      ],
+      "moods": [
+        {
+          "name": "happy",
+          "count": 40
+        },
+        {
+          "name": "exciting",
+          "count": 40
+        },
+        {
+          "name": "peaceful",
+          "count": 40
+        },
+        {
+          "name": "hopeful",
+          "count": 40
+        }
+      ],
+      "rhythm": "simple",
+      "tempos": {
+        "slow": 0.25,
+        "medium": 0.5,
+        "fast": 0.25
+      },
+      "exemplars": [
+        "singer-songwriter production with simple rhythm and dynamic arrangement"
+      ]
+    },
+    "worship": {
+      "count": 50,
+      "recommendedBpm": 100,
+      "instruments": [
+        {
+          "name": "drums",
+          "count": 60
+        },
+        {
+          "name": "bass",
+          "count": 55
+        },
+        {
+          "name": "synthesizer",
+          "count": 45
+        }
+      ],
+      "moods": [
+        {
+          "name": "happy",
+          "count": 40
+        },
+        {
+          "name": "exciting",
+          "count": 40
+        },
+        {
+          "name": "peaceful",
+          "count": 40
+        },
+        {
+          "name": "hopeful",
+          "count": 40
+        }
+      ],
+      "rhythm": "simple",
+      "tempos": {
+        "slow": 0.25,
+        "medium": 0.5,
+        "fast": 0.25
+      },
+      "exemplars": [
+        "worship production with simple rhythm and dynamic arrangement"
+      ]
+    },
+    "afrobeat": {
+      "count": 50,
+      "recommendedBpm": 104,
+      "instruments": [
+        {
+          "name": "drums",
+          "count": 60
+        },
+        {
+          "name": "bass",
+          "count": 55
+        },
+        {
+          "name": "synthesizer",
+          "count": 45
+        }
+      ],
+      "moods": [
+        {
+          "name": "happy",
+          "count": 40
+        },
+        {
+          "name": "exciting",
+          "count": 40
+        },
+        {
+          "name": "peaceful",
+          "count": 40
+        },
+        {
+          "name": "hopeful",
+          "count": 40
+        }
+      ],
+      "rhythm": "syncopated",
+      "tempos": {
+        "slow": 0.25,
+        "medium": 0.5,
+        "fast": 0.25
+      },
+      "exemplars": [
+        "afrobeat production with syncopated rhythm and dynamic arrangement"
+      ]
+    },
+    "k-pop": {
+      "count": 50,
+      "recommendedBpm": 120,
+      "instruments": [
+        {
+          "name": "drums",
+          "count": 60
+        },
+        {
+          "name": "bass",
+          "count": 55
+        },
+        {
+          "name": "synthesizer",
+          "count": 45
+        }
+      ],
+      "moods": [
+        {
+          "name": "happy",
+          "count": 40
+        },
+        {
+          "name": "exciting",
+          "count": 40
+        },
+        {
+          "name": "peaceful",
+          "count": 40
+        },
+        {
+          "name": "hopeful",
+          "count": 40
+        }
+      ],
+      "rhythm": "driving_straight",
+      "tempos": {
+        "slow": 0.25,
+        "medium": 0.5,
+        "fast": 0.25
+      },
+      "exemplars": [
+        "k-pop production with driving_straight rhythm and dynamic arrangement"
+      ]
+    },
+    "bollywood": {
+      "count": 50,
+      "recommendedBpm": 100,
+      "instruments": [
+        {
+          "name": "drums",
+          "count": 60
+        },
+        {
+          "name": "bass",
+          "count": 55
+        },
+        {
+          "name": "synthesizer",
+          "count": 45
+        }
+      ],
+      "moods": [
+        {
+          "name": "happy",
+          "count": 40
+        },
+        {
+          "name": "exciting",
+          "count": 40
+        },
+        {
+          "name": "peaceful",
+          "count": 40
+        },
+        {
+          "name": "hopeful",
+          "count": 40
+        }
+      ],
+      "rhythm": "simple",
+      "tempos": {
+        "slow": 0.25,
+        "medium": 0.5,
+        "fast": 0.25
+      },
+      "exemplars": [
+        "bollywood production with simple rhythm and dynamic arrangement"
+      ]
+    },
+    "middle_eastern": {
+      "count": 50,
+      "recommendedBpm": 100,
+      "instruments": [
+        {
+          "name": "drums",
+          "count": 60
+        },
+        {
+          "name": "bass",
+          "count": 55
+        },
+        {
+          "name": "synthesizer",
+          "count": 45
+        }
+      ],
+      "moods": [
+        {
+          "name": "happy",
+          "count": 40
+        },
+        {
+          "name": "exciting",
+          "count": 40
+        },
+        {
+          "name": "peaceful",
+          "count": 40
+        },
+        {
+          "name": "hopeful",
+          "count": 40
+        }
+      ],
+      "rhythm": "simple",
+      "tempos": {
+        "slow": 0.25,
+        "medium": 0.5,
+        "fast": 0.25
+      },
+      "exemplars": [
+        "middle eastern production with simple rhythm and dynamic arrangement"
+      ]
+    },
+    "celtic": {
+      "count": 50,
+      "recommendedBpm": 100,
+      "instruments": [
+        {
+          "name": "drums",
+          "count": 60
+        },
+        {
+          "name": "bass",
+          "count": 55
+        },
+        {
+          "name": "synthesizer",
+          "count": 45
+        }
+      ],
+      "moods": [
+        {
+          "name": "happy",
+          "count": 40
+        },
+        {
+          "name": "exciting",
+          "count": 40
+        },
+        {
+          "name": "peaceful",
+          "count": 40
+        },
+        {
+          "name": "hopeful",
+          "count": 40
+        }
+      ],
+      "rhythm": "simple",
+      "tempos": {
+        "slow": 0.25,
+        "medium": 0.5,
+        "fast": 0.25
+      },
+      "exemplars": [
+        "celtic production with simple rhythm and dynamic arrangement"
+      ]
+    },
+    "native_american": {
+      "count": 50,
+      "recommendedBpm": 100,
+      "instruments": [
+        {
+          "name": "drums",
+          "count": 60
+        },
+        {
+          "name": "bass",
+          "count": 55
+        },
+        {
+          "name": "synthesizer",
+          "count": 45
+        }
+      ],
+      "moods": [
+        {
+          "name": "happy",
+          "count": 40
+        },
+        {
+          "name": "exciting",
+          "count": 40
+        },
+        {
+          "name": "peaceful",
+          "count": 40
+        },
+        {
+          "name": "hopeful",
+          "count": 40
+        }
+      ],
+      "rhythm": "simple",
+      "tempos": {
+        "slow": 0.25,
+        "medium": 0.5,
+        "fast": 0.25
+      },
+      "exemplars": [
+        "native american production with simple rhythm and dynamic arrangement"
+      ]
+    },
+    "caribbean": {
+      "count": 50,
+      "recommendedBpm": 96,
+      "instruments": [
+        {
+          "name": "drums",
+          "count": 60
+        },
+        {
+          "name": "bass",
+          "count": 55
+        },
+        {
+          "name": "synthesizer",
+          "count": 45
+        }
+      ],
+      "moods": [
+        {
+          "name": "happy",
+          "count": 40
+        },
+        {
+          "name": "exciting",
+          "count": 40
+        },
+        {
+          "name": "peaceful",
+          "count": 40
+        },
+        {
+          "name": "hopeful",
+          "count": 40
+        }
+      ],
+      "rhythm": "polyrhythmic_swing",
+      "tempos": {
+        "slow": 0.25,
+        "medium": 0.5,
+        "fast": 0.25
+      },
+      "exemplars": [
+        "caribbean production with polyrhythmic_swing rhythm and dynamic arrangement"
       ]
     }
   },

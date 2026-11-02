@@ -1,0 +1,37 @@
+{
+    "instrumental intensity": [
+        "Very soft or minimal (almost no percussion)",
+        "Low intensity but steady rhythm",
+        "Moderate intensity with a clear beat",
+        "High energy and full instrumentation",
+        "Peak intensity with multiple layers and heavy percussion"
+    ],
+    "prominent element": [
+        "Percussion/drums",
+        "Guitar or bass",
+        "Synths or electronic sounds",
+        "String or orchestral elements",
+        "Atmospheric pads or ambient effects"
+    ],
+    "dynamic shift": [
+        "It stays uniformly quiet/soft",
+        "It stays uniformly loud/energetic",
+        "It builds gradually from soft to louder",
+        "It fades gradually from loud to softer",
+        "It fluctuates multiple times within the segment"
+    ],
+    "rhythm": [
+        "Simple 4/4 beat (straightforward)",
+        "Syncopated/funky groove",
+        "Driving dance or electronic beat",
+        "Swing or shuffled feel",
+        "Irregular or changing time signatures"
+    ],
+    "function in transitioning": [
+        "It cleanly continues the energy from the previous segment",
+        "It acts as a noticeable break or “breather”",
+        "It dramatically shifts the energy or mood",
+        "It slowly fades out or prepares for a drop",
+        "It features a sudden drop or pause before the next section"
+    ]
+}

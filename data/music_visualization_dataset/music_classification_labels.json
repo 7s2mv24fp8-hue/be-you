@@ -1,0 +1,148 @@
+{
+  "moods": [
+    "happy",
+    "exciting",
+    "peaceful",
+    "hopeful",
+    "uplifting",
+    "powerful",
+    "love",
+    "epic",
+    "carefree",
+    "mysterious",
+    "groovy",
+    "sad",
+    "dramatic",
+    "playful",
+    "tense",
+    "scary",
+    "serious",
+    "sexy",
+    "dark",
+    "angry",
+    "funny",
+    "nostalgic",
+    "empowering",
+    "romantic",
+    "inspirational",
+    "reflective",
+    "anxious"
+  ],
+  "genre": [
+    "cinematic",
+    "corporate",
+    "funk",
+    "hip hop",
+    "classical",
+    "jazz",
+    "lofi & chill beats",
+    "ambient",
+    "lounge",
+    "children",
+    "acoustic",
+    "country",
+    "indie",
+    "folk",
+    "soul & RnB",
+    "latin",
+    "retro",
+    "pop",
+    "world",
+    "electronic",
+    "rock",
+    "blues",
+    "reggae",
+    "fantasy",
+    "singer-songwriter",
+    "worship",
+    "holiday",
+    "afrobeat",
+    "k-pop",
+    "bollywood",
+    "middle eastern",
+    "celtic",
+    "native american",
+    "caribbean"
+  ],
+  "valence": [
+    "positive affect",
+    "negative affect",
+    "neutral affect"
+  ],
+  "arousal": [
+    "high arousal",
+    "low arousal"
+  ],
+  "dominance": [
+    "high dominance",
+    "low dominance"
+  ],
+  "energy": [
+    "high energy",
+    "medium energy",
+    "low energy"
+  ],
+  "tempo": [
+    "slow",
+    "medium",
+    "fast"
+  ],
+  "instrumentation": [
+    "vocal",
+    "instrumental",
+    "acoustic",
+    "electronic",
+    "orchestral",
+    "percussion-heavy",
+    "string-heavy",
+    "piano-based"
+  ],
+  "use_case": [
+    "background music",
+    "study music",
+    "party",
+    "workout",
+    "meditation",
+    "sleep/relaxation",
+    "wedding",
+    "travel"
+  ],
+  "rhythm": [
+    "simple",
+    "syncopated",
+    "complex",
+    "polyrhythmic"
+  ],
+  "key_tonality": [
+    "major",
+    "minor",
+    "modal",
+    "atonal"
+  ],
+  "dynamics": [
+    "loud",
+    "soft",
+    "gradual build-up",
+    "sudden shifts"
+  ],
+  "audience": [
+    "youthful",
+    "mature",
+    "family-friendly",
+    "niche enthusiasts"
+  ],
+  "production_characteristics": [
+    "lo-fi",
+    "hi-fi",
+    "live",
+    "studio-produced",
+    "minimalistic",
+    "layered"
+  ],
+  "historical_era": [
+    "vintage",
+    "modern",
+    "futuristic",
+    "timeless"
+  ]
+}

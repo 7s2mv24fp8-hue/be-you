@@ -1,0 +1,24 @@
+{
+    "location": [
+        "interior",
+        "exterior"
+    ],
+    "visual_setting": [
+        "Urban",
+        "Natural"
+    ],
+    "visual_style": [
+        "Realistic and detailed",
+        "Simplistic or minimalistic",
+        "Surreal or abstract",
+        "Cartoonish or exaggerated",
+        "Monochromatic or limited color palette"
+    ],
+    "visual_focus": [
+        "Single focal point or character",
+        "Multiple focal points or characters",
+        "Detailed background or environment",
+        "Abstract shapes or patterns",
+        "Negative space or minimal detail"
+    ]
+}

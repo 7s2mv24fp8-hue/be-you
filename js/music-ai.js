@@ -37,6 +37,8 @@ const GENRE_PROMPT_MAP = {
 const MOOD_TAGS = [
   'energetic', 'chill', 'dark', 'uplifting', 'melancholic', 'aggressive',
   'dreamy', 'groovy', 'atmospheric', 'funky', 'epic', 'minimal',
+  'peaceful', 'hopeful', 'romantic', 'dramatic', 'mysterious', 'nostalgic',
+  'playful', 'empowering', 'reflective', 'happy', 'tense'
 ];
 
 const INSTRUMENT_TAGS = [
@@ -882,6 +884,7 @@ class PromptBuilder {
     return [
       { label: '🎹 Pure Felt Piano (CVAE)', prompt: 'pure felt piano solo, intimate gentle acoustics, modern classical, warm room, high quality' },
       { label: '🎻 Cinematic Score (CVAE)', prompt: 'cinematic soundtrack, emotional strings, felt piano, dramatic crescendo, orchestral, studio quality' },
+      { label: '🎬 Music Video Score (Vis)', prompt: 'cinematic music video soundtrack, building energy, epic drums, emotional strings, modern production, visual score' },
       { label: '☕ Lo-Fi Chill',        prompt: 'lo-fi hip hop, mellow piano, vinyl crackle, chill, relaxing, rainy day, high quality' },
       { label: '🔥 Trap Banger',         prompt: 'trap beat, heavy 808 bass, rapid hi-hats, dark synths, aggressive, high energy, studio quality' },
       { label: '🏠 Deep House',           prompt: 'deep house music, four-on-the-floor kick, warm bass, atmospheric pads, groovy, high quality' },

@@ -1,0 +1,20 @@
+
+number_of_scenes = len(segments)
+    
+final_prompt = "You need to think of a story and a script for a music video. {additional_prompt}
+                The story structure needs to have a beginning, middle and an ending.
+                You will write the story based on the characteristics of the music that are provided to you.
+                The story needs to be told as descriptions of sccenes that will appear in a music video.
+                The structure needs to be reflected in the scene layout, to try to mimic the story's progression.
+                The story should include at least one animal character. For consistency, repeat the animal's description in every scene.
+                Make sure the scene descriptions are concrete and to the point, they need to be easy for a text2video model to generate videos from.
+                There are {number_of_scenes} scenes in total.
+                When listening to the entire song, it can be described like this:
+                the overall {overall_song_description_keywords}
+                When listening to individual segments, they can be described like this:
+                {scene_descriptions}
+                Each scene needs to visually match the following guidelines:
+                {overall_song_description_keywords_visual_guides}
+                Scene descriptions need to be as brief as possible. Every scene can be described in one sentence at the most. Omit all unnecesary details from the description.
+                In your response, start the description of every scene with the exact letters: "SCENE #:", '#' substituted with the scene number. Do NOT add any special or any other type of characters to this line! Example: "SCENE 1:\\n"
+                Before the start of the script, add the words "BEGIN SCRIPT\\n" so that I can easily extract it."

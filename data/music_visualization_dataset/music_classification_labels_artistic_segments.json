@@ -1,0 +1,72 @@
+{
+    "valence": [
+        "very positive affect",
+        "positive affect",
+        "neutral affect",
+        "negative affect",
+        "very negative affect"
+    ],
+    "arousal": [
+        "high arousal",
+        "low arousal",
+        "medium arousal"
+    ],
+    "dominance": [
+        "very high dominance",
+        "high dominance",
+        "medium dominance",
+        "low dominance",
+        "very low dominance"
+    ],
+    "energy": [
+        "very high energy",
+        "high energy",
+        "medium energy",
+        "low energy",
+        "very low energy"
+    ],
+    "tempo": [
+        "very slow",
+        "slow",
+        "medium",
+        "fast",
+        "very fast"
+    ],
+    "instrumentation": [
+        "Rock-band instrumentation (guitars, bass, drums)",
+        "Electronic and synth-based",
+        "Orchestral or symphonic",
+        "Acoustic/folk (acoustic guitar, minimal percussion)",
+        "A hybrid blend of styles"
+    ],
+    "instruments": [
+        "guitar",
+        "bass",
+        "drums",
+        "piano",
+        "synth",
+        "strings",
+        "brass",
+        "woodwinds",
+        "percussion",
+        "vocals"
+    ],
+    "rhythm": [
+        "simple",
+        "syncopated",
+        "complex",
+        "polyrhythmic"
+    ],
+    "key_tonality": [
+        "major",
+        "minor",
+        "modal",
+        "atonal"
+    ],
+    "dynamics": [
+        "loud",
+        "soft",
+        "gradual build-up",
+        "sudden shifts"
+    ]
+}
