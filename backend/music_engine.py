@@ -243,6 +243,78 @@ GENRE_KNOWLEDGE = {
         "bass_type": "deep_sub_swell",
         "lead_type": "ethereal_pad",
     },
+    "piano": { # CVAE Trained: Pure Felt & Romantic Solo Piano
+        "bpm_range": (76, 92),
+        "scale": "major",
+        "root": "C",
+        "chords": [
+            [48, 55, 60, 64, 67],  # Cmaj9
+            [45, 52, 57, 60, 64],  # Am9
+            [41, 48, 53, 57, 60],  # Fmaj9
+            [43, 50, 55, 59, 62],  # G6
+        ],
+        "kick_pattern":  [0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0],
+        "snare_pattern": [0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0],
+        "hihat_pattern": [0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0],
+        "swing": 0.0,
+        "vinyl_noise": 0.006,
+        "bass_type": "sub_warm",
+        "lead_type": "felt_piano",
+    },
+    "classical": { # CVAE Trained: Mozart / Liszt Classical Harmony
+        "bpm_range": (110, 126),
+        "scale": "harmonic_minor",
+        "root": "G",
+        "chords": [
+            [43, 50, 55, 58, 62],  # Gm
+            [41, 48, 53, 57, 60],  # F
+            [40, 46, 52, 55, 58],  # Eb
+            [43, 50, 55, 59, 62],  # D7
+        ],
+        "kick_pattern":  [1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0],
+        "snare_pattern": [0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0],
+        "hihat_pattern": [0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0],
+        "swing": 0.0,
+        "vinyl_noise": 0.005,
+        "bass_type": "sub_warm",
+        "lead_type": "orchestral_strings",
+    },
+    "soundtrack": { # CVAE Trained: Cinematic Emotional Soundtrack
+        "bpm_range": (78, 90),
+        "scale": "minor",
+        "root": "F",
+        "chords": [
+            [41, 48, 53, 57, 60],  # Fmaj7
+            [45, 52, 57, 60, 64],  # Am7
+            [43, 50, 55, 59, 62],  # G
+            [40, 47, 52, 55, 59],  # Em7
+        ],
+        "kick_pattern":  [1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 1, 0,  0, 0, 0, 0],
+        "snare_pattern": [0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0],
+        "hihat_pattern": [0, 0, 1, 0,  0, 0, 1, 0,  0, 0, 1, 0,  0, 0, 1, 0],
+        "swing": 0.0,
+        "vinyl_noise": 0.008,
+        "bass_type": "deep_sub_swell",
+        "lead_type": "cinematic_violins",
+    },
+    "minimalism": { # CVAE Trained: Contemporary Classical Minimalist
+        "bpm_range": (104, 116),
+        "scale": "dorian",
+        "root": "A",
+        "chords": [
+            [45, 52, 57, 60, 64],
+            [41, 48, 53, 57, 60],
+            [45, 52, 57, 60, 64],
+            [43, 50, 55, 59, 62],
+        ],
+        "kick_pattern":  [1, 0, 0, 0,  0, 0, 0, 0,  1, 0, 0, 0,  0, 0, 0, 0],
+        "snare_pattern": [0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0],
+        "hihat_pattern": [1, 0, 1, 0,  1, 0, 1, 0,  1, 0, 1, 0,  1, 0, 1, 0],
+        "swing": 0.0,
+        "vinyl_noise": 0.005,
+        "bass_type": "sub_warm",
+        "lead_type": "chamber_piano",
+    },
 }
 
 
@@ -277,8 +349,18 @@ def parse_prompt_intent(prompt: str) -> Tuple[str, int, Dict[str, Any]]:
         genre = "reggaeton"
     elif any(k in p for k in ["afrobeats", "afro", "burna", "amapiano"]):
         genre = "afrobeats"
-    elif any(k in p for k in ["ambient", "meditation", "drone", "space", "calm", "relaxing"]):
+    elif any(k in p for k in ["classical", "mozart", "liszt", "orchestral", "symphony", "allegro"]):
+        genre = "classical"
+    elif any(k in p for k in ["soundtrack", "cinematic", "film score", "epic score"]):
+        genre = "soundtrack"
+    elif any(k in p for k in ["felt piano", "pure felt", "soft piano", "romantic piano"]):
+        genre = "piano"
+    elif any(k in p for k in ["minimalism", "minimalist", "chamber", "contemporary classical"]):
+        genre = "minimalism"
+    elif any(k in p for k in ["ambient", "meditation", "drone", "space", "calm", "relaxing", "new age"]):
         genre = "ambient"
+    elif any(k in p for k in ["piano"]):
+        genre = "piano"
     elif any(k in p for k in ["lo-fi", "lofi", "chill", "chillhop", "study", "jazz"]):
         genre = "lofi"
     elif any(k in p for k in ["hip hop", "hip-hop", "boom bap", "rap"]):

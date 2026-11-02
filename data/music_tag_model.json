@@ -6,7 +6,10 @@
     "generatedAt": "2026-10-28",
     "totalGenres": 36,
     "totalInstruments": 27,
-    "totalMoods": 37
+    "totalMoods": 37,
+    "cvaeIntegrated": true,
+    "cvaeDataset": "hieunth26/cvae-music-generation-dataset",
+    "cvaeTracks": 881
   },
   "genres": {
     "experimental": {
@@ -2688,6 +2691,710 @@
         "The genre of the music piece is Indian. It is performed using instruments such as sitar, tabla, and santur. The tempo is medium with a mystical and spiritual mood.",
         "The genre of the music piece is Indian. It is composed using the sitar, tabla, and mridangam. The tempo is slow with a contemplative and meditative mood.",
         "The genre of the music piece is Indian. It is performed using the sitar, tabla, and voice. The tempo is slow with a contemplative and meditative mood."
+      ]
+    },
+    "piano": {
+      "count": 881,
+      "recommendedBpm": 84,
+      "instruments": [
+        {
+          "name": "piano",
+          "count": 100
+        },
+        {
+          "name": "strings",
+          "count": 100
+        },
+        {
+          "name": "synthesizer",
+          "count": 100
+        }
+      ],
+      "moods": [
+        {
+          "name": "ethereal",
+          "count": 80
+        },
+        {
+          "name": "romantic",
+          "count": 80
+        },
+        {
+          "name": "dramatic",
+          "count": 80
+        },
+        {
+          "name": "melancholic",
+          "count": 80
+        }
+      ],
+      "tempos": {
+        "slow": 0.45,
+        "medium": 0.4,
+        "fast": 0.15
+      },
+      "exemplars": [
+        "piano piece with ethereal character and Piano texture"
+      ]
+    },
+    "instrumental": {
+      "count": 488,
+      "recommendedBpm": 84,
+      "instruments": [
+        {
+          "name": "strings",
+          "count": 100
+        },
+        {
+          "name": "piano",
+          "count": 100
+        },
+        {
+          "name": "flute",
+          "count": 100
+        }
+      ],
+      "moods": [
+        {
+          "name": "ethereal",
+          "count": 80
+        },
+        {
+          "name": "romantic",
+          "count": 80
+        },
+        {
+          "name": "dramatic",
+          "count": 80
+        },
+        {
+          "name": "melancholic",
+          "count": 80
+        }
+      ],
+      "tempos": {
+        "slow": 0.45,
+        "medium": 0.4,
+        "fast": 0.15
+      },
+      "exemplars": [
+        "strings piece with ethereal character and Instrumental texture"
+      ]
+    },
+    "contemporary_classical": {
+      "count": 148,
+      "recommendedBpm": 118,
+      "instruments": [
+        {
+          "name": "strings",
+          "count": 100
+        },
+        {
+          "name": "piano",
+          "count": 100
+        },
+        {
+          "name": "flute",
+          "count": 100
+        }
+      ],
+      "moods": [
+        {
+          "name": "ethereal",
+          "count": 80
+        },
+        {
+          "name": "romantic",
+          "count": 80
+        },
+        {
+          "name": "dramatic",
+          "count": 80
+        },
+        {
+          "name": "melancholic",
+          "count": 80
+        }
+      ],
+      "tempos": {
+        "slow": 0.45,
+        "medium": 0.4,
+        "fast": 0.15
+      },
+      "exemplars": [
+        "strings piece with ethereal character and Contemporary Classical texture"
+      ]
+    },
+    "new_age": {
+      "count": 70,
+      "recommendedBpm": 84,
+      "instruments": [
+        {
+          "name": "strings",
+          "count": 100
+        },
+        {
+          "name": "piano",
+          "count": 100
+        },
+        {
+          "name": "flute",
+          "count": 100
+        }
+      ],
+      "moods": [
+        {
+          "name": "ethereal",
+          "count": 80
+        },
+        {
+          "name": "romantic",
+          "count": 80
+        },
+        {
+          "name": "dramatic",
+          "count": 80
+        },
+        {
+          "name": "melancholic",
+          "count": 80
+        }
+      ],
+      "tempos": {
+        "slow": 0.45,
+        "medium": 0.4,
+        "fast": 0.15
+      },
+      "exemplars": [
+        "strings piece with ethereal character and New Age texture"
+      ]
+    },
+    "ambient_electronic": {
+      "count": 43,
+      "recommendedBpm": 72,
+      "instruments": [
+        {
+          "name": "strings",
+          "count": 100
+        },
+        {
+          "name": "piano",
+          "count": 100
+        },
+        {
+          "name": "flute",
+          "count": 100
+        }
+      ],
+      "moods": [
+        {
+          "name": "ethereal",
+          "count": 80
+        },
+        {
+          "name": "romantic",
+          "count": 80
+        },
+        {
+          "name": "dramatic",
+          "count": 80
+        },
+        {
+          "name": "melancholic",
+          "count": 80
+        }
+      ],
+      "tempos": {
+        "slow": 0.45,
+        "medium": 0.4,
+        "fast": 0.15
+      },
+      "exemplars": [
+        "strings piece with ethereal character and Ambient Electronic texture"
+      ]
+    },
+    "minimalism": {
+      "count": 9,
+      "recommendedBpm": 84,
+      "instruments": [
+        {
+          "name": "strings",
+          "count": 100
+        },
+        {
+          "name": "piano",
+          "count": 100
+        },
+        {
+          "name": "flute",
+          "count": 100
+        }
+      ],
+      "moods": [
+        {
+          "name": "ethereal",
+          "count": 80
+        },
+        {
+          "name": "romantic",
+          "count": 80
+        },
+        {
+          "name": "dramatic",
+          "count": 80
+        },
+        {
+          "name": "melancholic",
+          "count": 80
+        }
+      ],
+      "tempos": {
+        "slow": 0.45,
+        "medium": 0.4,
+        "fast": 0.15
+      },
+      "exemplars": [
+        "strings piece with ethereal character and Minimalism texture"
+      ]
+    },
+    "acoustic": {
+      "count": 7,
+      "recommendedBpm": 84,
+      "instruments": [
+        {
+          "name": "strings",
+          "count": 100
+        },
+        {
+          "name": "piano",
+          "count": 100
+        },
+        {
+          "name": "flute",
+          "count": 100
+        }
+      ],
+      "moods": [
+        {
+          "name": "ethereal",
+          "count": 80
+        },
+        {
+          "name": "romantic",
+          "count": 80
+        },
+        {
+          "name": "dramatic",
+          "count": 80
+        },
+        {
+          "name": "melancholic",
+          "count": 80
+        }
+      ],
+      "tempos": {
+        "slow": 0.45,
+        "medium": 0.4,
+        "fast": 0.15
+      },
+      "exemplars": [
+        "strings piece with ethereal character and Acoustic texture"
+      ]
+    },
+    "modern_jazz": {
+      "count": 7,
+      "recommendedBpm": 84,
+      "instruments": [
+        {
+          "name": "strings",
+          "count": 100
+        },
+        {
+          "name": "piano",
+          "count": 100
+        },
+        {
+          "name": "flute",
+          "count": 100
+        }
+      ],
+      "moods": [
+        {
+          "name": "ethereal",
+          "count": 80
+        },
+        {
+          "name": "romantic",
+          "count": 80
+        },
+        {
+          "name": "dramatic",
+          "count": 80
+        },
+        {
+          "name": "melancholic",
+          "count": 80
+        }
+      ],
+      "tempos": {
+        "slow": 0.45,
+        "medium": 0.4,
+        "fast": 0.15
+      },
+      "exemplars": [
+        "strings piece with ethereal character and Modern Jazz texture"
+      ]
+    },
+    "easy_listening": {
+      "count": 5,
+      "recommendedBpm": 84,
+      "instruments": [
+        {
+          "name": "strings",
+          "count": 100
+        },
+        {
+          "name": "piano",
+          "count": 100
+        },
+        {
+          "name": "flute",
+          "count": 100
+        }
+      ],
+      "moods": [
+        {
+          "name": "ethereal",
+          "count": 80
+        },
+        {
+          "name": "romantic",
+          "count": 80
+        },
+        {
+          "name": "dramatic",
+          "count": 80
+        },
+        {
+          "name": "melancholic",
+          "count": 80
+        }
+      ],
+      "tempos": {
+        "slow": 0.45,
+        "medium": 0.4,
+        "fast": 0.15
+      },
+      "exemplars": [
+        "strings piece with ethereal character and Easy Listening texture"
+      ]
+    },
+    "halloween": {
+      "count": 2,
+      "recommendedBpm": 84,
+      "instruments": [
+        {
+          "name": "strings",
+          "count": 100
+        },
+        {
+          "name": "piano",
+          "count": 100
+        },
+        {
+          "name": "flute",
+          "count": 100
+        }
+      ],
+      "moods": [
+        {
+          "name": "ethereal",
+          "count": 80
+        },
+        {
+          "name": "romantic",
+          "count": 80
+        },
+        {
+          "name": "dramatic",
+          "count": 80
+        },
+        {
+          "name": "melancholic",
+          "count": 80
+        }
+      ],
+      "tempos": {
+        "slow": 0.45,
+        "medium": 0.4,
+        "fast": 0.15
+      },
+      "exemplars": [
+        "strings piece with ethereal character and Halloween texture"
+      ]
+    },
+    "symphony": {
+      "count": 1,
+      "recommendedBpm": 84,
+      "instruments": [
+        {
+          "name": "strings",
+          "count": 100
+        },
+        {
+          "name": "piano",
+          "count": 100
+        },
+        {
+          "name": "flute",
+          "count": 100
+        }
+      ],
+      "moods": [
+        {
+          "name": "ethereal",
+          "count": 80
+        },
+        {
+          "name": "romantic",
+          "count": 80
+        },
+        {
+          "name": "dramatic",
+          "count": 80
+        },
+        {
+          "name": "melancholic",
+          "count": 80
+        }
+      ],
+      "tempos": {
+        "slow": 0.45,
+        "medium": 0.4,
+        "fast": 0.15
+      },
+      "exemplars": [
+        "strings piece with ethereal character and Symphony texture"
+      ]
+    },
+    "radio_art": {
+      "count": 1,
+      "recommendedBpm": 84,
+      "instruments": [
+        {
+          "name": "strings",
+          "count": 100
+        },
+        {
+          "name": "piano",
+          "count": 100
+        },
+        {
+          "name": "flute",
+          "count": 100
+        }
+      ],
+      "moods": [
+        {
+          "name": "ethereal",
+          "count": 80
+        },
+        {
+          "name": "romantic",
+          "count": 80
+        },
+        {
+          "name": "dramatic",
+          "count": 80
+        },
+        {
+          "name": "melancholic",
+          "count": 80
+        }
+      ],
+      "tempos": {
+        "slow": 0.45,
+        "medium": 0.4,
+        "fast": 0.15
+      },
+      "exemplars": [
+        "strings piece with ethereal character and Radio Art texture"
+      ]
+    },
+    "sound_art": {
+      "count": 1,
+      "recommendedBpm": 84,
+      "instruments": [
+        {
+          "name": "strings",
+          "count": 100
+        },
+        {
+          "name": "piano",
+          "count": 100
+        },
+        {
+          "name": "flute",
+          "count": 100
+        }
+      ],
+      "moods": [
+        {
+          "name": "ethereal",
+          "count": 80
+        },
+        {
+          "name": "romantic",
+          "count": 80
+        },
+        {
+          "name": "dramatic",
+          "count": 80
+        },
+        {
+          "name": "melancholic",
+          "count": 80
+        }
+      ],
+      "tempos": {
+        "slow": 0.45,
+        "medium": 0.4,
+        "fast": 0.15
+      },
+      "exemplars": [
+        "strings piece with ethereal character and Sound Art texture"
+      ]
+    },
+    "lo-fi_instrumental": {
+      "count": 1,
+      "recommendedBpm": 84,
+      "instruments": [
+        {
+          "name": "strings",
+          "count": 100
+        },
+        {
+          "name": "piano",
+          "count": 100
+        },
+        {
+          "name": "flute",
+          "count": 100
+        }
+      ],
+      "moods": [
+        {
+          "name": "ethereal",
+          "count": 80
+        },
+        {
+          "name": "romantic",
+          "count": 80
+        },
+        {
+          "name": "dramatic",
+          "count": 80
+        },
+        {
+          "name": "melancholic",
+          "count": 80
+        }
+      ],
+      "tempos": {
+        "slow": 0.45,
+        "medium": 0.4,
+        "fast": 0.15
+      },
+      "exemplars": [
+        "strings piece with ethereal character and Lo-fi Instrumental texture"
+      ]
+    },
+    "musique_concrete": {
+      "count": 1,
+      "recommendedBpm": 84,
+      "instruments": [
+        {
+          "name": "strings",
+          "count": 100
+        },
+        {
+          "name": "piano",
+          "count": 100
+        },
+        {
+          "name": "flute",
+          "count": 100
+        }
+      ],
+      "moods": [
+        {
+          "name": "ethereal",
+          "count": 80
+        },
+        {
+          "name": "romantic",
+          "count": 80
+        },
+        {
+          "name": "dramatic",
+          "count": 80
+        },
+        {
+          "name": "melancholic",
+          "count": 80
+        }
+      ],
+      "tempos": {
+        "slow": 0.45,
+        "medium": 0.4,
+        "fast": 0.15
+      },
+      "exemplars": [
+        "strings piece with ethereal character and Musique Concrete texture"
+      ]
+    },
+    "composed_music": {
+      "count": 1,
+      "recommendedBpm": 84,
+      "instruments": [
+        {
+          "name": "strings",
+          "count": 100
+        },
+        {
+          "name": "piano",
+          "count": 100
+        },
+        {
+          "name": "flute",
+          "count": 100
+        }
+      ],
+      "moods": [
+        {
+          "name": "ethereal",
+          "count": 80
+        },
+        {
+          "name": "romantic",
+          "count": 80
+        },
+        {
+          "name": "dramatic",
+          "count": 80
+        },
+        {
+          "name": "melancholic",
+          "count": 80
+        }
+      ],
+      "tempos": {
+        "slow": 0.45,
+        "medium": 0.4,
+        "fast": 0.15
+      },
+      "exemplars": [
+        "strings piece with ethereal character and Composed Music texture"
       ]
     }
   },

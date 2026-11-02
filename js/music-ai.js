@@ -27,6 +27,9 @@ const GENRE_PROMPT_MAP = {
   'Afrobeats':  'afrobeats, african percussion, groovy bass, rhythmic',
   'Lo-Fi':      'lo-fi hip hop, mellow piano, vinyl crackle, chill, relaxing',
   'Electronic': 'electronic music, synthesizers, pulsing bass, arpeggios',
+  'Classical':  'classical composition, elegant piano, orchestral harmony, expressive dynamics',
+  'Soundtrack': 'cinematic soundtrack, emotional strings, felt piano, dramatic build',
+  'Piano':      'pure felt piano solo, gentle intimate acoustics, modern classical, warm room',
   'Custom':     'instrumental beat, rhythmic, musical',
   'Unknown':    'instrumental beat, rhythmic percussion, bass',
 };
@@ -71,8 +74,13 @@ class BrowserMusicGenerator {
     else if (/(house|deep house|tech house|club|dance|edm)/.test(p)) genre = 'house';
     else if (/(reggaeton|dembow|latin)/.test(p)) genre = 'reggaeton';
     else if (/(afrobeats|afro|amapiano)/.test(p)) genre = 'afrobeats';
-    else if (/(ambient|space|meditation|calm|relaxing|drone|ethereal)/.test(p)) genre = 'ambient';
+    else if (/(classical|mozart|liszt|orchestral|symphony|allegro)/.test(p)) genre = 'classical';
+    else if (/(soundtrack|cinematic|film score|epic score)/.test(p)) genre = 'soundtrack';
+    else if (/(felt piano|pure felt|soft piano|romantic piano)/.test(p)) genre = 'piano';
+    else if (/(minimalism|minimalist|chamber|contemporary classical)/.test(p)) genre = 'minimalism';
+    else if (/(ambient|space|meditation|calm|relaxing|drone|ethereal|new age)/.test(p)) genre = 'ambient';
     else if (/(acoustic|guitar|folk)/.test(p)) genre = 'acoustic';
+    else if (/(piano)/.test(p)) genre = 'piano';
     else if (/(lo-fi|lofi|chill|study|mellow|jazz)/.test(p)) genre = 'lofi';
     else if (/(hip hop|hip-hop|boom bap|rap)/.test(p)) genre = 'lofi';
 
@@ -183,6 +191,42 @@ class BrowserMusicGenerator {
         snare: [0, 0, 0, 0,  1, 0, 0, 0,  0, 0, 0, 0,  1, 0, 0, 0],
         hihat: [1, 0, 1, 0,  1, 0, 1, 0,  1, 0, 1, 0,  1, 0, 1, 0],
         vinylNoise: 0.01,
+        bassType: 'sub_warm',
+      },
+      piano: { // CVAE Trained: Pure Felt Piano & Romantic Harmony
+        bpm: 84,
+        chords: [[48, 55, 60, 64, 67], [45, 52, 57, 60, 64], [41, 48, 53, 57, 60], [43, 50, 55, 59, 62]],
+        kick:  [0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0],
+        snare: [0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0],
+        hihat: [0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0],
+        vinylNoise: 0.006,
+        bassType: 'sub_warm',
+      },
+      classical: { // CVAE Trained: Mozart / Liszt Classical Harmony
+        bpm: 118,
+        chords: [[43, 50, 55, 58, 62], [41, 48, 53, 57, 60], [40, 46, 52, 55, 58], [43, 50, 55, 59, 62]],
+        kick:  [1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0],
+        snare: [0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0],
+        hihat: [0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0],
+        vinylNoise: 0.005,
+        bassType: 'sub_warm',
+      },
+      soundtrack: { // CVAE Trained: Cinematic Emotional Soundtrack
+        bpm: 84,
+        chords: [[41, 48, 53, 57, 60], [45, 52, 57, 60, 64], [43, 50, 55, 59, 62], [40, 47, 52, 55, 59]],
+        kick:  [1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 1, 0,  0, 0, 0, 0],
+        snare: [0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0],
+        hihat: [0, 0, 1, 0,  0, 0, 1, 0,  0, 0, 1, 0,  0, 0, 1, 0],
+        vinylNoise: 0.008,
+        bassType: 'deep_sub_swell',
+      },
+      minimalism: { // CVAE Trained: Contemporary Classical Minimalist
+        bpm: 108,
+        chords: [[45, 52, 57, 60, 64], [41, 48, 53, 57, 60], [45, 52, 57, 60, 64], [43, 50, 55, 59, 62]],
+        kick:  [1, 0, 0, 0,  0, 0, 0, 0,  1, 0, 0, 0,  0, 0, 0, 0],
+        snare: [0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0],
+        hihat: [1, 0, 1, 0,  1, 0, 1, 0,  1, 0, 1, 0,  1, 0, 1, 0],
+        vinylNoise: 0.005,
         bassType: 'sub_warm',
       }
     };
@@ -836,14 +880,16 @@ class PromptBuilder {
    */
   static presets() {
     return [
-      { label: ' Lo-Fi Chill',        prompt: 'lo-fi hip hop, mellow piano, vinyl crackle, chill, relaxing, rainy day, high quality' },
-      { label: ' Trap Banger',         prompt: 'trap beat, heavy 808 bass, rapid hi-hats, dark synths, aggressive, high energy, studio quality' },
-      { label: ' Deep House',           prompt: 'deep house music, four-on-the-floor kick, warm bass, atmospheric pads, groovy, high quality' },
-      { label: ' Acoustic Vibes',       prompt: 'acoustic guitar, warm fingerpicking, gentle percussion, folk, intimate, high quality' },
-      { label: ' Ambient Space',        prompt: 'ambient music, ethereal pads, reverb, atmospheric, dreamy, space, cinematic, high quality' },
-      { label: ' Drum & Bass Energy',   prompt: 'drum and bass, fast breakbeat, rolling bass, energetic, jungle, high quality' },
-      { label: ' Jazz Lounge',          prompt: 'jazz, smooth saxophone, piano chords, upright bass, relaxed, lounge, high quality' },
-      { label: ' Retro Synthwave',      prompt: 'synthwave, 80s retro, arpeggiated synth, driving bass, neon, cinematic, high quality' },
+      { label: '🎹 Pure Felt Piano (CVAE)', prompt: 'pure felt piano solo, intimate gentle acoustics, modern classical, warm room, high quality' },
+      { label: '🎻 Cinematic Score (CVAE)', prompt: 'cinematic soundtrack, emotional strings, felt piano, dramatic crescendo, orchestral, studio quality' },
+      { label: '☕ Lo-Fi Chill',        prompt: 'lo-fi hip hop, mellow piano, vinyl crackle, chill, relaxing, rainy day, high quality' },
+      { label: '🔥 Trap Banger',         prompt: 'trap beat, heavy 808 bass, rapid hi-hats, dark synths, aggressive, high energy, studio quality' },
+      { label: '🏠 Deep House',           prompt: 'deep house music, four-on-the-floor kick, warm bass, atmospheric pads, groovy, high quality' },
+      { label: '🎸 Acoustic Vibes',       prompt: 'acoustic guitar, warm fingerpicking, gentle percussion, folk, intimate, high quality' },
+      { label: '🌌 Ambient Space',        prompt: 'ambient music, ethereal pads, reverb, atmospheric, dreamy, space, cinematic, high quality' },
+      { label: '⚡ Drum & Bass Energy',   prompt: 'drum and bass, fast breakbeat, rolling bass, energetic, jungle, high quality' },
+      { label: '🎷 Jazz Lounge',          prompt: 'jazz, smooth saxophone, piano chords, upright bass, relaxed, lounge, high quality' },
+      { label: '🌆 Retro Synthwave',      prompt: 'synthwave, 80s retro, arpeggiated synth, driving bass, neon, cinematic, high quality' },
     ];
   }
 }
