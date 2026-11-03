@@ -137,22 +137,32 @@ class FLParametricEQ {
   openFloating() {
     if (!this.floatingModal) return;
     this.floatingModal.classList.remove('hidden');
+    const tbBtn = document.getElementById('tb-btn-param-eq');
+    if (tbBtn) tbBtn.classList.add('active');
+
     const mount = document.getElementById('fl-eq-modal-body-mount');
     if (mount && this.container && !mount.contains(this.container)) {
       mount.appendChild(this.container);
+    }
+    requestAnimationFrame(() => {
       this._resizeCanvas();
       this.render();
-    }
+    });
   }
 
   closeFloating() {
     if (!this.floatingModal) return;
     this.floatingModal.classList.add('hidden');
+    const tbBtn = document.getElementById('tb-btn-param-eq');
+    if (tbBtn) tbBtn.classList.remove('active');
+
     const mixerView = document.getElementById('mixer-view');
     if (mixerView && this.container && !mixerView.contains(this.container)) {
       mixerView.appendChild(this.container);
-      this._resizeCanvas();
-      this.render();
+      requestAnimationFrame(() => {
+        this._resizeCanvas();
+        this.render();
+      });
     }
   }
 
@@ -328,9 +338,10 @@ class FLParametricEQ {
 
   _resizeCanvas() {
     if (!this.canvas) return;
-    const rect = this.canvas.parentElement.getBoundingClientRect();
-    const w = Math.max(300, Math.floor(rect.width));
-    const h = Math.max(160, Math.floor(rect.height || 180));
+    const parent = this.canvas.parentElement;
+    const rect = parent ? parent.getBoundingClientRect() : null;
+    const w = Math.max(300, Math.floor((rect && rect.width) || (parent ? parent.clientWidth : 380) || 380));
+    const h = Math.max(160, Math.floor((rect && rect.height) || (parent ? parent.clientHeight : 180) || 180));
     const dpr = window.devicePixelRatio || 1;
 
     this.canvas.width = w * dpr;

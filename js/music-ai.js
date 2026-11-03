@@ -66,6 +66,15 @@ class BrowserMusicGenerator {
     const bpmMatch = p.match(/(\d{2,3})\s*(?:bpm|tempo)/);
     const explicitBpm = bpmMatch ? parseInt(bpmMatch[1], 10) : null;
 
+    // Deterministic hash of prompt for consistent, distinct variety
+    let seed = 0;
+    const cleanPrompt = (prompt || 'music beat').trim().toLowerCase();
+    for (let i = 0; i < cleanPrompt.length; i++) {
+      seed = ((seed << 5) - seed) + cleanPrompt.charCodeAt(i);
+      seed |= 0;
+    }
+    const promptHash = Math.abs(seed) || 12345;
+
     let genre = 'lofi';
     if (/(drill|uk drill|ny drill)/.test(p)) genre = 'drill';
     else if (/(trap|808|metro|banger|dark beat)/.test(p)) genre = 'trap';
@@ -86,9 +95,38 @@ class BrowserMusicGenerator {
     else if (/(lo-fi|lofi|chill|study|mellow|jazz)/.test(p)) genre = 'lofi';
     else if (/(hip hop|hip-hop|boom bap|rap)/.test(p)) genre = 'lofi';
 
+    // Instrument detection
+    let instrument = 'synth';
+    if (/(flute|pipe|whistle|wind)/.test(p)) instrument = 'flute';
+    else if (/(guitar|acoustic|pluck|fingerstyle|folk)/.test(p)) instrument = 'guitar';
+    else if (/(piano|rhodes|felt piano|keys|grand piano)/.test(p)) instrument = 'piano';
+    else if (/(strings|violin|cello|orchestra|orchestral|symphony)/.test(p)) instrument = 'strings';
+    else if (/(brass|horn|trumpet|saw lead|lead synth)/.test(p)) instrument = 'brass';
+    else if (/(bell|glockenspiel|celesta|music box|vibes)/.test(p)) instrument = 'bell';
+    else if (['trap', 'drill', 'phonk'].includes(genre)) instrument = '808_synth';
+    else if (['lofi', 'piano', 'acoustic'].includes(genre)) instrument = 'piano';
+    else if (['synthwave', 'techno', 'house'].includes(genre)) instrument = 'synth';
+
+    // Lead melody style detection
+    let leadStyle = 'lyrical';
+    if (/(arp|arpeggio|arpeggiated|fast run|rolling|trance)/.test(p)) leadStyle = 'arpeggio';
+    else if (/(staccato|stab|riff|chops|bounce|syncopated)/.test(p)) leadStyle = 'staccato';
+    else if (/(ambient|swell|drone|pad|space|calm|meditation)/.test(p)) leadStyle = 'ambient_swell';
+    else if (/(melody|solo|emotional|vocal|hook|lyrical|singing)/.test(p)) leadStyle = 'lyrical';
+    else {
+      const styles = ['lyrical', 'arpeggio', 'staccato'];
+      leadStyle = styles[promptHash % styles.length];
+    }
+
     const GENRES = {
       lofi: {
         bpm: 78,
+        progressions: [
+          [[50, 53, 57, 60, 64], [45, 48, 52, 55, 59], [48, 52, 55, 59, 62], [43, 47, 50, 53, 57]], // Dm9 - Am9 - Cmaj9 - G7
+          [[48, 52, 55, 59, 62], [45, 48, 52, 55, 59], [41, 45, 48, 52, 55], [43, 47, 50, 53, 57]], // Cmaj9 - Am7 - Fmaj7 - G9
+          [[53, 57, 60, 64], [52, 55, 59, 62], [50, 53, 57, 60], [45, 48, 52, 55]],             // Fmaj7 - Em7 - Dm7 - Am7
+          [[45, 48, 52, 55, 59], [50, 53, 57, 60], [43, 47, 50, 55], [48, 52, 55, 59]]            // Am9 - Dm7 - Gsus - Cmaj7
+        ],
         chords: [[50, 53, 57, 60, 64], [45, 48, 52, 55, 59], [48, 52, 55, 59, 62], [43, 47, 50, 53, 57]],
         kick:  [1, 0, 0, 0,  0, 0, 1, 0,  0, 1, 0, 0,  0, 0, 0, 0],
         snare: [0, 0, 0, 0,  1, 0, 0, 0,  0, 0, 0, 0,  1, 0, 0, 0],
@@ -98,6 +136,12 @@ class BrowserMusicGenerator {
       },
       trap: {
         bpm: 140,
+        progressions: [
+          [[48, 51, 55], [44, 48, 51], [46, 50, 53], [43, 47, 50]], // Cm - Ab - Bb - Gm
+          [[48, 51, 55], [49, 53, 56], [48, 51, 55], [46, 50, 53]], // Cm - Db - Cm - Bb (Phrygian Dark)
+          [[48, 51, 55], [44, 48, 51], [41, 44, 48], [43, 47, 50]], // Cm - Ab - Fm - G
+          [[45, 48, 52], [41, 45, 48], [43, 47, 50], [40, 43, 47]]  // Am - F - G - Em (Melodic Trap)
+        ],
         chords: [[48, 51, 55], [44, 48, 51], [46, 50, 53], [43, 47, 50]],
         kick:  [1, 0, 0, 0,  0, 0, 0, 0,  1, 0, 1, 0,  0, 0, 0, 0],
         snare: [0, 0, 0, 0,  0, 0, 0, 0,  1, 0, 0, 0,  0, 0, 0, 0],
@@ -107,6 +151,12 @@ class BrowserMusicGenerator {
       },
       drill: {
         bpm: 142,
+        progressions: [
+          [[41, 44, 48], [42, 46, 49], [41, 44, 48], [40, 43, 47]], // Fm - F# - Fm - Em
+          [[45, 48, 52], [46, 50, 53], [45, 48, 52], [43, 47, 50]], // Am - Bb - Am - Gm
+          [[41, 44, 48], [44, 48, 51], [42, 46, 49], [41, 44, 48]], // Fm - Ab - F# - Fm
+          [[38, 41, 45], [40, 43, 47], [38, 41, 45], [37, 40, 44]]  // Dm - Em - Dm - C#m
+        ],
         chords: [[41, 44, 48], [42, 46, 49], [41, 44, 48], [40, 43, 47]],
         kick:  [1, 0, 0, 0,  0, 0, 1, 0,  0, 0, 1, 0,  0, 0, 0, 0],
         snare: [0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 1, 0,  0, 0, 0, 0],
@@ -116,6 +166,12 @@ class BrowserMusicGenerator {
       },
       synthwave: {
         bpm: 122,
+        progressions: [
+          [[45, 48, 52], [41, 45, 48], [43, 47, 50], [40, 43, 47]], // Am - F - G - Em
+          [[41, 45, 48], [43, 47, 50], [45, 48, 52], [48, 52, 55]], // F - G - Am - C
+          [[45, 48, 52], [48, 52, 55], [43, 47, 50], [41, 45, 48]], // Am - C - G - F
+          [[40, 43, 47], [41, 45, 48], [43, 47, 50], [45, 48, 52]]  // Em - F - G - Am
+        ],
         chords: [[45, 48, 52], [41, 45, 48], [43, 47, 50], [40, 43, 47]],
         kick:  [1, 0, 0, 0,  1, 0, 0, 0,  1, 0, 0, 0,  1, 0, 0, 0],
         snare: [0, 0, 0, 0,  1, 0, 0, 0,  0, 0, 0, 0,  1, 0, 0, 0],
@@ -125,6 +181,12 @@ class BrowserMusicGenerator {
       },
       house: {
         bpm: 126,
+        progressions: [
+          [[43, 46, 50, 53], [41, 45, 48, 52], [38, 41, 45, 48], [43, 46, 50, 53]],
+          [[48, 52, 55, 59], [45, 48, 52, 55], [41, 45, 48, 52], [43, 47, 50, 53]],
+          [[40, 43, 47, 50], [45, 48, 52, 55], [41, 45, 48, 52], [43, 47, 50, 53]],
+          [[45, 48, 52, 55], [43, 46, 50, 53], [41, 45, 48, 52], [40, 43, 47, 50]]
+        ],
         chords: [[43, 46, 50, 53], [41, 45, 48, 52], [38, 41, 45, 48], [43, 46, 50, 53]],
         kick:  [1, 0, 0, 0,  1, 0, 0, 0,  1, 0, 0, 0,  1, 0, 0, 0],
         snare: [0, 0, 0, 0,  1, 0, 0, 0,  0, 0, 0, 0,  1, 0, 0, 0],
@@ -134,6 +196,12 @@ class BrowserMusicGenerator {
       },
       techno: {
         bpm: 135,
+        progressions: [
+          [[41, 44, 48], [41, 44, 48], [42, 45, 49], [41, 44, 48]],
+          [[36, 40, 43], [36, 40, 43], [38, 41, 45], [36, 40, 43]],
+          [[43, 46, 50], [42, 45, 49], [43, 46, 50], [45, 48, 52]],
+          [[40, 43, 47], [40, 43, 47], [41, 44, 48], [40, 43, 47]]
+        ],
         chords: [[41, 44, 48], [41, 44, 48], [42, 45, 49], [41, 44, 48]],
         kick:  [1, 0, 0, 0,  1, 0, 0, 0,  1, 0, 0, 0,  1, 0, 0, 0],
         snare: [0, 0, 0, 0,  1, 0, 0, 0,  0, 0, 0, 0,  1, 0, 0, 0],
@@ -143,6 +211,12 @@ class BrowserMusicGenerator {
       },
       dnb: {
         bpm: 174,
+        progressions: [
+          [[40, 43, 47], [36, 40, 43], [38, 41, 45], [35, 39, 42]],
+          [[45, 48, 52], [41, 45, 48], [43, 47, 50], [40, 43, 47]],
+          [[38, 41, 45], [36, 40, 43], [40, 43, 47], [41, 45, 48]],
+          [[43, 47, 50], [40, 43, 47], [36, 40, 43], [38, 41, 45]]
+        ],
         chords: [[40, 43, 47], [36, 40, 43], [38, 41, 45], [35, 39, 42]],
         kick:  [1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 1, 0,  0, 0, 0, 0],
         snare: [0, 0, 0, 0,  1, 0, 0, 0,  0, 0, 0, 0,  1, 0, 0, 0],
@@ -152,6 +226,12 @@ class BrowserMusicGenerator {
       },
       reggaeton: {
         bpm: 96,
+        progressions: [
+          [[45, 48, 52], [41, 45, 48], [43, 47, 50], [45, 48, 52]],
+          [[48, 52, 55], [45, 48, 52], [41, 45, 48], [43, 47, 50]],
+          [[43, 47, 50], [40, 43, 47], [36, 40, 43], [38, 42, 45]],
+          [[41, 45, 48], [43, 47, 50], [45, 48, 52], [40, 43, 47]]
+        ],
         chords: [[45, 48, 52], [41, 45, 48], [43, 47, 50], [45, 48, 52]],
         kick:  [1, 0, 0, 0,  1, 0, 0, 0,  1, 0, 0, 0,  1, 0, 0, 0],
         snare: [0, 0, 0, 1,  0, 0, 1, 0,  0, 0, 0, 1,  0, 0, 1, 0],
@@ -161,6 +241,12 @@ class BrowserMusicGenerator {
       },
       afrobeats: {
         bpm: 106,
+        progressions: [
+          [[43, 47, 50], [40, 43, 47], [36, 40, 43], [38, 42, 45]],
+          [[48, 52, 55], [45, 48, 52], [41, 45, 48], [43, 47, 50]],
+          [[45, 48, 52], [43, 47, 50], [41, 45, 48], [43, 47, 50]],
+          [[40, 43, 47], [43, 47, 50], [36, 40, 43], [38, 42, 45]]
+        ],
         chords: [[43, 47, 50], [40, 43, 47], [36, 40, 43], [38, 42, 45]],
         kick:  [1, 0, 0, 0,  0, 0, 1, 0,  0, 0, 0, 0,  1, 0, 0, 0],
         snare: [0, 0, 0, 1,  0, 0, 1, 0,  0, 1, 0, 0,  0, 0, 1, 0],
@@ -170,6 +256,12 @@ class BrowserMusicGenerator {
       },
       phonk: {
         bpm: 148,
+        progressions: [
+          [[49, 52, 56], [50, 53, 57], [49, 52, 56], [45, 48, 52]],
+          [[46, 49, 53], [47, 50, 54], [46, 49, 53], [42, 45, 49]],
+          [[42, 45, 49], [43, 46, 50], [42, 45, 49], [38, 41, 45]],
+          [[50, 53, 57], [49, 52, 56], [46, 49, 53], [45, 48, 52]]
+        ],
         chords: [[49, 52, 56], [50, 53, 57], [49, 52, 56], [45, 48, 52]],
         kick:  [1, 0, 0, 0,  0, 0, 0, 0,  1, 0, 1, 0,  0, 0, 0, 0],
         snare: [0, 0, 0, 0,  0, 0, 0, 0,  1, 0, 0, 0,  0, 0, 0, 0],
@@ -179,6 +271,12 @@ class BrowserMusicGenerator {
       },
       ambient: {
         bpm: 72,
+        progressions: [
+          [[41, 45, 48, 52], [43, 47, 50, 53], [40, 43, 47, 50], [45, 48, 52, 55]],
+          [[48, 52, 55, 62], [45, 48, 52, 59], [41, 45, 48, 55], [43, 47, 50, 57]],
+          [[50, 53, 57, 64], [46, 50, 53, 60], [48, 52, 55, 62], [43, 47, 50, 57]],
+          [[45, 48, 52, 59], [40, 43, 47, 55], [41, 45, 48, 55], [43, 47, 50, 57]]
+        ],
         chords: [[41, 45, 48, 52], [43, 47, 50, 53], [40, 43, 47, 50], [45, 48, 52, 55]],
         kick:  [1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0],
         snare: [0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0],
@@ -188,6 +286,12 @@ class BrowserMusicGenerator {
       },
       acoustic: {
         bpm: 90,
+        progressions: [
+          [[43, 47, 50], [40, 43, 47], [36, 40, 43], [38, 42, 45]],
+          [[48, 52, 55], [43, 47, 50], [45, 48, 52], [41, 45, 48]],
+          [[45, 48, 52], [41, 45, 48], [48, 52, 55], [43, 47, 50]],
+          [[36, 40, 43], [38, 42, 45], [40, 43, 47], [43, 47, 50]]
+        ],
         chords: [[43, 47, 50], [40, 43, 47], [36, 40, 43], [38, 42, 45]],
         kick:  [1, 0, 0, 0,  0, 0, 1, 0,  0, 0, 0, 0,  1, 0, 0, 0],
         snare: [0, 0, 0, 0,  1, 0, 0, 0,  0, 0, 0, 0,  1, 0, 0, 0],
@@ -195,8 +299,14 @@ class BrowserMusicGenerator {
         vinylNoise: 0.01,
         bassType: 'sub_warm',
       },
-      piano: { // CVAE Trained: Pure Felt Piano & Romantic Harmony
+      piano: {
         bpm: 84,
+        progressions: [
+          [[48, 55, 60, 64, 67], [45, 52, 57, 60, 64], [41, 48, 53, 57, 60], [43, 50, 55, 59, 62]],
+          [[45, 52, 57, 60, 64], [41, 48, 53, 57, 60], [48, 55, 60, 64, 67], [43, 50, 55, 59, 62]],
+          [[41, 48, 53, 57, 60], [43, 50, 55, 59, 62], [45, 52, 57, 60, 64], [40, 47, 52, 55, 59]],
+          [[50, 57, 62, 65, 69], [45, 52, 57, 60, 64], [43, 50, 55, 59, 62], [48, 55, 60, 64, 67]]
+        ],
         chords: [[48, 55, 60, 64, 67], [45, 52, 57, 60, 64], [41, 48, 53, 57, 60], [43, 50, 55, 59, 62]],
         kick:  [0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0],
         snare: [0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0],
@@ -204,8 +314,14 @@ class BrowserMusicGenerator {
         vinylNoise: 0.006,
         bassType: 'sub_warm',
       },
-      classical: { // CVAE Trained: Mozart / Liszt Classical Harmony
+      classical: {
         bpm: 118,
+        progressions: [
+          [[43, 50, 55, 58, 62], [41, 48, 53, 57, 60], [40, 46, 52, 55, 58], [43, 50, 55, 59, 62]],
+          [[48, 55, 60, 63, 67], [45, 52, 57, 60, 64], [46, 53, 58, 62, 65], [43, 50, 55, 59, 62]],
+          [[45, 52, 57, 60, 64], [41, 48, 53, 57, 60], [43, 50, 55, 59, 62], [40, 47, 52, 55, 59]],
+          [[38, 45, 50, 53, 57], [43, 50, 55, 58, 62], [41, 48, 53, 57, 60], [40, 46, 52, 55, 58]]
+        ],
         chords: [[43, 50, 55, 58, 62], [41, 48, 53, 57, 60], [40, 46, 52, 55, 58], [43, 50, 55, 59, 62]],
         kick:  [1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0],
         snare: [0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0],
@@ -213,8 +329,14 @@ class BrowserMusicGenerator {
         vinylNoise: 0.005,
         bassType: 'sub_warm',
       },
-      soundtrack: { // CVAE Trained: Cinematic Emotional Soundtrack
+      soundtrack: {
         bpm: 84,
+        progressions: [
+          [[41, 48, 53, 57, 60], [45, 52, 57, 60, 64], [43, 50, 55, 59, 62], [40, 47, 52, 55, 59]],
+          [[45, 52, 57, 60, 64], [41, 48, 53, 57, 60], [48, 55, 60, 64, 67], [43, 50, 55, 59, 62]],
+          [[40, 47, 52, 55, 59], [41, 48, 53, 57, 60], [45, 52, 57, 60, 64], [43, 50, 55, 59, 62]],
+          [[38, 45, 50, 53, 57], [41, 48, 53, 57, 60], [43, 50, 55, 59, 62], [45, 52, 57, 60, 64]]
+        ],
         chords: [[41, 48, 53, 57, 60], [45, 52, 57, 60, 64], [43, 50, 55, 59, 62], [40, 47, 52, 55, 59]],
         kick:  [1, 0, 0, 0,  0, 0, 0, 0,  0, 0, 1, 0,  0, 0, 0, 0],
         snare: [0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0],
@@ -222,8 +344,14 @@ class BrowserMusicGenerator {
         vinylNoise: 0.008,
         bassType: 'deep_sub_swell',
       },
-      minimalism: { // CVAE Trained: Contemporary Classical Minimalist
+      minimalism: {
         bpm: 108,
+        progressions: [
+          [[45, 52, 57, 60, 64], [41, 48, 53, 57, 60], [45, 52, 57, 60, 64], [43, 50, 55, 59, 62]],
+          [[48, 55, 60, 64, 67], [45, 52, 57, 60, 64], [48, 55, 60, 64, 67], [43, 50, 55, 59, 62]],
+          [[41, 48, 53, 57, 60], [45, 52, 57, 60, 64], [41, 48, 53, 57, 60], [43, 50, 55, 59, 62]],
+          [[40, 47, 52, 55, 59], [43, 50, 55, 59, 62], [40, 47, 52, 55, 59], [45, 52, 57, 60, 64]]
+        ],
         chords: [[45, 52, 57, 60, 64], [41, 48, 53, 57, 60], [45, 52, 57, 60, 64], [43, 50, 55, 59, 62]],
         kick:  [1, 0, 0, 0,  0, 0, 0, 0,  1, 0, 0, 0,  0, 0, 0, 0],
         snare: [0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0],
@@ -233,7 +361,35 @@ class BrowserMusicGenerator {
       }
     };
 
-    const cfg = GENRES[genre] || GENRES.lofi;
+    const cfgTemplate = GENRES[genre] || GENRES.lofi;
+    const cfg = Object.assign({}, cfgTemplate);
+
+    // Pick one of the 4 diverse chord progressions dynamically
+    const progIndex = cfg.progressions ? (promptHash % cfg.progressions.length) : 0;
+    cfg.progressionIdx = progIndex;
+    cfg.chords = (cfg.progressions && cfg.progressions[progIndex]) || cfg.chords;
+
+    // Optional transposition based on prompt key or prompt hash
+    const keyRoots = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+    const keyMatch = p.match(/\b([cdefgab][#b]?)\b/i);
+    let keyOffset = 0;
+    if (keyMatch) {
+      const parsedNote = keyMatch[1].toUpperCase();
+      const idx = keyRoots.findIndex(r => r.toUpperCase() === parsedNote);
+      if (idx >= 0) keyOffset = (idx - 0); // offset from C
+    } else {
+      // Deterministic chromatic key shifting based on prompt hash
+      keyOffset = (promptHash % 7) - 3;
+    }
+
+    if (keyOffset !== 0) {
+      cfg.chords = cfg.chords.map(chord => chord.map(midi => Math.max(30, Math.min(84, midi + keyOffset))));
+    }
+
+    cfg.instrument = instrument;
+    cfg.leadStyle = leadStyle;
+    cfg.promptHash = promptHash;
+
     const bpm = (explicitBpm && explicitBpm >= 50 && explicitBpm <= 220) ? explicitBpm : (cfg.bpm || currentBpm || 120);
 
     return { genre, bpm, cfg };
@@ -396,8 +552,25 @@ class BrowserMusicGenerator {
         drumR += sValR * 0.72;
       }
 
+      // Dynamic drum variations across bars
+      const barIdx = Math.floor(stepIdx / 16);
+      const isTurnaroundBar = (barIdx % 4 === 3);
+
+      // Drum fill snare rolls on steps 12-15 of turnaround bar
+      if (isTurnaroundBar && stepMod16 >= 12 && timeInStep < 0.14) {
+        const rollVelocity = 0.5 + (stepMod16 - 12) * 0.15; // Crescendo
+        const toneEnv = Math.exp(-timeInStep * 32.0);
+        const sTone = Math.sin(2 * Math.PI * 210.0 * timeInStep) * toneEnv * 0.45;
+        const noiseEnv = Math.exp(-timeInStep * 20.0);
+        const rawNoise = (rng() * 2.0 - 1.0) * noiseEnv * 0.65;
+        const sVal = (sTone + rawNoise) * rollVelocity * 0.75;
+        drumL += sVal;
+        drumR += sVal;
+      }
+
       // Realistic Hi-Hat (Metallic 6-Oscillator Cluster + Highpass Noise Burst)
-      if (cfg.hihat[stepMod16] && timeInStep < 0.09) {
+      const hihatRollStep = isTurnaroundBar && (stepMod16 === 7 || stepMod16 === 15);
+      if ((cfg.hihat[stepMod16] || hihatRollStep) && timeInStep < 0.09) {
         const hEnv = Math.exp(-timeInStep * 65.0);
         // Inharmonic metallic square clusters
         const m1 = Math.sign(Math.sin(2 * Math.PI * 3420.0 * t));
@@ -405,7 +578,7 @@ class BrowserMusicGenerator {
         const m3 = Math.sign(Math.sin(2 * Math.PI * 6150.0 * t));
         const metalRing = (m1 + m2 + m3) * 0.18;
         const hNoise = (rng() * 2.0 - 1.0) * 0.45;
-        const accent = (stepMod16 % 4 === 2) ? 1.2 : 0.85;
+        const accent = (stepMod16 % 4 === 2 || hihatRollStep) ? 1.25 : 0.85;
 
         const hatSignal = (metalRing + hNoise) * hEnv * 0.26 * accent;
         drumL += hatSignal * 0.75;
@@ -417,7 +590,9 @@ class BrowserMusicGenerator {
       const bassType = cfg.bassType || 'sub_warm';
       if (bassType.includes('808')) {
         const freq = midiToFreq(rootMidi);
-        const glide = ([0, 8, 10].includes(stepMod16)) ? Math.exp(-timeInStep * 6.0) * 20.0 : 0.0;
+        const glideSteps = [0, 8, 10];
+        if (barIdx % 2 === 1) glideSteps.push(14); // Bass variation on alternate bars
+        const glide = (glideSteps.includes(stepMod16)) ? Math.exp(-timeInStep * 6.0) * 20.0 : 0.0;
         const bFreq = freq + glide;
 
         // Sub fundamental + 2nd harmonic for audibility on smaller speakers
@@ -484,20 +659,103 @@ class BrowserMusicGenerator {
         chordR += voice * chordEnv * panR;
       }
 
-      // ── 4. MELODIC LEAD / MOTIF with Echo & Vibrato ──
+      // ── 4. MELODIC LEAD / MOTIF with Expressive Timbre & Phrasing ──
       let dryLeadL = 0, dryLeadR = 0;
-      if ([2, 6, 8, 11, 14].includes(stepMod16)) {
-        const motifIdx = (stepMod16 * 3) % currentChord.length;
-        const leadMidi = currentChord[motifIdx] + 12;
+      let shouldPlayLead = false;
+      let leadMidi = currentChord[0] + 12;
+      let leadDur = 0.26;
+
+      const leadStyle = cfg.leadStyle || 'lyrical';
+      const instrument = cfg.instrument || 'synth';
+
+      if (leadStyle === 'arpeggio') {
+        shouldPlayLead = true;
+        const arpOrder = [0, 1, 2, 1, 0, 2, 3, 2, 1, 0, 2, 3, 2, 1, 3, 0];
+        const cNote = currentChord[arpOrder[stepMod16] % currentChord.length];
+        const octShift = (stepMod16 % 4 === 3) ? 24 : 12;
+        leadMidi = cNote + octShift;
+        leadDur = 0.15;
+      } else if (leadStyle === 'staccato') {
+        if ([0, 3, 6, 8, 11, 14].includes(stepMod16)) {
+          shouldPlayLead = true;
+          const noteIdx = (stepMod16 * 2) % currentChord.length;
+          leadMidi = currentChord[noteIdx] + 12;
+          leadDur = 0.16;
+        }
+      } else if (leadStyle === 'ambient_swell') {
+        if ([0, 8].includes(stepMod16)) {
+          shouldPlayLead = true;
+          const noteIdx = Math.floor(stepIdx / 8) % currentChord.length;
+          leadMidi = currentChord[noteIdx] + 12;
+          leadDur = 0.60;
+        }
+      } else {
+        // Lyrical call-and-response melody
+        const motifSteps = (cfg.progressionIdx % 2 === 0) ? [0, 2, 6, 8, 11, 14] : [2, 4, 7, 10, 13, 15];
+        if (motifSteps.includes(stepMod16)) {
+          shouldPlayLead = true;
+          const motifIdx = (stepMod16 * 3 + Math.floor(stepIdx / 16)) % currentChord.length;
+          leadMidi = currentChord[motifIdx] + 12;
+          leadDur = 0.28;
+        }
+      }
+
+      if (shouldPlayLead && timeInStep < leadDur) {
         const lFreq = midiToFreq(leadMidi);
-        // Subtle expressive pitch vibrato (5.5Hz)
-        const vibrato = Math.sin(2 * Math.PI * 5.5 * t) * 2.2;
-        const lEnv = (1.0 - Math.exp(-timeInStep * 40.0)) * Math.exp(-timeInStep * 10.0);
-        const leadWave = Math.sin(2 * Math.PI * (lFreq + vibrato) * t);
-        const leadSaw = (2.0 * ((t * (lFreq + vibrato)) % 1.0) - 1.0) * 0.25;
-        const fullLead = (leadWave + leadSaw) * lEnv * 0.26;
-        dryLeadL += fullLead * 0.85;
-        dryLeadR += fullLead * 1.15;
+        const vibSpeed = (instrument === 'flute') ? 5.2 : 5.8;
+        const vibDepth = (instrument === 'flute') ? 3.5 : 2.0;
+        const vibrato = Math.sin(2 * Math.PI * vibSpeed * t) * vibDepth;
+        const freqW = lFreq + vibrato;
+
+        let leadSig = 0;
+        if (instrument === 'flute') {
+          // Breathy sine core + filtered breath turbulence + smooth portamento vibrato
+          const breathNoise = (rng() * 2.0 - 1.0) * Math.sin(2 * Math.PI * 2600.0 * t) * 0.16;
+          const sineCore = Math.sin(2 * Math.PI * freqW * t);
+          const fEnv = (1.0 - Math.exp(-timeInStep * 28.0)) * Math.exp(-timeInStep * (3.8 / leadDur));
+          leadSig = (sineCore + breathNoise) * fEnv * 0.34;
+        } else if (instrument === 'guitar') {
+          // Plucked string transient + metallic Karplus-Strong resonant harmonics
+          const pEnv = Math.exp(-timeInStep * 20.0);
+          const s1 = Math.sin(2 * Math.PI * freqW * t);
+          const s2 = Math.sin(2 * Math.PI * freqW * 2.0 * t) * 0.42;
+          const s3 = Math.sin(2 * Math.PI * freqW * 3.0 * t) * 0.20;
+          const pClick = (rng() * 2.0 - 1.0) * Math.exp(-timeInStep * 400.0) * 0.28;
+          leadSig = Math.tanh((s1 + s2 + s3 + pClick) * 1.3) * pEnv * 0.32;
+        } else if (instrument === 'piano') {
+          // Hammer transient + acoustic multi-harmonic decay
+          const hammer = (rng() * 2.0 - 1.0) * Math.exp(-timeInStep * 600.0) * 0.22;
+          const h1 = Math.sin(2 * Math.PI * freqW * t);
+          const h2 = Math.sin(2 * Math.PI * freqW * 2.001 * t) * 0.38;
+          const h3 = Math.sin(2 * Math.PI * freqW * 3.003 * t) * 0.16;
+          const piEnv = Math.exp(-timeInStep * (5.5 / leadDur));
+          leadSig = (h1 + h2 + h3 + hammer) * piEnv * 0.30;
+        } else if (instrument === 'strings') {
+          // Slow bow envelope + dual detuned saw voices
+          const bowEnv = (1.0 - Math.exp(-timeInStep * 18.0)) * Math.exp(-timeInStep * (2.0 / leadDur));
+          const sawA = 2.0 * ((t * freqW) % 1.0) - 1.0;
+          const sawB = 2.0 * ((t * (freqW * 1.006)) % 1.0) - 1.0;
+          leadSig = (sawA * 0.5 + sawB * 0.5) * bowEnv * 0.26;
+        } else if (instrument === 'brass') {
+          // Bright saw swell with resonant bite
+          const bEnv = (1.0 - Math.exp(-timeInStep * 50.0)) * Math.exp(-timeInStep * 12.0);
+          const saw = 2.0 * ((t * freqW) % 1.0) - 1.0;
+          leadSig = Math.tanh(saw * 1.6) * bEnv * 0.28;
+        } else if (instrument === 'bell') {
+          // FM metallic chime
+          const bEnv = Math.exp(-timeInStep * 10.0);
+          const mod = Math.sin(2 * Math.PI * (freqW * 2.76) * t) * 2.0;
+          leadSig = Math.sin(2 * Math.PI * freqW * t + mod) * bEnv * 0.26;
+        } else {
+          // Default expressive analog lead
+          const lEnv = (1.0 - Math.exp(-timeInStep * 40.0)) * Math.exp(-timeInStep * 10.0);
+          const leadWave = Math.sin(2 * Math.PI * freqW * t);
+          const leadSaw = (2.0 * ((t * freqW) % 1.0) - 1.0) * 0.3;
+          leadSig = (leadWave + leadSaw) * lEnv * 0.28;
+        }
+
+        dryLeadL += leadSig * 0.85;
+        dryLeadR += leadSig * 1.15;
       }
 
       // Ping-pong delay tap

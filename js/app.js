@@ -52,6 +52,7 @@ class FLStudioApp {
     this._initDrumMachine();
     this._initAudioEditor();
     this._initGlobalDropZone();
+    this._bindStudioTools();
 
     this._bindExtendPatternModal();
 
@@ -1278,7 +1279,15 @@ class FLStudioApp {
     // Re-render active panel
     if (tabId === 'piano-roll' && this.pianoRoll) this.pianoRoll.render();
     if (tabId === 'playlist'   && this.playlist)  this.playlist.render();
-    if (tabId === 'mixer'      && this.mixer)     this.mixer.syncChannels();
+    if (tabId === 'mixer') {
+      if (this.mixer) this.mixer.syncChannels();
+      if (window.flParametricEQ) {
+        requestAnimationFrame(() => {
+          window.flParametricEQ._resizeCanvas();
+          window.flParametricEQ.render();
+        });
+      }
+    }
     if (tabId === 'record')                       this._onSwitchToRecordTab();
     if (tabId === 'audio-editor')                 this._onSwitchToAudioEditorTab();
   }
@@ -3544,7 +3553,10 @@ FLStudioApp.prototype._initAudioEditor = function() {
   document.getElementById('ae-open-fullscreen')?.addEventListener('click', () => {
     this.audioEditor.toggleFullscreen();
   });
+};
 
+// ── Studio Tools Binder (Unconditionally bound on startup) ─────────
+FLStudioApp.prototype._bindStudioTools = function() {
   // Tap tempo button
   let tapTimes = [];
   document.getElementById('btn-tap-tempo')?.addEventListener('click', () => {
@@ -3595,7 +3607,9 @@ FLStudioApp.prototype._initAudioEditor = function() {
   // Graph Editor launcher (Toolbar & Rack buttons)
   const toggleGraphEditor = () => {
     if (window.flGraphEditor) {
-      window.flGraphEditor.toggle(this.sequencer.pianoRollChannel || 0);
+      const targetCi = (this.sequencer && this.sequencer.pianoRollChannel !== undefined && this.sequencer.pianoRollChannel !== null)
+        ? this.sequencer.pianoRollChannel : 0;
+      window.flGraphEditor.toggle(targetCi);
     }
   };
   document.getElementById('tb-btn-graph-editor')?.addEventListener('click', toggleGraphEditor);
@@ -3603,7 +3617,7 @@ FLStudioApp.prototype._initAudioEditor = function() {
 
   // Send Rack to Piano Roll button
   document.getElementById('rack-to-piano-btn')?.addEventListener('click', () => {
-    const ci = (this.sequencer.pianoRollChannel !== undefined && this.sequencer.pianoRollChannel !== null)
+    const ci = (this.sequencer && this.sequencer.pianoRollChannel !== undefined && this.sequencer.pianoRollChannel !== null)
       ? this.sequencer.pianoRollChannel : 0;
     this.sendRackPatternToPianoRoll(ci);
   });
@@ -3868,6 +3882,21 @@ FLStudioApp.prototype.sendRackPatternToPianoRoll = function(channelIdx) {
     this.pianoRoll.setChannel(ci);
     this.pianoRoll.render();
   }
+
+  // Auto-scroll Piano Roll viewport to center the notes
+  requestAnimationFrame(() => {
+    const wrap = document.getElementById('piano-roll-canvas-wrap');
+    if (wrap && notes.length > 0) {
+      const avgMidi = notes.reduce((sum, n) => sum + (n.midi || baseMidi), 0) / notes.length;
+      const cellH = this.pianoRoll ? (this.pianoRoll.cellH || 14) : 14;
+      const targetY = (95 - avgMidi) * cellH;
+      const viewH = wrap.clientHeight || 350;
+      wrap.scrollTop = Math.max(0, Math.floor(targetY - (viewH / 2)));
+      const keysEl = document.getElementById('piano-keys');
+      if (keysEl) keysEl.scrollTop = wrap.scrollTop;
+    }
+  });
+
   showToast(`Converted ${ch.name} rack pattern (${notes.length} notes) into Piano Roll!`, 2500);
 };
 
@@ -4019,8 +4048,9 @@ FLStudioApp.prototype.sendRackPatternToAudioEditor = async function(channelIdx =
     if (this.audioEditor) {
       this.audioEditor.addLayer(renderedBuffer, layerName, layerColor);
       this._switchTab('audio-editor');
-      this.audioEditor._renderLayerList();
-      this.audioEditor._draw();
+      if (this.audioEditor._renderLayerList) this.audioEditor._renderLayerList();
+      if (this.audioEditor._draw) this.audioEditor._draw();
+      if (typeof this._updateInlineLayerList === 'function') this._updateInlineLayerList();
       showToast(`Bounced to Audio Editor: "${layerName}"!`, 3000);
     } else {
       showToast('Audio Editor initialized and layer saved!', 2000);

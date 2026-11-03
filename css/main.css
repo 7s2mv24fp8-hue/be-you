@@ -6840,6 +6840,16 @@ canvas { display: block; }
   display: flex;
   flex-direction: column;
 }
+.fl-eq-win-body {
+  width: 100%;
+  display: flex;
+}
+.fl-eq-win-body .fl-eq-wrap {
+  width: 100%;
+  min-width: 0;
+  border-left: none;
+  box-shadow: none;
+}
 .fl-eq-win-header {
   height: 36px;
   background: linear-gradient(180deg, #161c28 0%, #101520 100%);

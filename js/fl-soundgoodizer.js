@@ -147,14 +147,24 @@ class FLSoundgoodizer {
 
   open() {
     this.isOpen = true;
+    const tbBtn = document.getElementById('tb-btn-soundgoodizer');
+    if (tbBtn) tbBtn.classList.add('active');
     if (this.container) {
       this.container.classList.remove('hidden');
+      if (!this.container.style.top || parseInt(this.container.style.top, 10) < 0) {
+        this.container.style.top = '120px';
+        this.container.style.left = 'max(20px, calc(50% - 130px))';
+        this.container.style.right = 'auto';
+        this.container.style.bottom = 'auto';
+      }
       this._renderKnob();
     }
   }
 
   close() {
     this.isOpen = false;
+    const tbBtn = document.getElementById('tb-btn-soundgoodizer');
+    if (tbBtn) tbBtn.classList.remove('active');
     if (this.container) this.container.classList.add('hidden');
   }
 

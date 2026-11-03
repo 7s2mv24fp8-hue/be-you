@@ -82,7 +82,13 @@ class FLGraphEditor {
         </svg>
         <span>Graph</span>
       `;
-      geToggleBtn.addEventListener('click', () => this.toggle());
+      if (!geToggleBtn._bound) {
+        geToggleBtn._bound = true;
+        geToggleBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.toggle();
+        });
+      }
 
       // Insert before the last right-aligned group (Rand/Clear)
       const lastGroup = rackControls.querySelector('div[style*="margin-left:auto"]');
@@ -98,8 +104,12 @@ class FLGraphEditor {
 
   toggle(channelIdx = null) {
     if (channelIdx !== null && typeof channelIdx === 'number') {
-      this.selectedChannel = channelIdx;
-      this.visible = true;
+      if (this.visible && this.selectedChannel === channelIdx) {
+        this.visible = false;
+      } else {
+        this.selectedChannel = channelIdx;
+        this.visible = true;
+      }
     } else {
       this.visible = !this.visible;
     }
@@ -375,3 +385,5 @@ if (document.readyState === 'loading') {
 window.addEventListener('load', () => {
   initFLGraphEditor();
 });
+
+window.FLGraphEditor = FLGraphEditor;
