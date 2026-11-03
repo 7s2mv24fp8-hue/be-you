@@ -468,6 +468,28 @@ class ProceduralSynthesizer:
                     drum_l += h_noise * 0.18
                     drum_r += h_noise * 0.26
 
+            # Dynamic drum variations across bars
+            bar_idx = int(step_idx / 16)
+            is_turnaround_bar = (bar_idx % 4 == 3)
+
+            # Drum turnaround snare roll crescendo on steps 12-15 of bar 4
+            if is_turnaround_bar and step_mod16 >= 12 and time_in_step < 0.14:
+                roll_velocity = 0.5 + (step_mod16 - 12) * 0.15
+                tone_env = math.exp(-time_in_step * 30.0)
+                s_tone = math.sin(2 * math.pi * 210.0 * time_in_step) * tone_env * 0.45
+                noise_env = math.exp(-time_in_step * 20.0)
+                s_val = (s_tone + (rng.random() * 2.0 - 1.0) * noise_env * 0.6) * roll_velocity * 0.7
+                drum_l += s_val
+                drum_r += s_val
+
+            # Crash Cymbal on beat 1 of intro and 4-bar section drop
+            if (step_idx == 0 or (bar_idx % 4 == 0 and step_mod16 == 0)) and time_in_step < 0.60:
+                crash_env = math.exp(-time_in_step * 8.0)
+                c_noise = (rng.random() * 2.0 - 1.0) * crash_env * 0.25
+                c_ring = math.sin(2 * math.pi * 5200.0 * t) * crash_env * 0.10
+                drum_l += (c_noise + c_ring) * 0.9
+                drum_r += (c_noise - c_ring) * 1.1
+
             # ── 2. BASS SYNTHESIS ──
             bass_l, bass_r = 0.0, 0.0
             bass_type = cfg.get("bass_type", "sub_warm")
@@ -526,18 +548,36 @@ class ProceduralSynthesizer:
                 chord_l += voice * chord_env * pan_mult
                 chord_r += voice * chord_env * (2.0 - pan_mult)
 
-            # ── 4. LEAD & MELODIC MOTIF ──
+            # ── 4. LEAD & MELODIC MOTIF (4-Bar Phrasing & Dynamic Extensions) ──
             lead_l, lead_r = 0.0, 0.0
-            # Arpeggiator or melodic note on steps
-            if step_mod16 in [2, 6, 8, 11, 14]:
-                motif_idx = (step_mod16 * 3) % len(current_chord)
-                lead_midi = current_chord[motif_idx] + 12
+            root_m = current_chord[0]
+            is_minor = (len(current_chord) > 1 and (current_chord[1] - current_chord[0] == 3))
+            third = 3 if is_minor else 4
+            fifth = 7
+            seventh = 10 if is_minor else 11
+            ninth = 14
+
+            bar_in_phrase = bar_idx % 4
+            # 4-bar phrasing: Call -> Response -> Climax -> Resolution
+            if bar_in_phrase == 0:
+                motif_map = {0: 0, 2: 2, 6: third, 8: fifth, 11: seventh}
+            elif bar_in_phrase == 1:
+                motif_map = {2: seventh, 4: fifth, 7: third, 10: fifth, 13: 2}
+            elif bar_in_phrase == 2:
+                motif_map = {0: fifth, 3: seventh, 6: ninth, 8: 12 + third, 11: 12, 14: ninth}
+            else:
+                motif_map = {0: 12, 2: seventh, 6: fifth, 8: third, 11: 2, 13: 0}
+
+            if step_mod16 in motif_map:
+                offset_semitones = motif_map[step_mod16]
+                lead_midi = root_m + 12 + offset_semitones
                 l_freq = midi_to_freq(lead_midi)
-                l_env = math.exp(-time_in_step * 12.0)
-                lead_wave = math.sin(2 * math.pi * l_freq * t)
-                # Ping-pong delay simulation
-                lead_l += lead_wave * l_env * 0.22
-                lead_r += lead_wave * l_env * 0.15
+                vibrato = math.sin(2 * math.pi * 5.6 * t) * 2.2
+                l_env = math.exp(-time_in_step * (8.0 if step_mod16 in (0, 8) else 14.0))
+                lead_wave = math.sin(2 * math.pi * (l_freq + vibrato) * t)
+                # Stereo delay & width
+                lead_l += lead_wave * l_env * 0.26
+                lead_r += lead_wave * l_env * 0.20
 
             # ── 5. ATMOSPHERE / VINYL TEXTURE ──
             vinyl_noise = cfg.get("vinyl_noise", 0.0)

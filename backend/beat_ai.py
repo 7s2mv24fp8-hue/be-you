@@ -966,6 +966,80 @@ def apply_variation(base_pattern: List[int], intensity: float = 0.12) -> List[in
     return result
 
 
+def generate_melodic_notes(ch_name: str, steps: List[int], genre: str, mood: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Generate expressive, non-repetitive musical MIDI notes matching the chord progression & scale."""
+    notes = []
+    if ch_name not in ('Bass', 'Lead'):
+        return notes
+
+    genre_key_map = {
+        'trap': 38,       # D
+        'drill': 38,      # D
+        'hip-hop': 36,    # C
+        'lo-fi': 41,      # F
+        'house': 45,      # A
+        'techno': 40,     # E
+        'synthwave': 45,  # A
+        'phonk': 42,      # F#
+        'afrobeats': 43,  # G
+        'reggaeton': 43,  # G
+        'ambient': 36,    # C
+    }
+    base_root = genre_key_map.get(genre, 38)
+
+    prog_offsets = {
+        'trap': [0, -4, -2, -5],      # i - VI - VII - v
+        'drill': [0, 1, 0, -1],        # i - bII - i - vii
+        'hip-hop': [0, 5, 7, 0],       # I - IV - V - I
+        'lo-fi': [0, 5, -3, 2],        # I - IV - vi - ii
+        'house': [0, 7, -3, 5],        # i - v - VI - IV
+        'synthwave': [-3, 5, 0, 7],    # vi - IV - I - V
+        'phonk': [0, 1, 0, -3],
+    }
+    offsets = prog_offsets.get(genre, [0, -3, 5, 7])
+
+    if ch_name == 'Bass':
+        for step, active in enumerate(steps):
+            if not active:
+                continue
+            bar_idx = min(3, step // 4)
+            chord_root = base_root + offsets[bar_idx]
+            # Offbeat 808 octave glide and passing fifths
+            if step in (6, 10, 14) and genre in ('trap', 'drill', 'phonk'):
+                pitch = chord_root + 12
+            elif step in (7, 15):
+                pitch = chord_root + 7
+            else:
+                pitch = chord_root
+            notes.append({
+                'step': step,
+                'midi': max(24, min(60, pitch)),
+                'length': 2 if step % 2 == 0 else 1,
+                'velocity': 0.92 if step % 4 == 0 else 0.80
+            })
+    elif ch_name == 'Lead':
+        lead_root = base_root + 24
+        scale_name = GENRE_SCALES.get(genre, ['minor'])[0]
+        scale_intervals = SCALES.get(scale_name, SCALES['minor'])
+        scale_notes = [lead_root + interval for interval in scale_intervals]
+        scale_notes += [n + 12 for n in scale_notes]
+
+        # Call-and-response melodic motif
+        melodic_degrees = [0, 2, 4, 2, 3, 5, 4, 1, 2, 4, 6, 5, 3, 2, 1, 0]
+        for step, active in enumerate(steps):
+            if not active:
+                continue
+            deg = melodic_degrees[step % len(melodic_degrees)]
+            pitch = scale_notes[deg % len(scale_notes)]
+            notes.append({
+                'step': step,
+                'midi': max(48, min(84, pitch)),
+                'length': 2 if (step % 4 == 0) else 1,
+                'velocity': 0.85 if (step % 2 == 0) else 0.72
+            })
+    return notes
+
+
 def generate_beat_response(prompt: str, current_state: Optional[Dict] = None) -> Dict:
     """
     Main entry point: Generate a complete AI music production response.
@@ -1018,11 +1092,13 @@ def generate_beat_response(prompt: str, current_state: Optional[Dict] = None) ->
                 steps = apply_variation(base_steps, intensity=0.10)
 
             velocities = humanize_velocities(steps, genre, ch_name, mood_mod, swing)
+            ch_notes = generate_melodic_notes(ch_name, steps, genre, mood)
 
             channels.append({
                 'name': ch_name,
                 'steps': steps,
                 'velocity': velocities,
+                'notes': ch_notes,
             })
 
         result['beat'] = {
@@ -1079,7 +1155,8 @@ def generate_beat_response(prompt: str, current_state: Optional[Dict] = None) ->
 
                 steps = apply_variation(existing, intensity=0.20)
                 velocities = humanize_velocities(steps, genre, ch_name, mood_mod, swing)
-                channels.append({'name': ch_name, 'steps': steps, 'velocity': velocities})
+                ch_notes = generate_melodic_notes(ch_name, steps, genre, mood)
+                channels.append({'name': ch_name, 'steps': steps, 'velocity': velocities, 'notes': ch_notes})
 
             result['beat'] = {
                 'bpm': current_state.get('bpm', bpm),
@@ -1095,7 +1172,8 @@ def generate_beat_response(prompt: str, current_state: Optional[Dict] = None) ->
                     list(base_pattern.get(ch_name, [0] * 16)), intensity=0.22
                 )
                 velocities = humanize_velocities(steps, genre, ch_name, mood_mod, swing)
-                channels.append({'name': ch_name, 'steps': steps, 'velocity': velocities})
+                ch_notes = generate_melodic_notes(ch_name, steps, genre, mood)
+                channels.append({'name': ch_name, 'steps': steps, 'velocity': velocities, 'notes': ch_notes})
 
             result['beat'] = {'bpm': bpm, 'channels': channels}
 

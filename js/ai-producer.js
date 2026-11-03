@@ -281,6 +281,16 @@ class BeatGenerator {
     if (!beatData || !sequencer) return;
     if (beatData.bpm >= 20 && beatData.bpm <= 300) sequencer.setBPM(beatData.bpm);
     if (!Array.isArray(beatData.channels)) return;
+
+    const genre = (beatData.genre || 'trap').toLowerCase();
+    const genreKeys = {
+      'trap': 38, 'drill': 38, 'hip-hop': 36, 'lo-fi': 41, 'house': 45,
+      'techno': 40, 'synthwave': 45, 'phonk': 42, 'afrobeats': 43, 'r&b': 41
+    };
+    const baseRoot = genreKeys[genre] || 38;
+    const offsets = [0, -4, -2, -5];
+    const minorScale = [0, 2, 3, 5, 7, 8, 10, 12, 14, 15, 17, 19];
+
     beatData.channels.forEach(chData => {
       const idx = AI_PRODUCER_CHANNELS.findIndex(n => n.toLowerCase() === (chData.name || '').toLowerCase());
       if (idx === -1 || !sequencer.channels[idx]) return;
@@ -291,7 +301,53 @@ class BeatGenerator {
       if (Array.isArray(chData.velocity)) {
         for (let i = 0; i < Math.min(16, chData.velocity.length); i++) ch.velocity[i] = Math.max(0, Math.min(1, chData.velocity[i] || 0.8));
       }
+
+      // ── Apply or Synthesize Musical Notes for Bass & Lead ──
+      if (Array.isArray(chData.notes) && chData.notes.length > 0) {
+        ch.notes = [...chData.notes];
+      } else if (ch.name === 'Bass') {
+        ch.notes = [];
+        ch.steps.forEach((active, s) => {
+          if (!active) return;
+          const barIdx = Math.min(3, Math.floor(s / 4));
+          const chordRoot = baseRoot + offsets[barIdx];
+          const pitch = (s === 6 || s === 10 || s === 14) ? (chordRoot + 12) : ((s === 7 || s === 15) ? chordRoot + 7 : chordRoot);
+          ch.notes.push({
+            step: s,
+            midi: Math.max(24, Math.min(60, pitch)),
+            length: (s % 2 === 0) ? 2 : 1,
+            velocity: ch.velocity[s] || 0.85
+          });
+        });
+      } else if (ch.name === 'Lead') {
+        ch.notes = [];
+        const leadRoot = baseRoot + 24;
+        const contour = [0, 2, 4, 2, 3, 5, 4, 1, 2, 4, 6, 5, 3, 2, 1, 0];
+        ch.steps.forEach((active, s) => {
+          if (!active) return;
+          const interval = minorScale[contour[s % contour.length] % minorScale.length];
+          ch.notes.push({
+            step: s,
+            midi: Math.max(48, Math.min(84, leadRoot + interval)),
+            length: (s % 4 === 0) ? 2 : 1,
+            velocity: ch.velocity[s] || 0.8
+          });
+        });
+      }
     });
+
+    // ── Synchronize with DAW UI & Piano Roll ──
+    if (typeof sequencer.onPatternChange === 'function') {
+      sequencer.onPatternChange();
+    }
+    if (typeof window !== 'undefined' && window.flStudioApp) {
+      if (typeof window.flStudioApp._refreshChannelRack === 'function') {
+        window.flStudioApp._refreshChannelRack();
+      }
+      if (window.flStudioApp.pianoRoll && typeof window.flStudioApp.pianoRoll.render === 'function') {
+        window.flStudioApp.pianoRoll.render();
+      }
+    }
   }
   static snapshot(sequencer) {
     return {
@@ -620,7 +676,33 @@ class AIProducer {
       const base = (seed[name] || new Array(16).fill(0));
       const steps = base.map(s => s);
       const velocity = steps.map((s, i) => s ? (i % 4 === 0 ? 0.95 : 0.7 + Math.random() * 0.2) : 0);
-      return { name, steps, velocity };
+      const chObj = { name, steps, velocity };
+
+      // Generate melodic notes for Bass & Lead
+      if (name === 'Bass') {
+        const root = (bpmMap[genre] > 130) ? 38 : 36;
+        const offsets = [0, -4, -2, -5];
+        chObj.notes = [];
+        steps.forEach((s, i) => {
+          if (!s) return;
+          const barIdx = Math.min(3, Math.floor(i / 4));
+          const chordRoot = root + offsets[barIdx];
+          const pitch = (i === 6 || i === 10 || i === 14) ? (chordRoot + 12) : chordRoot;
+          chObj.notes.push({ step: i, midi: pitch, length: 2, velocity: velocity[i] });
+        });
+      } else if (name === 'Lead') {
+        const root = (bpmMap[genre] > 130) ? 62 : 60;
+        const scale = [0, 2, 3, 5, 7, 8, 10, 12, 14, 15, 17];
+        const contour = [0, 2, 4, 2, 3, 5, 4, 1, 2, 4, 6, 5, 3, 2, 1, 0];
+        chObj.notes = [];
+        steps.forEach((s, i) => {
+          if (!s) return;
+          const pitch = root + scale[contour[i % contour.length] % scale.length];
+          chObj.notes.push({ step: i, midi: pitch, length: (i % 4 === 0) ? 2 : 1, velocity: velocity[i] });
+        });
+      }
+
+      return chObj;
     });
 
     const mix = {
@@ -639,7 +721,7 @@ class AIProducer {
 
     return {
       message: `Got you — ${genre} groove locked at ${bpm} BPM. Complete 8-channel production & mix ready.`,
-      beat: { bpm, channels },
+      beat: { bpm, genre, channels },
       mix,
       suggestions: [
         'Hit Generate Beat again for a fresh groove variation',

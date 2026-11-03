@@ -659,44 +659,86 @@ class BrowserMusicGenerator {
         chordR += voice * chordEnv * panR;
       }
 
-      // ── 4. MELODIC LEAD / MOTIF with Expressive Timbre & Phrasing ──
+      // Crash Cymbal on Intro & 4-bar section drop (Step 0)
+      if ((stepIdx === 0 || (barIdx % 4 === 0 && stepMod16 === 0)) && timeInStep < 0.65) {
+        const crashEnv = Math.exp(-timeInStep * 7.5);
+        const cNoise = (rng() * 2.0 - 1.0) * crashEnv * 0.28;
+        const cRing = Math.sin(2 * Math.PI * 5200.0 * t) * crashEnv * 0.12;
+        drumL += (cNoise + cRing) * 0.9;
+        drumR += (cNoise - cRing) * 1.1;
+      }
+
+      // ── 4. MELODIC LEAD / MOTIF with Expressive Phrasing & Dynamic Song Structure ──
       let dryLeadL = 0, dryLeadR = 0;
       let shouldPlayLead = false;
       let leadMidi = currentChord[0] + 12;
-      let leadDur = 0.26;
+      let leadDur = 0.28;
 
       const leadStyle = cfg.leadStyle || 'lyrical';
       const instrument = cfg.instrument || 'synth';
 
+      // 4-Bar Song Phrasing Structure
+      const barInPhrase = barIdx % 4;
+      const rootM = currentChord[0];
+      const isMinor = (currentChord.length > 1 && (currentChord[1] - currentChord[0] === 3));
+      const third = isMinor ? 3 : 4;
+      const fifth = 7;
+      const seventh = isMinor ? 10 : 11;
+      const ninth = 14;
+
       if (leadStyle === 'arpeggio') {
-        shouldPlayLead = true;
-        const arpOrder = [0, 1, 2, 1, 0, 2, 3, 2, 1, 0, 2, 3, 2, 1, 3, 0];
-        const cNote = currentChord[arpOrder[stepMod16] % currentChord.length];
-        const octShift = (stepMod16 % 4 === 3) ? 24 : 12;
-        leadMidi = cNote + octShift;
-        leadDur = 0.15;
-      } else if (leadStyle === 'staccato') {
-        if ([0, 3, 6, 8, 11, 14].includes(stepMod16)) {
+        // Musical arpeggiator with dynamic phrasing and breath on beat 4
+        if (stepMod16 < 14) {
           shouldPlayLead = true;
-          const noteIdx = (stepMod16 * 2) % currentChord.length;
-          leadMidi = currentChord[noteIdx] + 12;
+          const arpPatterns = [
+            [0, 2, 4, 7,  2, 4, 7, 9,  4, 7, 9, 12,  7, 4],
+            [0, 4, 7, 12, 4, 7, 12, 9, 7, 12, 9, 7,  4, 2],
+            [12, 9, 7, 4, 9, 7, 4, 2,  7, 4, 2, 0,   2, 4]
+          ];
+          const pattern = arpPatterns[(barInPhrase + (cfg.promptHash || 0)) % arpPatterns.length];
+          const semitone = pattern[stepMod16 % pattern.length];
+          leadMidi = rootM + 12 + semitone;
           leadDur = 0.16;
         }
-      } else if (leadStyle === 'ambient_swell') {
-        if ([0, 8].includes(stepMod16)) {
+      } else if (leadStyle === 'staccato') {
+        const stabSteps = [0, 3, 6, 8, 11, 14];
+        if (stabSteps.includes(stepMod16)) {
           shouldPlayLead = true;
-          const noteIdx = Math.floor(stepIdx / 8) % currentChord.length;
-          leadMidi = currentChord[noteIdx] + 12;
-          leadDur = 0.60;
+          const stabNotes = (barInPhrase < 2)
+            ? [seventh, fifth, third, fifth, seventh, ninth]
+            : [ninth, 12, 12 + third, 12, seventh, fifth];
+          const noteOffset = stabNotes[stabSteps.indexOf(stepMod16)];
+          leadMidi = rootM + 12 + noteOffset;
+          leadDur = 0.18;
+        }
+      } else if (leadStyle === 'ambient_swell') {
+        if (stepMod16 === 0 || stepMod16 === 8) {
+          shouldPlayLead = true;
+          const swellNotes = [third, fifth, seventh, ninth];
+          leadMidi = rootM + 12 + swellNotes[(barInPhrase * 2 + (stepMod16 === 8 ? 1 : 0)) % swellNotes.length];
+          leadDur = 0.65;
         }
       } else {
-        // Lyrical call-and-response melody
-        const motifSteps = (cfg.progressionIdx % 2 === 0) ? [0, 2, 6, 8, 11, 14] : [2, 4, 7, 10, 13, 15];
-        if (motifSteps.includes(stepMod16)) {
+        // Lyrical 4-Bar Call-and-Response:
+        // Bar 0: Hook theme statement
+        // Bar 1: Answering counter-phrase
+        // Bar 2: Climax with upper extensions (9th / 11th)
+        // Bar 3: Cadential descent resolving to tonic before turnaround fill
+        let motifMap = null;
+        if (barInPhrase === 0) {
+          motifMap = { 0: 0, 2: 2, 6: third, 8: fifth, 11: seventh };
+        } else if (barInPhrase === 1) {
+          motifMap = { 2: seventh, 4: fifth, 7: third, 10: fifth, 13: 2 };
+        } else if (barInPhrase === 2) {
+          motifMap = { 0: fifth, 3: seventh, 6: ninth, 8: 12 + third, 11: 12, 14: ninth };
+        } else {
+          motifMap = { 0: 12, 2: seventh, 6: fifth, 8: third, 11: 2, 13: 0 };
+        }
+
+        if (motifMap[stepMod16] !== undefined) {
           shouldPlayLead = true;
-          const motifIdx = (stepMod16 * 3 + Math.floor(stepIdx / 16)) % currentChord.length;
-          leadMidi = currentChord[motifIdx] + 12;
-          leadDur = 0.28;
+          leadMidi = rootM + 12 + motifMap[stepMod16];
+          leadDur = (stepMod16 === 0 || stepMod16 === 8) ? 0.38 : 0.24;
         }
       }
 
