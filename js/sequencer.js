@@ -366,54 +366,93 @@ class Sequencer {
         if (!hasBlock) return; // Muted for this bar in the song arrangement
       }
 
-      if (!ch.steps[patternStep]) return;
+      // Check if channel has piano roll notes starting on this step
+      const stepNotes = (ch.notes && ch.notes.length > 0)
+        ? ch.notes.filter(n => Math.floor(n.step) === patternStep)
+        : [];
+
+      // If channel has no piano roll notes on this step AND channel step is not active, skip
+      if (!ch.steps[patternStep] && stepNotes.length === 0) return;
 
       const vel = (ch.velocity[patternStep] !== undefined ? ch.velocity[patternStep] : 0.8) * ch.volume;
-
       const stepPitch = (ch.stepPitch && ch.stepPitch[patternStep] !== undefined) ? ch.stepPitch[patternStep] : 0;
       const stepPan   = (ch.stepPan && ch.stepPan[patternStep] !== undefined) ? ch.stepPan[patternStep] : (ch.pan || 0);
       const stepCutoff = (ch.stepCutoff && ch.stepCutoff[patternStep] !== undefined) ? ch.stepCutoff[patternStep] : (ch.filterFreq || 2000);
 
+      const nameLow = (ch.name || '').toLowerCase();
+      let defaultBaseMidi = 60;
+      if (nameLow.includes('kick') || nameLow.includes('808') || nameLow.includes('sub')) defaultBaseMidi = 36;
+      else if (nameLow.includes('snare') || nameLow.includes('sd')) defaultBaseMidi = 38;
+      else if (nameLow.includes('clap') || nameLow.includes('cp')) defaultBaseMidi = 39;
+      else if (nameLow.includes('hat') || nameLow.includes('hh')) defaultBaseMidi = 42;
+      else if (nameLow.includes('tom')) defaultBaseMidi = 45;
+      else if (nameLow.includes('bass')) defaultBaseMidi = 36;
+
       if (ch.type === 'drum') {
-        this.engine.triggerChannel(ch.name, playTime, vel, { pitchOffset: stepPitch, pan: stepPan, cutoff: stepCutoff, channelKey: ch.name });
+        if (stepNotes.length > 0) {
+          stepNotes.forEach(n => {
+            const notePitchOffset = (n.midi - defaultBaseMidi) + stepPitch;
+            const nVel = (n.velocity !== undefined ? n.velocity : 0.8) * ch.volume;
+            this.engine.triggerChannel(ch.name, playTime, nVel, {
+              pitchOffset: notePitchOffset,
+              pitch: Math.pow(2, notePitchOffset / 12),
+              pan: stepPan,
+              cutoff: stepCutoff,
+              channelKey: ch.name
+            });
+          });
+        } else {
+          this.engine.triggerChannel(ch.name, playTime, vel, {
+            pitchOffset: stepPitch,
+            pitch: Math.pow(2, stepPitch / 12),
+            pan: stepPan,
+            cutoff: stepCutoff,
+            channelKey: ch.name
+          });
+        }
       } else if (ch.type === 'audio' && ch.audioBuffer) {
         // Play recorded vocal / audio clip with pitch & pan
-        try {
-          const src = this.engine.ctx.createBufferSource();
-          if (this.engine._trackNode) this.engine._trackNode(src, ch.name);
-          src.buffer = ch.audioBuffer;
-          if (stepPitch !== 0) {
-            src.playbackRate.value = Math.pow(2, stepPitch / 12);
-          }
-          const gainNode = this.engine.ctx.createGain();
-          gainNode.gain.setValueAtTime(vel * (ch.volume || 1), playTime);
+        const notesToPlay = stepNotes.length > 0 ? stepNotes : [{ midi: defaultBaseMidi, velocity: (vel / (ch.volume || 1)) }];
+        notesToPlay.forEach(n => {
+          try {
+            const src = this.engine.ctx.createBufferSource();
+            if (this.engine._trackNode) this.engine._trackNode(src, ch.name);
+            src.buffer = ch.audioBuffer;
+            const semitoneShift = (stepNotes.length > 0 ? (n.midi - defaultBaseMidi) : 0) + stepPitch;
+            if (semitoneShift !== 0) {
+              src.playbackRate.value = Math.pow(2, semitoneShift / 12);
+            }
+            const gainNode = this.engine.ctx.createGain();
+            const nVel = (n.velocity !== undefined ? n.velocity : (vel / (ch.volume || 1))) * (ch.volume || 1);
+            gainNode.gain.setValueAtTime(nVel, playTime);
 
-          let lastNode = gainNode;
-          if (stepPan !== 0 && this.engine.ctx.createStereoPanner) {
-            const panner = this.engine.ctx.createStereoPanner();
-            panner.pan.value = stepPan;
-            gainNode.connect(panner);
-            lastNode = panner;
-          }
+            let lastNode = gainNode;
+            if (stepPan !== 0 && this.engine.ctx.createStereoPanner) {
+              const panner = this.engine.ctx.createStereoPanner();
+              panner.pan.value = stepPan;
+              gainNode.connect(panner);
+              lastNode = panner;
+            }
 
-          src.connect(gainNode);
-          lastNode.connect(this.engine.masterCompressor || this.engine.ctx.destination);
-          src.start(playTime);
-        } catch (e) {
-          console.warn('Audio clip playback failed:', e);
-        }
+            src.connect(gainNode);
+            lastNode.connect(this.engine.masterCompressor || this.engine.ctx.destination);
+            src.start(playTime);
+          } catch (e) {
+            console.warn('Audio clip playback failed:', e);
+          }
+        });
       } else {
         // Synth: find notes for this step from piano roll
-        const stepNotes = ch.notes.filter(n => Math.floor(n.step) === patternStep);
         if (stepNotes.length > 0) {
           stepNotes.forEach(n => {
             let freq = this._midiToFreq(n.midi);
             if (stepPitch !== 0) freq *= Math.pow(2, stepPitch / 12);
             const dur = (n.length || 1) * this.stepDuration;
-            if (ch.name === 'Bass') {
-              this.engine.playBass(playTime, { freq, gain: vel * 0.5, duration: dur, filterFreq: stepCutoff, pan: stepPan, channelKey: ch.name });
+            const nVel = (n.velocity !== undefined ? n.velocity : 0.8) * ch.volume;
+            if (ch.name === 'Bass' || nameLow.includes('bass') || nameLow.includes('sub')) {
+              this.engine.playBass(playTime, { freq, gain: nVel * 0.5, duration: dur, filterFreq: stepCutoff, pan: stepPan, channelKey: ch.name });
             } else {
-              this.engine.playSynth(playTime, { freq, gain: vel * 0.35, duration: dur, filterFreq: stepCutoff, pan: stepPan, channelKey: ch.name });
+              this.engine.playSynth(playTime, { freq, gain: nVel * 0.35, duration: dur, filterFreq: stepCutoff, pan: stepPan, channelKey: ch.name });
             }
           });
         } else {
@@ -421,7 +460,7 @@ class Sequencer {
           const defaultFreqs = { 'Bass': 110, 'Lead': 440 };
           let freq = (defaultFreqs[ch.name] || 220) * Math.pow(2, stepPitch / 12);
           const dur = this.stepDuration;
-          if (ch.name === 'Bass') {
+          if (ch.name === 'Bass' || nameLow.includes('bass') || nameLow.includes('sub')) {
             this.engine.playBass(playTime, { freq, gain: vel * 0.4, duration: dur, filterFreq: stepCutoff, pan: stepPan, channelKey: ch.name });
           } else {
             this.engine.playSynth(playTime, { freq, gain: vel * 0.25, duration: dur, filterFreq: stepCutoff, pan: stepPan, channelKey: ch.name });
@@ -530,6 +569,24 @@ class Sequencer {
     ch.notes = ch.notes.filter(n => !(n.step === step && n.midi === midi));
     const hasNotes = ch.notes.some(n => n.step === step);
     if (!hasNotes) ch.steps[step] = false;
+  }
+
+  syncChannelStepsFromNotes(channelIdx) {
+    const ch = this.channels[channelIdx];
+    if (!ch) return;
+    ch.steps.fill(false);
+    if (ch.notes) {
+      ch.notes.forEach(n => {
+        const start = Math.max(0, Math.floor(n.step));
+        const len = Math.max(1, Math.round(n.length || 1));
+        for (let s = start; s < Math.min(this.steps, start + len); s++) {
+          ch.steps[s] = true;
+        }
+      });
+    }
+    if (typeof window !== 'undefined' && window.app && typeof window.app._refreshChannelRack === 'function') {
+      window.app._refreshChannelRack();
+    }
   }
 
   // ── Util ───────────────────────────────────────────────────────

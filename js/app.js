@@ -475,6 +475,7 @@ class FLStudioApp {
       const row = this._buildChannelRow(ch, ci);
       list.appendChild(row);
     });
+    this._updatePianoRollChannelSelect();
   }
 
   _auditionChannel(ch) {
@@ -786,6 +787,26 @@ class FLStudioApp {
       this._selectPianoRollChannel(idx);
     });
 
+    // Toolbar extra tools
+    document.getElementById('pr-oct-down')?.addEventListener('click', () => {
+      this.pianoRoll.shiftOctave(-1);
+    });
+    document.getElementById('pr-oct-up')?.addEventListener('click', () => {
+      this.pianoRoll.shiftOctave(1);
+    });
+    document.getElementById('pr-ghost-btn')?.addEventListener('click', (e) => {
+      this.pianoRoll.toggleGhostNotes();
+      e.currentTarget.classList.toggle('active', this.pianoRoll.showGhostNotes);
+    });
+    document.getElementById('pr-zoom-in')?.addEventListener('click', () => {
+      this.pianoRoll.zoom(1.2);
+    });
+    document.getElementById('pr-zoom-out')?.addEventListener('click', () => {
+      this.pianoRoll.zoom(0.8);
+    });
+
+    this._updatePianoRollChannelSelect();
+
     // Sync scroll between piano keys and grid
     wrap.addEventListener('scroll', () => {
       const keysEl = document.getElementById('piano-keys');
@@ -799,13 +820,33 @@ class FLStudioApp {
     }, 100);
   }
 
+  _updatePianoRollChannelSelect() {
+    const sel = document.getElementById('pr-channel-select');
+    if (!sel || !this.sequencer || !this.sequencer.channels) return;
+    const curVal = (this.sequencer.pianoRollChannel !== undefined) ? this.sequencer.pianoRollChannel : 0;
+    sel.innerHTML = '';
+    this.sequencer.channels.forEach((ch, i) => {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = `${i + 1}. ${ch.name}`;
+      sel.appendChild(opt);
+    });
+    sel.value = Math.max(0, Math.min(curVal, this.sequencer.channels.length - 1));
+  }
+
   _selectPianoRollChannel(idx) {
+    if (idx < 0 || !this.sequencer.channels || !this.sequencer.channels[idx]) return;
     this.sequencer.pianoRollChannel = idx;
     if (this.pianoRoll) {
       this.pianoRoll.setChannel(idx);
     }
     const sel = document.getElementById('pr-channel-select');
-    if (sel) sel.value = idx;
+    if (sel) {
+      if (sel.options.length !== this.sequencer.channels.length) {
+        this._updatePianoRollChannelSelect();
+      }
+      sel.value = idx;
+    }
 
     // Update piano roll label
     const ch = this.sequencer.channels[idx];
@@ -1360,6 +1401,75 @@ class FLStudioApp {
           this.audioEditor.selEnd = this.audioEditor.duration;
           this.audioEditor._draw();
           return;
+        }
+      }
+
+      // Piano Roll shortcuts and musical typing keyboard
+      if (this.activeTab === 'piano-roll' && this.pianoRoll) {
+        if ((e.ctrlKey || e.metaKey) && e.code === 'ArrowUp') {
+          e.preventDefault();
+          this.pianoRoll.shiftOctave(1);
+          return;
+        }
+        if ((e.ctrlKey || e.metaKey) && e.code === 'ArrowDown') {
+          e.preventDefault();
+          this.pianoRoll.shiftOctave(-1);
+          return;
+        }
+        if ((e.ctrlKey || e.metaKey) && e.code === 'KeyQ') {
+          e.preventDefault();
+          this.pianoRoll.quantizeNotes();
+          return;
+        }
+        if (e.altKey && e.code === 'KeyV') {
+          e.preventDefault();
+          this.pianoRoll.toggleGhostNotes();
+          document.getElementById('pr-ghost-btn')?.classList.toggle('active', this.pianoRoll.showGhostNotes);
+          return;
+        }
+
+        // Musical typing keyboard (FL Studio layout: Z-M octave 4, Q-I octave 5)
+        if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+          const musicalKeys = {
+            'KeyZ': 60, // C4
+            'KeyS': 61, // C#4
+            'KeyX': 62, // D4
+            'KeyD': 63, // D#4
+            'KeyC': 64, // E4
+            'KeyV': 65, // F4
+            'KeyG': 66, // F#4
+            'KeyB': 67, // G4
+            'KeyH': 68, // G#4
+            'KeyN': 69, // A4
+            'KeyJ': 70, // A#4
+            'KeyM': 71, // B4
+            'Comma': 72, // C5
+            'KeyQ': 72, // C5
+            'Digit2': 73, // C#5
+            'KeyW': 74, // D5
+            'Digit3': 75, // D#5
+            'KeyE': 76, // E5
+            'KeyR': 77, // F5
+            'Digit5': 78, // F#5
+            'KeyT': 79, // G5
+            'Digit6': 80, // G#5
+            'KeyY': 81, // A5
+            'Digit7': 82, // A#5
+            'KeyU': 83, // B5
+            'KeyI': 84  // C6
+          };
+
+          if (musicalKeys[e.code] !== undefined) {
+            e.preventDefault();
+            const midi = musicalKeys[e.code];
+            this.pianoRoll._previewNote(midi, 0.35);
+            const keyEl = document.querySelector(`.piano-key[data-midi="${midi}"]`);
+            if (keyEl) {
+              keyEl.classList.add('playing');
+              setTimeout(() => keyEl.classList.remove('playing'), 200);
+            }
+            return;
+          }
         }
       }
 
