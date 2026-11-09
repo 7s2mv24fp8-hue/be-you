@@ -7434,3 +7434,467 @@ canvas { display: block; }
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STUDIO WORKFLOW, QUICK START LAUNCHER, AI CO-PILOT, & PRO CONTROLS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Quick Start Launcher Modal ────────────────────────────────────────── */
+.quick-start-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+@media (max-width: 600px) {
+  .quick-start-grid { grid-template-columns: 1fr; }
+}
+.quick-genre-card {
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  display: flex;
+  flex-direction: column;
+}
+.quick-genre-card:hover {
+  border-color: #ff7700;
+  background: rgba(255, 119, 0, 0.04);
+  transform: translateY(-1px);
+}
+.quick-genre-card.active {
+  border-color: #ff7700;
+  background: rgba(255, 119, 0, 0.10);
+  box-shadow: 0 0 12px rgba(255, 119, 0, 0.2);
+}
+.qg-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.qg-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+}
+.qg-badge {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  background: #27272a;
+  color: #ff7700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.qg-desc {
+  font-size: 11px;
+  color: #a1a1aa;
+  line-height: 1.4;
+  margin-bottom: 8px;
+  flex: 1;
+}
+.qg-scale {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: #71717a;
+}
+
+/* ── 2. Top-Left File Menu Dropdown ───────────────────────────────────────── */
+.tb-file-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.tb-file-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+.file-btn-arrow {
+  font-size: 9px;
+  color: #a1a1aa;
+}
+.tb-file-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+  padding: 4px 0;
+  min-width: 210px;
+  z-index: 1000;
+}
+.tb-file-menu.hidden {
+  display: none;
+}
+.tb-file-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #d4d4d8;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 7px 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+}
+.tb-file-menu-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+.tb-file-menu-sep {
+  height: 1px;
+  background: #27272a;
+  margin: 4px 0;
+}
+
+/* ── 3. Mixer Studio Tools Bar ────────────────────────────────────────────── */
+.mixer-studio-tools-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: #121215;
+  border-bottom: 1px solid #27272a;
+  flex-shrink: 0;
+}
+.mixer-tools-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: #71717a;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-right: 4px;
+}
+
+/* ── 4. Channel Rack Controls & Sample Swapping ──────────────────────────── */
+.channel-label {
+  width: 90px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #f4f4f5 !important;
+  padding: 0 6px !important;
+}
+.ch-swap-controls {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+.ch-swap-btn {
+  width: 13px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+  color: #a1a1aa;
+  font-size: 8px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.1s;
+}
+.ch-swap-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+.ch-vol-slider {
+  width: 36px;
+  height: 4px;
+  accent-color: #ff7700;
+  cursor: pointer;
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+.rack-bar-quick-toggles {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.rack-bar-toggle-btn {
+  padding: 2px 7px;
+  font-size: 9px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 3px;
+  color: #a1a1aa;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.rack-bar-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+.rack-bar-toggle-btn.active {
+  background: #ff7700;
+  border-color: #ff7700;
+  color: #000000;
+}
+.rack-ai-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  font-size: 9px;
+  font-weight: 700;
+  background: rgba(255, 119, 0, 0.12);
+  border: 1px solid rgba(255, 119, 0, 0.4);
+  border-radius: 3px;
+  color: #ff7700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.rack-ai-action-btn:hover {
+  background: #ff7700;
+  color: #000000;
+}
+.ai-spark-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ff7700;
+}
+.rack-ai-action-btn:hover .ai-spark-dot {
+  background: #000000;
+}
+
+/* ── 5. Piano Roll Fold-to-Scale & Progression Builder ────────────────────── */
+#pr-btn-fold-scale.active {
+  background: #ff7700 !important;
+  color: #000000 !important;
+  border-color: #ff7700 !important;
+  font-weight: 700 !important;
+}
+.pr-ai-action-btn {
+  background: rgba(255, 119, 0, 0.12) !important;
+  border-color: rgba(255, 119, 0, 0.4) !important;
+  color: #ff7700 !important;
+  font-weight: 700 !important;
+}
+.pr-ai-action-btn:hover {
+  background: #ff7700 !important;
+  color: #000000 !important;
+}
+
+/* ── 6. Playlist Auto-Arrange ─────────────────────────────────────────────── */
+.pl-arrange-btn {
+  background: rgba(255, 119, 0, 0.15) !important;
+  border-color: rgba(255, 119, 0, 0.45) !important;
+  color: #ff7700 !important;
+  font-weight: 700 !important;
+}
+.pl-arrange-btn:hover {
+  background: #ff7700 !important;
+  color: #000000 !important;
+}
+
+/* ── 7. Max AI Co-Pilot Collapsible Drawer ─────────────────────────────────── */
+.tb-ai-copilot-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  background: rgba(255, 119, 0, 0.14);
+  border: 1px solid rgba(255, 119, 0, 0.45);
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tb-ai-copilot-btn:hover {
+  background: #ff7700;
+  color: #000000;
+}
+.ai-copilot-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 360px;
+  height: 100%;
+  background: #121215;
+  border-left: 1px solid #27272a;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.6);
+}
+.ai-copilot-drawer.hidden {
+  display: none;
+}
+.ai-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid #27272a;
+}
+.ai-drawer-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+}
+.ai-copilot-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ff7700;
+}
+.ai-drawer-close-btn {
+  background: transparent;
+  border: none;
+  color: #a1a1aa;
+  font-size: 14px;
+  cursor: pointer;
+}
+.ai-drawer-close-btn:hover {
+  color: #ffffff;
+}
+.ai-drawer-quick-prompts {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  overflow-x: auto;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.ai-quick-chip {
+  padding: 3px 8px;
+  font-size: 10px;
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 12px;
+  color: #d4d4d8;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.ai-quick-chip:hover {
+  border-color: #ff7700;
+  color: #ff7700;
+}
+.ai-drawer-tabs {
+  display: flex;
+  border-bottom: 1px solid #27272a;
+}
+.ai-drawer-tab {
+  flex: 1;
+  padding: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #71717a;
+  cursor: pointer;
+}
+.ai-drawer-tab.active {
+  color: #ffffff;
+  border-bottom-color: #ff7700;
+}
+.ai-drawer-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 12px;
+}
+.ai-drawer-pane {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+}
+.ai-drawer-pane.active {
+  display: flex;
+}
+.ai-drawer-chat-history {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ai-chat-msg {
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.ai-chat-msg.ai {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #e4e4e7;
+}
+.ai-chat-msg.user {
+  background: rgba(255, 119, 0, 0.15);
+  border: 1px solid rgba(255, 119, 0, 0.3);
+  color: #ffffff;
+  align-self: flex-end;
+}
+.ai-msg-sender {
+  font-size: 10px;
+  font-weight: 700;
+  color: #ff7700;
+  margin-bottom: 3px;
+}
+.ai-drawer-input-row {
+  display: flex;
+  gap: 6px;
+}
+.ai-drawer-input {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 11px;
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 4px;
+  color: #ffffff;
+  outline: none;
+}
+.ai-drawer-input:focus {
+  border-color: #ff7700;
+}
+.ai-drawer-btn {
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 4px;
+  cursor: pointer;
+  border: none;
+}
+.ai-drawer-btn.primary {
+  background: #ff7700;
+  color: #000000;
+}
+.ai-drawer-btn.secondary {
+  background: #27272a;
+  color: #ffffff;
+}
+

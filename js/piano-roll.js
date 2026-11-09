@@ -47,6 +47,7 @@ class PianoRoll {
     this.activeKeyMidi = null;
     this.activePlayingMidis = [];
     this.showGhostNotes = true;
+    this.foldedToScale = false;
     this._keyHighlightTimer = null;
 
     // Which channel we're editing
@@ -90,11 +91,131 @@ class PianoRoll {
     this.render();
   }
 
+  getVisibleMidis() {
+    const scalePitches = (window.flPianoExtras && typeof window.flPianoExtras.getScalePitchClasses === 'function')
+      ? window.flPianoExtras.getScalePitchClasses()
+      : null;
+
+    if (!this.foldedToScale || !scalePitches || scalePitches.length === 0) {
+      return Array.from({ length: this.totalNotes }, (_, i) => i);
+    }
+    const list = [];
+    for (let m = 0; m < this.totalNotes; m++) {
+      if (scalePitches.includes(m % 12)) list.push(m);
+    }
+    return list.length > 0 ? list : Array.from({ length: this.totalNotes }, (_, i) => i);
+  }
+
+  yToMidi(y) {
+    const v = this.getVisibleMidis();
+    const row = Math.floor(y / this.cellH);
+    const clampedRow = Math.max(0, Math.min(v.length - 1, row));
+    return v[v.length - 1 - clampedRow];
+  }
+
+  midiToY(midi) {
+    const v = this.getVisibleMidis();
+    let idx = v.indexOf(midi);
+    if (idx === -1) {
+      let bestDiff = 999;
+      let bestIdx = 0;
+      v.forEach((vm, i) => {
+        const d = Math.abs(vm - midi);
+        if (d < bestDiff) { bestDiff = d; bestIdx = i; }
+      });
+      idx = bestIdx;
+    }
+    const row = v.length - 1 - idx;
+    return row * this.cellH;
+  }
+
+  toggleFoldScale(forceState) {
+    this.foldedToScale = (forceState !== undefined) ? !!forceState : !this.foldedToScale;
+    const btn = document.getElementById('pr-btn-fold-scale');
+    if (btn) {
+      btn.classList.toggle('active', this.foldedToScale);
+      btn.textContent = this.foldedToScale ? 'Fold Scale [ON]' : 'Fold Scale';
+    }
+    const visibleMidis = this.getVisibleMidis();
+    this.totalH = visibleMidis.length * this.cellH;
+    if (this.canvas) this.canvas.height = this.totalH;
+    if (this.keysCanvas) this.keysCanvas.height = this.totalH;
+    this._renderKeys();
+    this.render();
+    if (window.showToast) {
+      window.showToast(this.foldedToScale ? 'Fold Scale ON: Out-of-key rows hidden' : 'Fold Scale OFF: Chromatic grid visible');
+    }
+  }
+
+  stampProgression(progressionKey = 'i-VI-III-VII') {
+    const ch = this.sequencer.channels[this.channelIdx];
+    if (!ch) return;
+
+    const extras = window.flPianoExtras || {};
+    const rootName = extras.scaleRoot || 'C';
+    const scaleType = extras.scaleType || 'Minor';
+    const noteNames = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+    const rootPitchClass = noteNames.indexOf(rootName);
+
+    const isMajor = (scaleType || '').toLowerCase().includes('major');
+    const scaleIntervals = isMajor
+      ? [0, 2, 4, 5, 7, 9, 11]
+      : [0, 2, 3, 5, 7, 8, 10];
+
+    const progressionDegrees = {
+      'i-VI-III-VII': [0, 5, 2, 6],
+      'i-iv-v-i':     [0, 3, 4, 0],
+      'I-V-vi-IV':    [0, 4, 5, 3],
+      'ii-V-I-vi':    [1, 4, 0, 5],
+      'i-iv-VII-III': [0, 3, 6, 2],
+    };
+
+    const degrees = progressionDegrees[progressionKey] || progressionDegrees['i-VI-III-VII'];
+    const baseOctave = (ch.name === 'Bass') ? 2 : 4;
+    const baseRootMidi = baseOctave * 12 + (rootPitchClass >= 0 ? rootPitchClass : 0);
+
+    ch.notes = [];
+    const totalSteps = this.sequencer.steps || 16;
+    const chordStepLen = Math.floor(totalSteps / 4);
+
+    degrees.forEach((deg, chordIdx) => {
+      const stepOffset = chordIdx * chordStepLen;
+      const deg0 = deg;
+      const deg1 = (deg + 2) % 7;
+      const deg2 = (deg + 4) % 7;
+
+      const oct0 = Math.floor(deg / 7);
+      const oct1 = Math.floor((deg + 2) / 7);
+      const oct2 = Math.floor((deg + 4) / 7);
+
+      const m0 = baseRootMidi + scaleIntervals[deg0 % 7] + oct0 * 12;
+      const m1 = baseRootMidi + scaleIntervals[deg1] + oct1 * 12;
+      const m2 = baseRootMidi + scaleIntervals[deg2] + oct2 * 12;
+
+      const notesToAdd = (ch.name === 'Bass') ? [m0 - 12] : [m0, m1, m2];
+      notesToAdd.forEach(midi => {
+        ch.notes.push({
+          step: stepOffset,
+          midi: Math.max(12, Math.min(84, midi)),
+          length: Math.max(1, chordStepLen - 0.25),
+          velocity: 0.85
+        });
+      });
+    });
+
+    this.sequencer.syncChannelStepsFromNotes(this.channelIdx);
+    this.render();
+    if (window.showToast) window.showToast(`Stamped ${progressionKey} progression in ${rootName} ${scaleType}`);
+  }
+
   // ── Piano key rendering ────────────────────────────────────────
   _renderKeys() {
     if (!this.keysCtx) return;
     const ctx = this.keysCtx;
-    const totalNotes = this.totalNotes;
+    const visibleMidis = this.getVisibleMidis();
+    const numRows = visibleMidis.length;
+    this.totalH = numRows * this.cellH;
+    if (this.keysCanvas.height !== this.totalH) this.keysCanvas.height = this.totalH;
     ctx.clearRect(0, 0, 48, this.totalH);
 
     const noteNames = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
@@ -103,8 +224,8 @@ class PianoRoll {
     const currentCh = this.sequencer.channels[this.channelIdx];
     const chColor = (currentCh && currentCh.color) ? currentCh.color : '#00d2d3';
 
-    for (let i = 0; i < totalNotes; i++) {
-      const noteIdx = totalNotes - 1 - i; // top = highest note
+    for (let i = 0; i < numRows; i++) {
+      const noteIdx = visibleMidis[numRows - 1 - i]; // top = highest note
       const noteName = noteNames[noteIdx % 12];
       const isB = isBlack[noteIdx % 12];
       const octave = Math.floor(noteIdx / 12);
@@ -146,13 +267,12 @@ class PianoRoll {
         ctx.font = 'bold 9px JetBrains Mono, monospace';
         ctx.textAlign = 'right';
         ctx.fillText(`C${octave}`, 44, y + h - 3);
-        // Subtle orange dot marker for middle C (C5/C4)
         if (octave === 5 || octave === 4) {
           ctx.fillStyle = isPressed ? '#ffffff' : chColor;
           ctx.fillRect(4, y + h / 2 - 1.5, 3, 3);
         }
-      } else if (!isB) {
-        ctx.fillStyle = isPressed ? '#ffffff' : '#444444';
+      } else {
+        ctx.fillStyle = isPressed ? '#ffffff' : (isB ? '#888888' : '#444444');
         ctx.font = '8px Inter, sans-serif';
         ctx.textAlign = 'right';
         ctx.fillText(noteName, 42, y + h - 3);
@@ -164,7 +284,11 @@ class PianoRoll {
   render() {
     if (!this.ctx) return;
     const ctx = this.ctx;
-    const { totalW, totalH, cellW, cellH, totalNotes, steps } = this;
+    const visibleMidis = this.getVisibleMidis();
+    const numRows = visibleMidis.length;
+    this.totalH = numRows * this.cellH;
+    if (this.canvas.height !== this.totalH) this.canvas.height = this.totalH;
+    const { totalW, totalH, cellW, cellH, steps } = this;
 
     ctx.clearRect(0, 0, totalW, totalH);
 
@@ -176,14 +300,14 @@ class PianoRoll {
       : null;
 
     // Draw rows with scale and black key guidance
-    for (let i = 0; i < totalNotes; i++) {
-      const noteIdx = totalNotes - 1 - i;
+    for (let i = 0; i < numRows; i++) {
+      const noteIdx = visibleMidis[numRows - 1 - i];
       const pitchClass = noteIdx % 12;
       const isB = isBlack[pitchClass];
       const inScale = scalePitches ? scalePitches.includes(pitchClass) : true;
       const y = i * cellH;
 
-      if (scalePitches) {
+      if (scalePitches && !this.foldedToScale) {
         ctx.fillStyle = inScale
           ? (isB ? '#151c28' : '#1c2436')
           : (isB ? '#0d0f13' : '#111317');
@@ -228,7 +352,7 @@ class PianoRoll {
     }
 
     // Horizontal grid lines
-    for (let i = 0; i <= totalNotes; i++) {
+    for (let i = 0; i <= numRows; i++) {
       const y = i * cellH;
       ctx.strokeStyle = '#12141a';
       ctx.lineWidth = 0.5;
@@ -247,9 +371,8 @@ class PianoRoll {
         ctx.lineWidth = 0.5;
 
         otherCh.notes.forEach(gn => {
-          const gnRow = this.totalNotes - 1 - gn.midi;
+          const gy = this.midiToY(gn.midi) + 1;
           const gx = gn.step * cellW + 1;
-          const gy = gnRow * cellH + 1;
           const gw = Math.max(4, (gn.length || 1) * cellW - 2);
           const gh = cellH - 2;
 
@@ -269,9 +392,8 @@ class PianoRoll {
 
       ch.notes.forEach(note => {
         const { step, midi, length = 1, velocity = 0.8 } = note;
-        const noteRowIdx = this.totalNotes - 1 - midi;
         const x = step * cellW + 1;
-        const y = noteRowIdx * cellH + 1;
+        const y = this.midiToY(midi) + 1;
         const w = Math.max(6, length * cellW - 2);
         const h = cellH - 2;
 
@@ -398,8 +520,7 @@ class PianoRoll {
     const handleKeyPointer = (e) => {
       const rect = this.keysCanvas.getBoundingClientRect();
       const y = e.clientY - rect.top;
-      const noteRow = Math.floor(y / this.cellH);
-      const midi = this.totalNotes - 1 - noteRow;
+      const midi = this.yToMidi(y);
       if (midi >= 0 && midi < this.totalNotes && midi !== this.activeKeyMidi) {
         this._previewNote(midi, 0.35, 0.85);
       }
@@ -424,6 +545,37 @@ class PianoRoll {
       }
     });
 
+    // Piano Roll Toolbar Extra Controls (Fold Scale, Stamp Progression, AI Melody)
+    const foldBtn = document.getElementById('pr-btn-fold-scale');
+    if (foldBtn && !foldBtn._bound) {
+      foldBtn._bound = true;
+      foldBtn.addEventListener('click', () => this.toggleFoldScale());
+    }
+
+    const stampBtn = document.getElementById('pr-btn-stamp-prog');
+    if (stampBtn && !stampBtn._bound) {
+      stampBtn._bound = true;
+      stampBtn.addEventListener('click', () => {
+        const sel = document.getElementById('pr-progression-select');
+        const key = sel ? sel.value : 'i-VI-III-VII';
+        this.stampProgression(key);
+      });
+    }
+
+    const aiMelodyBtn = document.getElementById('pr-btn-ai-melody');
+    if (aiMelodyBtn && !aiMelodyBtn._bound) {
+      aiMelodyBtn._bound = true;
+      aiMelodyBtn.addEventListener('click', () => {
+        if (window.flApp && typeof window.flApp.generateCounterMelody === 'function') {
+          window.flApp.generateCounterMelody();
+        } else if (window.app && typeof window.app.generateCounterMelody === 'function') {
+          window.app.generateCounterMelody();
+        } else if (window.showToast) {
+          window.showToast('AI Counter-Melody generating...');
+        }
+      });
+    }
+
     // Piano Roll Grid interactions
     this.canvas.addEventListener('mousedown', e => this._onMouseDown(e));
     this.canvas.addEventListener('mousemove', e => this._onMouseMove(e));
@@ -447,8 +599,7 @@ class PianoRoll {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     const step = Math.floor(x / this.cellW);
-    const noteRow = Math.floor(y / this.cellH);
-    const midi = this.totalNotes - 1 - noteRow;
+    const midi = this.yToMidi(y);
     return { step, midi, x, y };
   }
 

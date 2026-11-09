@@ -555,6 +555,10 @@ class Sequencer {
     this.bpm = Math.max(20, Math.min(300, bpm));
   }
 
+  setBpm(bpm) {
+    return this.setBPM(bpm);
+  }
+
   // ── Piano roll note integration ────────────────────────────────
   addNote(channelIdx, step, midi, length = 1, velocity = 0.8) {
     const ch = this.channels[channelIdx];

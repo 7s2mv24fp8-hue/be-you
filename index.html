@@ -41,161 +41,163 @@
   <!-- Mobile sidebar toggle (hidden on desktop, shown via CSS on ≤1024px) -->
   <button id="mobile-sidebar-toggle" style="display:none" aria-label="Toggle instrument rack" title="Instrument Rack">☰</button>
 
- <!-- Transport -->
- <div class="transport-group">
- <button id="btn-play" class="transport-btn play" title="Play (Space / F5)" data-tooltip="Play">
- <svg viewBox="0 0 16 16" width="14" fill="currentColor"><polygon points="3,2 13,8 3,14"/></svg>
- </button>
- <button id="btn-pause" class="transport-btn pause" title="Pause (Shift+Space / P)" data-tooltip="Pause">
- <svg viewBox="0 0 16 16" width="12" fill="currentColor">
-   <rect x="2.5" y="2" width="3.5" height="12" rx="1"/>
-   <rect x="10" y="2" width="3.5" height="12" rx="1"/>
- </svg>
- </button>
- <button id="btn-stop" class="transport-btn stop" title="Stop (F6)" data-tooltip="Stop">
- <svg viewBox="0 0 16 16" width="12" fill="currentColor"><rect x="2" y="2" width="12" height="12" rx="1"/></svg>
- </button>
- <button id="btn-record" class="transport-btn record" title="Record" data-tooltip="Record">
- <svg viewBox="0 0 16 16" width="12" fill="currentColor"><circle cx="8" cy="8" r="5"/></svg>
- </button>
- <button id="btn-metronome" class="transport-btn metro" title="Metronome Click (Ctrl+T)" data-tooltip="Metronome">
-  <svg viewBox="0 0 16 16" width="13" fill="currentColor">
-    <path d="M7 1h2l3.5 13H3.5L7 1zm.5 2.5L5.2 13h5.6L8.5 3.5h-1z"/>
-    <line x1="8" y1="9" x2="13" y2="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Top-left File Menu -->
+  <div class="file-dropdown-wrap" style="position:relative;">
+    <button id="tb-btn-file" class="tb-file-btn" title="Project and File Menu">
+      <span>File</span>
+      <span class="file-btn-arrow">&#9662;</span>
+    </button>
+    <div id="tb-file-menu" class="tb-file-menu hidden">
+      <button type="button" id="menu-btn-new-project" class="tb-file-menu-item">
+        <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="1.8"/></svg>
+        <span>New Project (Quick Start)</span>
+      </button>
+      <button type="button" id="menu-btn-save" class="tb-file-menu-item">
+        <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M3 2h8l3 3v9H3V2zm2 2v3h6V4H5zm1 6v3h4v-3H6z"/></svg>
+        <span>Save to Cloud (Ctrl+S)</span>
+      </button>
+      <button type="button" id="menu-btn-projects" class="tb-file-menu-item">
+        <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M2 3h4l2 2h6v8H2V3z"/></svg>
+        <span>Open Projects</span>
+      </button>
+      <button type="button" id="menu-btn-import" class="tb-file-menu-item">
+        <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M8 12V2M4 6l4-4 4 4M2 14h12" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>
+        <span>Import Sound / Audio</span>
+      </button>
+      <button type="button" id="menu-btn-export-stems" class="tb-file-menu-item">
+        <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M8 2v8m-4-4l4 4 4-4M2 14h12" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>
+        <span>Export Track Stems (WAV)</span>
+      </button>
+      <div class="tb-file-menu-sep"></div>
+      <button type="button" id="menu-btn-explore" class="tb-file-menu-item">
+        <span>Explore Community Beats</span>
+      </button>
+      <button type="button" id="menu-btn-train" class="tb-file-menu-item">
+        <span>Train Max AI</span>
+      </button>
+      <button type="button" id="menu-btn-admin" class="tb-file-menu-item">
+        <span>Super Admin Dashboard</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="toolbar-separator"></div>
+
+  <!-- Transport -->
+  <div class="transport-group">
+  <button id="btn-play" class="transport-btn play" title="Play (Space / F5)" data-tooltip="Play">
+  <svg viewBox="0 0 16 16" width="14" fill="currentColor"><polygon points="3,2 13,8 3,14"/></svg>
+  </button>
+  <button id="btn-pause" class="transport-btn pause" title="Pause (Shift+Space / P)" data-tooltip="Pause">
+  <svg viewBox="0 0 16 16" width="12" fill="currentColor">
+    <rect x="2.5" y="2" width="3.5" height="12" rx="1"/>
+    <rect x="10" y="2" width="3.5" height="12" rx="1"/>
   </svg>
- </button>
- </div>
+  </button>
+  <button id="btn-stop" class="transport-btn stop" title="Stop (F6)" data-tooltip="Stop">
+  <svg viewBox="0 0 16 16" width="12" fill="currentColor"><rect x="2" y="2" width="12" height="12" rx="1"/></svg>
+  </button>
+  <button id="btn-record" class="transport-btn record" title="Record" data-tooltip="Record">
+  <svg viewBox="0 0 16 16" width="12" fill="currentColor"><circle cx="8" cy="8" r="5"/></svg>
+  </button>
+  <button id="btn-metronome" class="transport-btn metro" title="Metronome Click (Ctrl+T)" data-tooltip="Metronome">
+   <svg viewBox="0 0 16 16" width="13" fill="currentColor">
+     <path d="M7 1h2l3.5 13H3.5L7 1zm.5 2.5L5.2 13h5.6L8.5 3.5h-1z"/>
+     <line x1="8" y1="9" x2="13" y2="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+   </svg>
+  </button>
+  </div>
 
- <div class="toolbar-separator"></div>
+  <div class="toolbar-separator"></div>
 
- <!-- Pattern / Song mode -->
- <div class="mode-toggle">
- <button class="mode-btn active" id="mode-pattern">PAT</button>
- <button class="mode-btn" id="mode-song">SONG</button>
- </div>
+  <!-- Pattern / Song mode -->
+  <div class="mode-toggle">
+  <button class="mode-btn active" id="mode-pattern">PAT</button>
+  <button class="mode-btn" id="mode-song">SONG</button>
+  </div>
 
- <div class="toolbar-separator"></div>
+  <div class="toolbar-separator"></div>
 
- <!-- BPM -->
- <div class="bpm-group">
- <span class="bpm-label">BPM</span>
- <input id="bpm-display" class="bpm-display" type="number" min="20" max="300" value="140" title="Drag to change BPM">
- <button id="btn-tap-tempo" class="tb-tap-btn" title="Tap Tempo — Click rhythmically to set BPM">TAP</button>
- <div class="bpm-arrows">
- <button id="bpm-up" class="bpm-arrow" title="+1 BPM">▲</button>
- <button id="bpm-down" class="bpm-arrow" title="−1 BPM">▼</button>
- </div>
- </div>
+  <!-- BPM -->
+  <div class="bpm-group">
+  <span class="bpm-label">BPM</span>
+  <input id="bpm-display" class="bpm-display" type="number" min="20" max="300" value="140" title="Drag to change BPM">
+  <button id="btn-tap-tempo" class="tb-tap-btn" title="Tap Tempo — Click rhythmically to set BPM">TAP</button>
+  <div class="bpm-arrows">
+  <button id="bpm-up" class="bpm-arrow" title="+1 BPM">▲</button>
+  <button id="bpm-down" class="bpm-arrow" title="−1 BPM">▼</button>
+  </div>
+  </div>
 
- <!-- Time sig -->
- <div class="timesig-group">
- <span>4</span>
- <span style="font-size:10px;color:var(--text-muted)">/</span>
- <span>4</span>
- </div>
+  <!-- Time sig -->
+  <div class="timesig-group">
+  <span>4</span>
+  <span style="font-size:10px;color:var(--text-muted)">/</span>
+  <span>4</span>
+  </div>
 
- <!-- Position -->
- <div id="position-display" class="position-display">1:1:1</div>
+  <!-- Position -->
+  <div id="position-display" class="position-display">1:1:1</div>
 
- <div class="toolbar-separator"></div>
+  <div class="toolbar-separator"></div>
 
- <!-- Project Name Pill (Hidden in toolbar because it is already present in Title Bar) -->
- <div class="project-pill-wrap" style="display:none;" title="Current Project Name (Click to rename)">
- <span class="proj-pill-icon"></span>
- <input id="tb-project-title-input" class="tb-proj-input" value="Untitled Project" spellcheck="false" title="Click to rename project" />
- <span class="proj-edit-hint"></span>
- </div>
+  <!-- Master knobs & Groove Swing -->
+  <div class="master-group">
+  <button id="tb-audio-status-btn" class="tb-audio-status-btn" title="Audio Engine Status — Click to Unmute or Test Sound">
+  <svg class="audio-status-icon" viewBox="0 0 16 16" width="13" fill="currentColor">
+  <path d="M11.536 14.01A8.473 8.473 0 0 0 14 8c0-2.298-.914-4.383-2.39-5.924l-.707.707A7.477 7.477 0 0 1 13 8a7.477 7.477 0 0 1-2.171 5.303l.707.707z"/>
+  <path d="M6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A1.5 1.5 0 0 1 0 9V7a1.5 1.5 0 0 1 1.5-1.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06z"/>
+  </svg>
+  <span id="tb-audio-status-text">Audio ON</span>
+  </button>
+  <div class="knob-wrap" data-tooltip="Master Volume">
+  <span class="master-knob-label">VOL</span>
+  <canvas id="master-vol-knob" width="28" height="28" title="Master Volume (drag)"></canvas>
+  <span id="master-vol-val" class="knob-value">85%</span>
+  </div>
+  <div class="knob-wrap" data-tooltip="Master Pitch">
+  <span class="master-knob-label">PITCH</span>
+  <canvas id="master-pitch-knob" width="28" height="28" title="Master Pitch (drag)"></canvas>
+  <span id="master-pitch-val" class="knob-value">0 st</span>
+  </div>
+  <div class="knob-wrap" data-tooltip="Swing / Groove (0-75%)">
+  <span class="master-knob-label">SWING</span>
+  <input type="range" id="tb-swing-slider" min="0" max="75" value="0" style="width:36px;height:5px;accent-color:#ff7700;cursor:pointer;" title="Swing Shuffle">
+  <span id="tb-swing-val" class="knob-value">0%</span>
+  </div>
+  </div>
 
- <!-- Plugin & Tool Launchers -->
- <div class="view-btns">
- <button class="view-btn plugin-launch-btn" id="tb-btn-param-eq" title="Parametric EQ 2">
- <svg viewBox="0 0 16 16" width="13" fill="currentColor">
- <path d="M2 13h12v1H2z"/>
- <path d="M3 11c2-1 3-7 5-7s3 6 5 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
- </svg>
- EQ 2
- </button>
- <button class="view-btn plugin-launch-btn" id="tb-btn-soundgoodizer" title="Soundgoodizer Maximus Plugin">
- <svg viewBox="0 0 16 16" width="13" fill="currentColor">
- <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
- <line x1="8" y1="8" x2="11" y2="5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
- </svg>
- Goodizer
- </button>
- <button class="view-btn plugin-launch-btn" id="tb-btn-graph-editor" title="Graph Editor (F4) — Step Velocity, Pitch, Pan, Cutoff">
- <svg viewBox="0 0 16 16" width="13" fill="currentColor">
-   <rect x="2" y="8" width="2" height="6"/>
-   <rect x="6" y="4" width="2" height="10"/>
-   <rect x="10" y="2" width="2" height="12"/>
-   <rect x="14" y="6" width="2" height="8"/>
- </svg>
- Graph
- </button>
- <button class="view-btn plugin-launch-btn" id="tb-btn-export-stems" title="Export Track Stems (WAV)">
- <svg viewBox="0 0 16 16" width="13" fill="currentColor">
- <path d="M8 2v8m-4-4l4 4 4-4M2 14h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
- </svg>
- Stems
- </button>
- </div>
+  <!-- Hidden Legacy Compatibility Elements -->
+  <div class="legacy-hidden-actions" style="display:none;" aria-hidden="true">
+    <button id="plat-cloud-save-btn">Save</button>
+    <button id="btn-cloud-open">Projects</button>
+    <button id="btn-import-sound">Import</button>
+    <button id="plat-explore-tab">Explore</button>
+    <button id="plat-train-btn">Train</button>
+    <button id="btn-admin-dash">Admin</button>
+    <button id="tb-btn-export-stems">Stems</button>
+    <button id="btn-ai-toggle">AI Beats</button>
+  </div>
 
- <!-- Master knobs & Groove Swing -->
- <div class="master-group">
- <button id="tb-audio-status-btn" class="tb-audio-status-btn" title="Audio Engine Status — Click to Unmute or Test Sound">
- <svg class="audio-status-icon" viewBox="0 0 16 16" width="13" fill="currentColor">
- <path d="M11.536 14.01A8.473 8.473 0 0 0 14 8c0-2.298-.914-4.383-2.39-5.924l-.707.707A7.477 7.477 0 0 1 13 8a7.477 7.477 0 0 1-2.171 5.303l.707.707z"/>
- <path d="M6.717 3.55A.5.5 0 0 1 7 4v8a.5.5 0 0 1-.812.39L3.825 10.5H1.5A1.5 1.5 0 0 1 0 9V7a1.5 1.5 0 0 1 1.5-1.5h2.325l2.363-1.89a.5.5 0 0 1 .529-.06z"/>
- </svg>
- <span id="tb-audio-status-text">Audio ON</span>
- </button>
- <div class="knob-wrap" data-tooltip="Master Volume">
- <span class="master-knob-label">VOL</span>
- <canvas id="master-vol-knob" width="28" height="28" title="Master Volume (drag)"></canvas>
- <span id="master-vol-val" class="knob-value">85%</span>
- </div>
- <div class="knob-wrap" data-tooltip="Master Pitch">
- <span class="master-knob-label">PITCH</span>
- <canvas id="master-pitch-knob" width="28" height="28" title="Master Pitch (drag)"></canvas>
- <span id="master-pitch-val" class="knob-value">0 st</span>
- </div>
- <div class="knob-wrap" data-tooltip="Swing / Groove (0-75%)">
- <span class="master-knob-label">SWING</span>
- <input type="range" id="tb-swing-slider" min="0" max="75" value="0" style="width:36px;height:5px;accent-color:#ff7700;cursor:pointer;" title="Swing Shuffle">
- <span id="tb-swing-val" class="knob-value">0%</span>
- </div>
- </div>
+  <div class="toolbar-separator"></div>
 
- <div class="toolbar-separator"></div>
+  <!-- User Profile Badge -->
+  <div class="user-badge-group">
+  <div id="user-badge" class="user-pill" title="User Account (Click to Switch/Sign In)">
+  <span class="user-avatar-icon"></span>
+  <span id="user-name-display" class="user-name-text">Rahul Sharma</span>
+  <span id="user-role-tag" class="role-badge admin">ADMIN</span>
+  </div>
+  </div>
 
- <!-- Main Actions Group -->
- <div class="cloud-group">
- <button id="plat-cloud-save-btn" class="tb-cloud-btn" title="Save Project to Cloud">Save</button>
- <button id="btn-cloud-open" class="tb-cloud-btn" title="Open Cloud Projects">Projects</button>
- <button id="btn-import-sound" class="tb-cloud-btn" title="Import audio files or browse instrument presets" style="border-color:rgba(255,255,255,0.2);color:#ffffff;font-weight:700;">Import</button>
- <button id="plat-explore-tab" class="tb-cloud-btn" title="Explore Community Beats">Explore</button>
- <button id="plat-train-btn" class="tb-cloud-btn" title="Train Max with song audio & beats">Train</button>
- <button id="btn-admin-dash" class="tb-cloud-btn admin-btn" title="Super Admin Dashboard">Admin</button>
- </div>
-
- <div class="toolbar-separator"></div>
-
- <!-- User Profile Badge -->
- <div class="user-badge-group">
- <div id="user-badge" class="user-pill" title="User Account (Click to Switch/Sign In)">
- <span class="user-avatar-icon"></span>
- <span id="user-name-display" class="user-name-text">Rahul Sharma</span>
- <span id="user-role-tag" class="role-badge admin">ADMIN</span>
- </div>
- </div>
-
- <!-- AI Beat Suggester toggle -->
- <div style="flex-shrink:0;">
- <button id="btn-ai-toggle" title="AI Beat Suggester">
- <span class="ai-btn-dot"></span>
- AI Beats
- </button>
- </div>
- </div>
+  <!-- AI Co-Pilot Toggle -->
+  <div style="flex-shrink:0;">
+  <button id="btn-ai-copilot-toggle" class="tb-ai-copilot-btn" title="Toggle Max AI Co-Pilot Drawer">
+  <span class="ai-btn-dot"></span>
+  AI Co-Pilot
+  </button>
+  </div>
+  </div>
 
  <!-- ── Floating Live Voice Recording HUD ───────────────── -->
  <div id="top-rec-hud" class="hidden">
@@ -240,6 +242,23 @@
           <svg viewBox="0 0 16 16" width="8" height="8" fill="currentColor"><rect x="3" y="3" width="10" height="10" rx="1"/></svg>
         </button>
       </div>
+
+      <div class="rack-v-sep" style="width:1px;height:16px;background:var(--border);margin:0 2px;"></div>
+
+      <!-- Quick 1x / 2x / 4x Bar Expander Buttons -->
+      <div class="rack-bar-quick-toggles" title="1x (16 steps), 2x (32 steps), 4x (64 steps) Bar Expander">
+        <button type="button" class="rack-bar-toggle-btn active" data-bars="1">1x (16)</button>
+        <button type="button" class="rack-bar-toggle-btn" data-bars="2">2x (32)</button>
+        <button type="button" class="rack-bar-toggle-btn" data-bars="4">4x (64)</button>
+      </div>
+
+      <div class="rack-v-sep" style="width:1px;height:16px;background:var(--border);margin:0 2px;"></div>
+
+      <!-- Inline AI Drum Generator -->
+      <button type="button" id="rack-btn-ai-drums" class="rack-ai-action-btn" title="AI Generate Drum Groove for Current Genre">
+        <span class="ai-spark-dot"></span>
+        <span>AI Drums</span>
+      </button>
 
       <div class="rack-v-sep" style="width:1px;height:16px;background:var(--border);margin:0 2px;"></div>
 
@@ -354,30 +373,28 @@
  <!-- Right panel: Piano Roll / Mixer / Playlist tabs -->
  <div id="right-panel">
  <div class="right-tabs">
- <button class="right-tab active" data-tab="piano-roll">
- Piano Roll
+ <button class="right-tab" data-tab="channel-rack" id="tab-btn-beat" title="1. Beat — Step Sequencer &amp; Channel Rack">
+ 1. Beat
  </button>
- <button class="right-tab" data-tab="mixer">
- Mixer
+ <button class="right-tab active" data-tab="piano-roll" id="tab-btn-melody" title="2. Melody — Piano Roll &amp; Chords">
+ 2. Melody
  </button>
- <button class="right-tab" data-tab="playlist">
- Playlist
+ <button class="right-tab" data-tab="playlist" id="tab-btn-arrange" title="3. Arrange — Song Timeline">
+ 3. Arrange
  </button>
- <button class="right-tab record-tab" data-tab="record">
- Record
+ <button class="right-tab record-tab" data-tab="record" id="tab-btn-vocal" title="4. Vocal / Audio Recording">
+ 4. Vocal/Record
  <span class="rec-dot"></span>
  </button>
- <button class="right-tab ai-music-tab" data-tab="ai-music">
- AI Music
- <span class="ai-music-dot"></span>
+ <button class="right-tab" data-tab="mixer" id="tab-btn-mix" title="5. Mix — Multi-Track Mixer &amp; Studio Plugins">
+ 5. Mix (Mixer &amp; EQ)
  </button>
- <button class="right-tab ai-producer-tab" data-tab="ai-producer">
- AI Producer
- <span class="ai-producer-dot"></span>
- </button>
- <button class="right-tab" data-tab="audio-editor">
+ <button class="right-tab" data-tab="audio-editor" title="Audio Sample Editor">
  Audio Editor
  </button>
+ <!-- Hidden legacy compatibility buttons -->
+ <button class="right-tab ai-music-tab" data-tab="ai-music" style="display:none;"></button>
+ <button class="right-tab ai-producer-tab" data-tab="ai-producer" style="display:none;"></button>
  </div>
 
  <!-- Piano Roll tab -->
@@ -411,6 +428,18 @@
  <button id="pr-zoom-out" class="pr-tool-btn" title="Zoom Out Grid">-</button>
  <button id="pr-zoom-in" class="pr-tool-btn" title="Zoom In Grid">+</button>
  <div class="pr-separator"></div>
+ <button id="pr-btn-fold-scale" class="pr-tool-btn" title="Fold to Scale — Hides out-of-key rows so every clicked note is in-key">Fold Scale</button>
+ <select id="pr-progression-select" class="pr-quantize-select" title="4-Bar Chord Progression Builder" style="width:115px;">
+   <option value="i-VI-III-VII">i - VI - III - VII</option>
+   <option value="i-iv-v-i">i - iv - v - i</option>
+   <option value="I-V-vi-IV">I - V - vi - IV</option>
+   <option value="ii-V-I-vi">ii - V - I - vi</option>
+   <option value="i-iv-VII-III">i - iv - VII - III</option>
+ </select>
+ <button id="pr-btn-stamp-prog" class="pr-tool-btn" title="Stamp 4-Bar Chord Progression into Active Channel">Stamp Chords</button>
+ <button id="pr-btn-ai-melody" class="pr-tool-btn pr-ai-action-btn" title="AI Generate In-Key Counter-Melody">AI Melody</button>
+
+ <div class="pr-separator"></div>
  <button id="pr-clear-btn" class="pr-tool-btn" style="margin-left:auto;color:#ffffff;">
  Clear
  </button>
@@ -429,7 +458,26 @@
 
  <!-- Mixer tab -->
  <div id="tab-mixer" class="tab-content">
- <div id="mixer-view" style="flex:1;display:flex;flex-direction:row;overflow-x:auto;overflow-y:hidden;height:100%;">
+ <div class="mixer-studio-tools-bar">
+   <span class="mixer-tools-title">Studio Plugins:</span>
+   <button class="view-btn plugin-launch-btn" id="tb-btn-param-eq" title="Parametric EQ 2">
+     <svg viewBox="0 0 16 16" width="13" fill="currentColor"><path d="M2 13h12v1H2z"/><path d="M3 11c2-1 3-7 5-7s3 6 5 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+     Parametric EQ 2
+   </button>
+   <button class="view-btn plugin-launch-btn" id="tb-btn-soundgoodizer" title="Soundgoodizer Maximus DSP">
+     <svg viewBox="0 0 16 16" width="13" fill="currentColor"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="8" y1="8" x2="11" y2="5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+     Soundgoodizer
+   </button>
+   <button class="view-btn plugin-launch-btn" id="tb-btn-graph-editor" title="Graph Editor (F4)">
+     <svg viewBox="0 0 16 16" width="13" fill="currentColor"><rect x="2" y="8" width="2" height="6"/><rect x="6" y="4" width="2" height="10"/><rect x="10" y="2" width="2" height="12"/><rect x="14" y="6" width="2" height="8"/></svg>
+     Graph Editor
+   </button>
+   <button class="view-btn plugin-launch-btn" id="mixer-btn-export-stems" title="Export Track Stems (WAV)">
+     <svg viewBox="0 0 16 16" width="13" fill="currentColor"><path d="M8 2v8m-4-4l4 4 4-4M2 14h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+     Export Stems
+   </button>
+ </div>
+ <div id="mixer-view" style="flex:1;display:flex;flex-direction:row;overflow-x:auto;overflow-y:hidden;height:calc(100% - 38px);">
  <div id="mixer-channels"></div>
  </div>
  </div>
@@ -442,6 +490,8 @@
  <button id="pl-erase-btn" class="pl-tool-btn"> Erase</button>
  <div style="width:1px;height:18px;background:var(--border);margin:0 4px;"></div>
  <button id="pl-loop-btn" class="pl-tool-btn"> Loop</button>
+ <div style="width:1px;height:18px;background:var(--border);margin:0 4px;"></div>
+ <button id="pl-auto-arrange-btn" class="pl-tool-btn pl-arrange-btn" title="Bridge the 8-bar loop into a full 48-bar song arrangement">Auto-Arrange Song</button>
  <div style="margin-left:auto;font-size:10px;color:var(--text-muted);">
  Right-click to remove blocks
  </div>
@@ -1041,6 +1091,51 @@
  </div>
 
  </div>
+
+ <!-- ── Collapsible Right-hand Max AI Co-Pilot Drawer ────── -->
+ <div id="ai-copilot-drawer" class="ai-copilot-drawer hidden">
+   <div class="ai-drawer-header">
+     <div class="ai-drawer-title">
+       <span class="ai-copilot-dot"></span>
+       <span>Max AI Co-Pilot</span>
+     </div>
+    <button id="ai-drawer-close-btn" class="ai-drawer-close-btn" title="Close AI Drawer">&times;</button>
+   </div>
+   <div class="ai-drawer-quick-prompts">
+     <button type="button" class="ai-quick-chip" data-prompt="Trap beat with rolling 808s and fast hi-hats">Trap 808s</button>
+     <button type="button" class="ai-quick-chip" data-prompt="Lofi chill beat with vinyl warmth and Rhodes chords">Lo-Fi Chill</button>
+     <button type="button" class="ai-quick-chip" data-prompt="Drill beat with sliding bass and syncopated snare">Drill Bounce</button>
+     <button type="button" class="ai-quick-chip" data-prompt="Boom-Bap 90s hip hop punchy drums">Boom-Bap</button>
+   </div>
+   <div class="ai-drawer-tabs">
+     <button type="button" class="ai-drawer-tab active" data-view="producer">Beat Producer</button>
+     <button type="button" class="ai-drawer-tab" data-view="music">Audio Generator</button>
+   </div>
+   <div class="ai-drawer-body">
+     <div id="ai-drawer-producer-pane" class="ai-drawer-pane active">
+       <div class="ai-drawer-chat-history" id="ai-drawer-chat-history">
+         <div class="ai-chat-msg ai">
+           <div class="ai-msg-sender">Max AI Producer</div>
+           <div class="ai-msg-text">What are we cooking today? Ask for drums, counter-melodies, 808 basslines, or full genre productions.</div>
+         </div>
+       </div>
+       <div class="ai-drawer-input-row">
+         <input type="text" id="ai-drawer-prompt-input" class="ai-drawer-input" placeholder="Describe beat (e.g. dark drill with sliding 808)..." spellcheck="false" />
+         <button type="button" id="ai-drawer-send-btn" class="ai-drawer-btn primary">Produce</button>
+       </div>
+     </div>
+     <div id="ai-drawer-music-pane" class="ai-drawer-pane">
+       <div class="ai-drawer-input-row" style="margin-bottom:8px;">
+         <input type="text" id="ai-drawer-music-prompt-input" class="ai-drawer-input" placeholder="Describe audio (e.g. chill lofi piano chords)..." spellcheck="false" />
+         <button type="button" id="ai-drawer-music-gen-btn" class="ai-drawer-btn primary">Synthesize</button>
+       </div>
+       <div id="ai-drawer-music-status" class="ai-drawer-status" style="font-size:11px;color:var(--text-muted);min-height:24px;">Ready to synthesize multi-stem audio</div>
+       <audio id="ai-drawer-audio-player" controls style="width:100%;height:32px;margin-top:8px;display:none;"></audio>
+       <button type="button" id="ai-drawer-insert-audio-btn" class="ai-drawer-btn secondary" style="width:100%;margin-top:6px;display:none;">Insert into Channel Rack</button>
+     </div>
+   </div>
+ </div>
+
  </div>
 
  <!-- ── Global Sound Drop Zone (always visible) ────────── -->
@@ -1169,6 +1264,96 @@
 </style>
 
 <!-- ── Modals: Cloud Projects, Save, Admin Dashboard, Auth, Pattern Extension ──────────── -->
+
+<!-- Modal: Quick Start Launcher (Zero-to-Loop Onboarding) -->
+<div id="modal-quick-start" class="fl-modal-overlay hidden">
+  <div class="fl-modal-box" style="max-width: 620px;">
+    <div class="fl-modal-header">
+      <div class="fl-modal-title">
+        <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;vertical-align:-2px;">
+          <polygon points="5 3 14 8 5 13 5 3"/>
+        </svg>
+        Quick Start Launcher
+      </div>
+      <button class="fl-modal-close" data-close="modal-quick-start">&times;</button>
+    </div>
+    <div class="fl-modal-body">
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">
+        Select a genre foundation. BeYou Studio will set the BPM, lock the musical scale, load matching drum kits, and optionally generate a starter groove so you can start creating immediately.
+      </p>
+
+      <!-- Genre & Vibe Grid -->
+      <div class="quick-start-grid" id="quick-start-genres">
+        <div class="quick-genre-card active" data-genre="boom-bap" data-bpm="90" data-scale-root="C" data-scale-type="Minor">
+          <div class="qg-header">
+            <span class="qg-title">Boom-Bap</span>
+            <span class="qg-badge">90 BPM</span>
+          </div>
+          <div class="qg-desc">Classic 90s hip-hop bounce, snappy acoustic snare, 12% groove swing.</div>
+          <div class="qg-scale">Scale: C Minor</div>
+        </div>
+
+        <div class="quick-genre-card" data-genre="drill" data-bpm="142" data-scale-root="D" data-scale-type="Minor">
+          <div class="qg-header">
+            <span class="qg-title">Drill</span>
+            <span class="qg-badge">142 BPM</span>
+          </div>
+          <div class="qg-desc">Menacing sliding 808s, half-time snare, syncopated hi-hat counter-rhythms.</div>
+          <div class="qg-scale">Scale: D Minor</div>
+        </div>
+
+        <div class="quick-genre-card" data-genre="lofi" data-bpm="80" data-scale-root="C" data-scale-type="Minor">
+          <div class="qg-header">
+            <span class="qg-title">Lo-Fi</span>
+            <span class="qg-badge">80 BPM</span>
+          </div>
+          <div class="qg-desc">Relaxed chill beats with 15% swing, warm Rhodes piano, and analog vinyl feel.</div>
+          <div class="qg-scale">Scale: C Minor</div>
+        </div>
+
+        <div class="quick-genre-card" data-genre="trap" data-bpm="150" data-scale-root="F" data-scale-type="Minor">
+          <div class="qg-header">
+            <span class="qg-title">Trap</span>
+            <span class="qg-badge">150 BPM</span>
+          </div>
+          <div class="qg-desc">Deep resonant 808 bass, rapid-fire hi-hat rolls, and melodic brass chords.</div>
+          <div class="qg-scale">Scale: F Minor</div>
+        </div>
+
+        <div class="quick-genre-card" data-genre="house" data-bpm="126" data-scale-root="A" data-scale-type="Minor">
+          <div class="qg-header">
+            <span class="qg-title">House</span>
+            <span class="qg-badge">126 BPM</span>
+          </div>
+          <div class="qg-desc">Four-on-the-floor kick punch, driving offbeat open hats, and bouncy organ bass.</div>
+          <div class="qg-scale">Scale: A Minor</div>
+        </div>
+
+        <div class="quick-genre-card" data-genre="synthwave" data-bpm="122" data-scale-root="D" data-scale-type="Minor">
+          <div class="qg-header">
+            <span class="qg-title">Synthwave</span>
+            <span class="qg-badge">122 BPM</span>
+          </div>
+          <div class="qg-desc">80s retro-futuristic gated drums, rolling saw bass arps, and lush synth pads.</div>
+          <div class="qg-scale">Scale: D Minor</div>
+        </div>
+      </div>
+    </div>
+    <div class="fl-modal-footer" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+      <button type="button" id="btn-quick-start-empty" class="fl-btn secondary" style="font-size:11px;">
+        Blank Project
+      </button>
+      <div style="display:flex;gap:8px;">
+        <button type="button" class="fl-btn secondary fl-modal-close" data-close="modal-quick-start" style="font-size:11px;">
+          Cancel
+        </button>
+        <button type="button" id="btn-quick-start-generate" class="fl-btn primary" style="font-size:11px;font-weight:700;">
+          Generate Starter Groove
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Modal: Extend Pattern Length -->
 <div id="modal-extend-pattern" class="fl-modal-overlay hidden">

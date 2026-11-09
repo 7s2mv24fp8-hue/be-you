@@ -13,8 +13,9 @@ class Playlist {
     // Grid config
     this.trackH = 32;
     this.cellW  = 48;  // pixels per bar (1 bar = 1 pattern block)
-    this.bars   = 32;  // total bars in playlist
+    this.bars   = 48;  // total bars in playlist (48 bars for full songs)
     this.tracks = [];  // [{name, color, blocks: [{bar, length}]}]
+    this.sectionMarkers = []; // [{bar, length, name, color, borderColor}]
 
     this.tool = 'draw';
     this.isDragging = false;
@@ -189,6 +190,24 @@ class Playlist {
       ctx.strokeRect(lx, 0, lw, h);
     }
 
+    // Section Markers
+    if (this.sectionMarkers && this.sectionMarkers.length) {
+      this.sectionMarkers.forEach(m => {
+        const mx = m.bar * cellW;
+        const mw = (m.length || 8) * cellW;
+        ctx.fillStyle = m.color || 'rgba(255, 119, 0, 0.12)';
+        ctx.fillRect(mx, 0, mw, 18);
+        ctx.strokeStyle = m.borderColor || 'rgba(255, 119, 0, 0.45)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(mx, 0, mw, 18);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 9px JetBrains Mono, monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(m.name, mx + 6, 12);
+      });
+    }
+
     // Playhead
     const px = this.playPosition * cellW;
     ctx.strokeStyle = '#ffffff';
@@ -318,6 +337,12 @@ class Playlist {
 
   updatePlayhead(bar) {
     this.playPosition = bar;
+    this.render();
+  }
+
+  setBars(newBars) {
+    this.bars = Math.max(16, parseInt(newBars, 10) || 48);
+    this._initCanvas();
     this.render();
   }
 

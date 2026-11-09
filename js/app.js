@@ -55,6 +55,11 @@ class FLStudioApp {
     this._bindStudioTools();
 
     this._bindExtendPatternModal();
+    this._bindQuickStartLauncher();
+    this._bindFileMenu();
+    this._bindAICopilotDrawer();
+    this._bindRackQuickBarToggles();
+    this._bindPlaylistAutoArrange();
 
     // Sequencer callbacks
     this.sequencer.onStep = (step, songStep) => this._onStep(step, songStep);
@@ -216,6 +221,12 @@ class FLStudioApp {
       }
       select.value = String(newSteps);
     }
+
+    // Update 1x / 2x / 4x quick bar toggle buttons
+    const barCount = Math.round(newSteps / 16);
+    document.querySelectorAll('.rack-bar-toggle-btn').forEach(b => {
+      b.classList.toggle('active', parseInt(b.dataset.bars, 10) === barCount);
+    });
 
     // Smooth scroll to reveal newly added steps seamlessly
     if (newSteps > oldSteps && channelsList) {
@@ -547,6 +558,29 @@ class FLStudioApp {
     });
     row.appendChild(pauseBtn);
 
+    // 1-Click Sample Swap Arrows (< >)
+    const swapWrap = document.createElement('div');
+    swapWrap.className = 'ch-swap-controls';
+    const prevSwapBtn = document.createElement('button');
+    prevSwapBtn.className = 'ch-swap-btn';
+    prevSwapBtn.textContent = '<';
+    prevSwapBtn.title = `Previous sample for ${ch.name}`;
+    prevSwapBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.swapChannelSample(ci, -1);
+    });
+    const nextSwapBtn = document.createElement('button');
+    nextSwapBtn.className = 'ch-swap-btn';
+    nextSwapBtn.textContent = '>';
+    nextSwapBtn.title = `Next sample for ${ch.name}`;
+    nextSwapBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.swapChannelSample(ci, 1);
+    });
+    swapWrap.appendChild(prevSwapBtn);
+    swapWrap.appendChild(nextSwapBtn);
+    row.appendChild(swapWrap);
+
     // Label (click → audition & open piano roll for synth, or preview for audio)
     const label = document.createElement('div');
     label.className = 'channel-label';
@@ -573,12 +607,12 @@ class FLStudioApp {
     });
     row.appendChild(label);
 
-    // Mini controls (mute, solo)
+    // Mini controls (mute, solo, volume slider, clone)
     const miniCtrl = document.createElement('div');
     miniCtrl.className = 'channel-mini-controls';
 
     const muteBtn = document.createElement('button');
-    muteBtn.className = 'ch-btn';
+    muteBtn.className = 'ch-btn' + (ch.muted ? ' muted' : '');
     muteBtn.textContent = 'M';
     muteBtn.title = 'Mute';
     muteBtn.dataset.channelIdx = ci;
@@ -590,9 +624,11 @@ class FLStudioApp {
     });
 
     const soloBtn = document.createElement('button');
-    soloBtn.className = 'ch-btn';
+    soloBtn.className = 'ch-btn' + (ch.solo ? ' soloed' : '');
     soloBtn.textContent = 'S';
     soloBtn.title = 'Solo';
+    soloBtn.dataset.channelIdx = ci;
+    soloBtn.dataset.action = 'solo';
     soloBtn.addEventListener('click', () => {
       const newSolo = !ch.solo;
       this.sequencer.setChannelSolo(ci, newSolo);
@@ -601,7 +637,22 @@ class FLStudioApp {
         b.classList.toggle('soloed', this.sequencer.channels[i]?.solo);
       });
     });
-    soloBtn.dataset.action = 'solo';
+
+    const volSlider = document.createElement('input');
+    volSlider.type = 'range';
+    volSlider.className = 'ch-vol-slider';
+    volSlider.min = '0';
+    volSlider.max = '1';
+    volSlider.step = '0.05';
+    volSlider.value = ch.volume !== undefined ? ch.volume : 0.85;
+    volSlider.title = `Volume: ${Math.round((ch.volume !== undefined ? ch.volume : 0.85) * 100)}%`;
+    volSlider.addEventListener('input', (e) => {
+      e.stopPropagation();
+      const val = parseFloat(volSlider.value);
+      ch.volume = val;
+      volSlider.title = `Volume: ${Math.round(val * 100)}%`;
+    });
+    volSlider.addEventListener('click', (e) => e.stopPropagation());
 
     const cloneBtn = document.createElement('button');
     cloneBtn.className = 'ch-btn';
@@ -614,6 +665,7 @@ class FLStudioApp {
 
     miniCtrl.appendChild(muteBtn);
     miniCtrl.appendChild(soloBtn);
+    miniCtrl.appendChild(volSlider);
     miniCtrl.appendChild(cloneBtn);
     row.appendChild(miniCtrl);
 
@@ -1315,10 +1367,21 @@ class FLStudioApp {
   _switchTab(tabId) {
     this.activeTab = tabId;
     document.querySelectorAll('.right-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('visible', c.id === `tab-${tabId}`));
+
+    if (tabId === 'channel-rack') {
+      const rack = document.getElementById('channel-rack');
+      if (rack) {
+        rack.scrollIntoView({ behavior: 'smooth' });
+        rack.classList.add('rack-highlight-pulse');
+        setTimeout(() => rack.classList.remove('rack-highlight-pulse'), 1200);
+      }
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('visible', c.id === 'tab-piano-roll'));
+    } else {
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('visible', c.id === `tab-${tabId}`));
+    }
 
     // Re-render active panel
-    if (tabId === 'piano-roll' && this.pianoRoll) this.pianoRoll.render();
+    if ((tabId === 'piano-roll' || tabId === 'channel-rack') && this.pianoRoll) this.pianoRoll.render();
     if (tabId === 'playlist'   && this.playlist)  this.playlist.render();
     if (tabId === 'mixer') {
       if (this.mixer) this.mixer.syncChannels();
@@ -4171,11 +4234,631 @@ FLStudioApp.prototype.sendRackPatternToAudioEditor = async function(channelIdx =
   }
 };
 
+// ── Sample Swapping (< >) ──────────────────────────────────────
+FLStudioApp.prototype.swapChannelSample = async function(ci, direction = 1) {
+  const ch = this.sequencer.channels[ci];
+  if (!ch) return;
+
+  const nameLower = (ch.preset || ch.sampleFileName || ch.name || '').toLowerCase();
+  let targetCat = 'Kicks';
+  if (nameLower.includes('kick')) {
+    targetCat = 'Kicks';
+  } else if (nameLower.includes('snare') || nameLower.includes('clap') || nameLower.includes('rim')) {
+    targetCat = 'Snares';
+  } else if (nameLower.includes('hat') || nameLower.includes('hh') || nameLower.includes('shaker') || nameLower.includes('cymbal')) {
+    targetCat = 'Hi-Hats';
+  } else if (nameLower.includes('808') || nameLower.includes('bass') || nameLower.includes('sub')) {
+    targetCat = 'Bass';
+  } else if (nameLower.includes('lead') || nameLower.includes('pluck') || nameLower.includes('synth') || nameLower.includes('saw') || nameLower.includes('keys') || nameLower.includes('piano') || nameLower.includes('rhodes')) {
+    targetCat = 'Leads';
+  } else if (nameLower.includes('perc') || nameLower.includes('tom') || nameLower.includes('conga')) {
+    targetCat = 'Percussion';
+  }
+
+  if (window.presetLibrary && window.presetLibrary._categories) {
+    let samples = window.presetLibrary._categories[targetCat];
+    if (!samples || !samples.length) {
+      for (const [catName, list] of Object.entries(window.presetLibrary._categories)) {
+        if (catName.toLowerCase().includes(targetCat.toLowerCase())) {
+          samples = list;
+          break;
+        }
+      }
+    }
+    if (samples && samples.length) {
+      const curIdx = samples.findIndex(s => s.name.toLowerCase() === (ch.sampleFileName || ch.preset || ch.name).toLowerCase());
+      const nextIdx = (curIdx + direction + samples.length) % samples.length;
+      const nextSample = samples[nextIdx];
+
+      const buf = await window.presetLibrary._getBuffer(nextSample);
+      if (buf) {
+        ch.audioBuffer = buf;
+        ch.type = 'audio';
+        ch.sampleFileName = nextSample.name;
+        ch.preset = nextSample.name;
+        ch.name = nextSample.name;
+        if (nextSample.color) ch.color = nextSample.color;
+      } else {
+        ch.name = nextSample.name;
+        ch.preset = nextSample.name;
+      }
+      this._buildChannelRack();
+      this._auditionChannel(ch);
+      showToast(`Sample swapped: ${ch.name}`);
+      return;
+    }
+  }
+
+  // Fallback cycle when presetLibrary is not initialized
+  const defaultCycle = {
+    'Kicks': ['808 Kick', 'Punchy Kick', 'Sub Kick', 'Acoustic Kick', 'Distorted Kick'],
+    'Snares': ['Crisp Snare', 'Fat Snare', 'Electronic Snare', 'Clap', 'Rimshot'],
+    'Hi-Hats': ['Closed HH', 'Open HH', 'Pedal HH', 'Shaker'],
+    'Bass': ['808 Bass', 'Sub Bass', 'Reese Bass', 'Pluck Bass'],
+    'Leads': ['Saw Lead', 'Square Lead', 'Pluck Synth', 'Grand Piano', 'Rhodes EP']
+  };
+  const list = defaultCycle[targetCat] || defaultCycle['Kicks'];
+  const curIdx = list.findIndex(item => item.toLowerCase() === (ch.name || '').toLowerCase());
+  const nextIdx = (curIdx + direction + list.length) % list.length;
+  ch.name = list[nextIdx];
+  ch.preset = list[nextIdx];
+  this._buildChannelRack();
+  this._auditionChannel(ch);
+  showToast(`Sample swapped: ${ch.name}`);
+};
+
+// ── Quick Start Launcher Onboarding ─────────────────────────────
+FLStudioApp.prototype.openQuickStartModal = function() {
+  const modal = document.getElementById('modal-quick-start');
+  if (modal) modal.classList.remove('hidden');
+};
+
+FLStudioApp.prototype.closeQuickStartModal = function() {
+  const modal = document.getElementById('modal-quick-start');
+  if (modal) modal.classList.add('hidden');
+};
+
+FLStudioApp.prototype._bindQuickStartLauncher = function() {
+  const modal = document.getElementById('modal-quick-start');
+  if (!modal) return;
+
+  let selectedPreset = { genre: 'trap', bpm: 150, scale: 'C Minor', name: 'Trap' };
+
+  modal.querySelectorAll('.quick-genre-card').forEach(card => {
+    card.addEventListener('click', () => {
+      modal.querySelectorAll('.quick-genre-card').forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+      const root = card.dataset.scaleRoot || 'C';
+      const type = card.dataset.scaleType || 'Minor';
+      const scaleStr = card.dataset.scale || `${root} ${type}`;
+      selectedPreset = {
+        genre: (card.dataset.genre || 'trap').toLowerCase().replace('-', ''),
+        bpm: parseInt(card.dataset.bpm, 10) || 140,
+        scale: scaleStr,
+        name: card.querySelector('.quick-genre-title')?.textContent.trim() || card.dataset.genre
+      };
+    });
+  });
+
+  document.getElementById('btn-close-quick-start')?.addEventListener('click', () => {
+    this.closeQuickStartModal();
+  });
+
+  document.getElementById('btn-quick-start-generate')?.addEventListener('click', () => {
+    this.applyStarterKit(selectedPreset, true);
+  });
+
+  document.getElementById('btn-quick-start-empty')?.addEventListener('click', () => {
+    this.applyStarterKit(selectedPreset, false);
+  });
+};
+
+FLStudioApp.prototype.applyStarterKit = function(preset, generateGroove = true) {
+  if (!preset) preset = { genre: 'trap', bpm: 150, scale: 'C Minor', name: 'Trap' };
+
+  // 1. Set BPM
+  const bpm = parseInt(preset.bpm, 10) || 140;
+  if (typeof this.sequencer.setBpm === 'function') this.sequencer.setBpm(bpm);
+  else if (typeof this.sequencer.setBPM === 'function') this.sequencer.setBPM(bpm);
+  else this.sequencer.bpm = bpm;
+  const bpmInput = document.getElementById('bpm-input');
+  if (bpmInput) bpmInput.value = bpm;
+  const bpmSlider = document.getElementById('bpm-slider');
+  if (bpmSlider) bpmSlider.value = bpm;
+  const bpmDisplay = document.getElementById('tb-bpm-display');
+  if (bpmDisplay) bpmDisplay.textContent = bpm;
+
+  // 2. Set Scale & Key
+  const scaleParts = (preset.scale || 'C Minor').split(' ');
+  const root = scaleParts[0] || 'C';
+  const type = scaleParts[1] || 'Minor';
+  if (window.flPianoExtras) {
+    window.flPianoExtras.scaleRoot = root;
+    window.flPianoExtras.scaleType = type;
+    if (typeof window.flPianoExtras.setScale === 'function') {
+      window.flPianoExtras.setScale(type);
+    }
+  }
+  const rootSelect = document.getElementById('pr-scale-root');
+  if (rootSelect) rootSelect.value = root;
+  const typeSelect = document.getElementById('pr-scale-type');
+  if (typeSelect) typeSelect.value = type;
+
+  // 3. Set standard 16 steps (1 bar)
+  this.setPatternLength(16);
+
+  // 4. Configure genre drum kit
+  const kitConfigs = {
+    boombap: {
+      kick: 'Acoustic Kick', snare: 'Crisp Snare', hat: 'Closed HH', bass: 'Sub Bass', keys: 'Rhodes EP',
+      kickSteps: [0, 10], snareSteps: [4, 12], hatSteps: [0, 2, 4, 6, 8, 10, 12, 14],
+      progression: 'i-iv-VII-III'
+    },
+    drill: {
+      kick: 'Sub Kick', snare: 'Rimshot', hat: 'Closed HH', bass: '808 Bass', keys: 'Grand Piano',
+      kickSteps: [0, 6, 10], snareSteps: [6, 12], hatSteps: [0, 3, 6, 9, 12, 14],
+      progression: 'i-VI-III-VII'
+    },
+    lofi: {
+      kick: 'Sub Kick', snare: 'Fat Snare', hat: 'Shaker', bass: 'Sine Bass', keys: 'Rhodes EP',
+      kickSteps: [0, 7, 10], snareSteps: [4, 12], hatSteps: [0, 2, 4, 6, 8, 10, 12, 14],
+      progression: 'ii-V-I-vi'
+    },
+    trap: {
+      kick: '808 Kick', snare: 'Clap', hat: 'Closed HH', bass: '808 Bass', keys: 'Pluck Synth',
+      kickSteps: [0, 7, 10], snareSteps: [8], hatSteps: [0, 2, 4, 6, 8, 10, 12, 14],
+      progression: 'i-VI-III-VII'
+    },
+    house: {
+      kick: 'Punchy Kick', snare: 'Clap', hat: 'Open HH', bass: 'Pluck Bass', keys: 'Grand Piano',
+      kickSteps: [0, 4, 8, 12], snareSteps: [4, 12], hatSteps: [2, 6, 10, 14],
+      progression: 'I-V-vi-IV'
+    },
+    synthwave: {
+      kick: 'Punchy Kick', snare: 'Electronic Snare', hat: 'Closed HH', bass: 'Reese Bass', keys: 'Saw Lead',
+      kickSteps: [0, 8], snareSteps: [4, 12], hatSteps: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+      progression: 'i-VI-III-VII'
+    }
+  };
+
+  const cfg = kitConfigs[preset.genre.toLowerCase()] || kitConfigs.trap;
+
+  // Reset channel steps
+  this.sequencer.channels.forEach(ch => {
+    ch.steps = new Array(16).fill(false);
+    ch.notes = [];
+  });
+
+  // Assign names for channels
+  if (this.sequencer.channels[0]) this.sequencer.channels[0].name = cfg.kick;
+  if (this.sequencer.channels[1]) this.sequencer.channels[1].name = cfg.snare;
+  if (this.sequencer.channels[2]) this.sequencer.channels[2].name = cfg.hat;
+  if (this.sequencer.channels[3]) this.sequencer.channels[3].name = cfg.bass;
+  if (this.sequencer.channels[4]) this.sequencer.channels[4].name = cfg.keys;
+
+  if (generateGroove) {
+    if (this.sequencer.channels[0]) cfg.kickSteps.forEach(s => { if (s < 16) this.sequencer.channels[0].steps[s] = true; });
+    if (this.sequencer.channels[1]) cfg.snareSteps.forEach(s => { if (s < 16) this.sequencer.channels[1].steps[s] = true; });
+    if (this.sequencer.channels[2]) cfg.hatSteps.forEach(s => { if (s < 16) this.sequencer.channels[2].steps[s] = true; });
+
+    if (this.pianoRoll) {
+      const keysIdx = this.sequencer.channels.findIndex(c => {
+        const n = (c.name || '').toLowerCase();
+        return n.includes('lead') || n.includes('key') || n.includes('piano') || n.includes('synth');
+      });
+      const targetCh = keysIdx >= 0 ? keysIdx : 4;
+      this.pianoRoll.setChannel(targetCh);
+      this.pianoRoll.stampProgression(cfg.progression || 'i-VI-III-VII');
+    }
+  }
+
+  this._refreshChannelRack();
+  if (this.pianoRoll) this.pianoRoll.render();
+  if (this.playlist) this.playlist.syncWithChannels();
+
+  this.closeQuickStartModal();
+  showToast(`Loaded ${preset.name || preset.genre} starter kit (${bpm} BPM • ${preset.scale})`);
+};
+
+// ── File Dropdown Menu ──────────────────────────────────────────
+FLStudioApp.prototype._bindFileMenu = function() {
+  const fileBtn = document.getElementById('tb-btn-file');
+  const fileMenu = document.getElementById('tb-file-menu');
+  if (!fileBtn || !fileMenu) return;
+
+  fileBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    fileMenu.classList.toggle('hidden');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!fileMenu.contains(e.target) && e.target !== fileBtn) {
+      fileMenu.classList.add('hidden');
+    }
+  });
+
+  document.getElementById('menu-btn-new-project')?.addEventListener('click', () => {
+    fileMenu.classList.add('hidden');
+    this.openQuickStartModal();
+  });
+
+  document.getElementById('menu-btn-save-cloud')?.addEventListener('click', () => {
+    fileMenu.classList.add('hidden');
+    document.getElementById('plat-cloud-save-btn')?.click();
+  });
+
+  document.getElementById('menu-btn-open-projects')?.addEventListener('click', () => {
+    fileMenu.classList.add('hidden');
+    document.getElementById('btn-cloud-open')?.click();
+  });
+
+  document.getElementById('menu-btn-import')?.addEventListener('click', () => {
+    fileMenu.classList.add('hidden');
+    document.getElementById('btn-import-sound')?.click();
+  });
+
+  document.getElementById('menu-btn-export-stems')?.addEventListener('click', () => {
+    fileMenu.classList.add('hidden');
+    this.exportAllStems();
+  });
+
+  document.getElementById('menu-btn-explore')?.addEventListener('click', () => {
+    fileMenu.classList.add('hidden');
+    if (window.presetLibrary) window.presetLibrary.open();
+  });
+
+  document.getElementById('menu-btn-train')?.addEventListener('click', () => {
+    fileMenu.classList.add('hidden');
+    document.getElementById('plat-train-btn')?.click();
+  });
+
+  document.getElementById('menu-btn-admin')?.addEventListener('click', () => {
+    fileMenu.classList.add('hidden');
+    document.getElementById('btn-admin-dash')?.click();
+  });
+};
+
+// ── AI Co-Pilot Drawer ──────────────────────────────────────────
+FLStudioApp.prototype._bindAICopilotDrawer = function() {
+  const toggleBtn = document.getElementById('btn-ai-copilot-toggle');
+  const drawer = document.getElementById('ai-copilot-drawer');
+  const closeBtn = document.getElementById('ai-drawer-close-btn');
+
+  if (toggleBtn && drawer) {
+    toggleBtn.addEventListener('click', () => {
+      drawer.classList.toggle('open');
+    });
+  }
+
+  if (closeBtn && drawer) {
+    closeBtn.addEventListener('click', () => {
+      drawer.classList.remove('open');
+    });
+  }
+
+  document.querySelectorAll('.ai-copilot-tab-btn').forEach(tabBtn => {
+    tabBtn.addEventListener('click', () => {
+      document.querySelectorAll('.ai-copilot-tab-btn').forEach(b => b.classList.remove('active'));
+      tabBtn.classList.add('active');
+      const target = tabBtn.dataset.drawerTab;
+      document.querySelectorAll('.ai-copilot-tab-content').forEach(c => {
+        c.classList.toggle('active', c.id === target);
+      });
+    });
+  });
+
+  document.querySelectorAll('.ai-prompt-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const promptText = chip.dataset.prompt || chip.textContent.trim();
+      const activeTabContent = document.querySelector('.ai-copilot-tab-content.active');
+      if (activeTabContent && activeTabContent.id === 'copilot-music') {
+        const input = document.getElementById('ai-music-prompt-input');
+        if (input) input.value = promptText;
+      } else {
+        const promptInput = document.getElementById('ai-producer-prompt-input');
+        if (promptInput) promptInput.value = promptText;
+      }
+    });
+  });
+
+  document.getElementById('drawer-btn-gen-beat')?.addEventListener('click', () => {
+    const promptInput = document.getElementById('ai-producer-prompt-input');
+    const text = promptInput ? promptInput.value : '';
+    if (this.aiProducer && typeof this.aiProducer.generateGroove === 'function') {
+      this.aiProducer.generateGroove(text);
+    } else {
+      this.generateAIDrums();
+    }
+  });
+
+  document.getElementById('drawer-btn-gen-audio')?.addEventListener('click', () => {
+    const promptInput = document.getElementById('ai-music-prompt-input');
+    const text = promptInput ? promptInput.value : '';
+    if (this.musicAI && typeof this.musicAI.generateAudio === 'function') {
+      this.musicAI.generateAudio(text);
+    } else {
+      showToast('AI Audio Generator processing prompt...');
+    }
+  });
+};
+
+// ── Rack Bar Quick Toggles & AI Drums ───────────────────────────
+FLStudioApp.prototype._bindRackQuickBarToggles = function() {
+  document.querySelectorAll('.rack-bar-toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const bars = parseInt(btn.dataset.bars, 10) || 1;
+      const steps = bars * 16;
+      this.setPatternLength(steps);
+      document.querySelectorAll('.rack-bar-toggle-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  const aiDrumsBtn = document.getElementById('rack-btn-ai-drums');
+  if (aiDrumsBtn) {
+    aiDrumsBtn.addEventListener('click', () => {
+      this.generateAIDrums();
+    });
+  }
+};
+
+// ── Playlist Auto-Arrange Song (48 Bars) ────────────────────────
+FLStudioApp.prototype._bindPlaylistAutoArrange = function() {
+  const btn = document.getElementById('pl-auto-arrange-btn');
+  if (btn) {
+    btn.addEventListener('click', () => this.autoArrangeSong());
+  }
+};
+
+FLStudioApp.prototype.autoArrangeSong = function() {
+  if (!this.playlist) return;
+
+  // 48 Bars full timeline
+  this.playlist.setBars(48);
+
+  const channels = this.sequencer.channels;
+  const kickIdx = channels.findIndex(c => (c.name || '').toLowerCase().includes('kick'));
+  const snareIdx = channels.findIndex(c => {
+    const n = (c.name || '').toLowerCase();
+    return n.includes('snare') || n.includes('clap') || n.includes('rim');
+  });
+  const hatIdx = channels.findIndex(c => {
+    const n = (c.name || '').toLowerCase();
+    return n.includes('hat') || n.includes('hh') || n.includes('shaker');
+  });
+  const bassIdx = channels.findIndex(c => {
+    const n = (c.name || '').toLowerCase();
+    return n.includes('808') || n.includes('bass') || n.includes('sub');
+  });
+  const chordsIdx = channels.findIndex(c => {
+    const n = (c.name || '').toLowerCase();
+    return n.includes('key') || n.includes('piano') || n.includes('chord') || n.includes('rhodes');
+  });
+  const leadIdx = channels.findIndex((c, i) => {
+    const n = (c.name || '').toLowerCase();
+    return i !== chordsIdx && (n.includes('lead') || n.includes('synth') || n.includes('pluck') || n.includes('bell'));
+  });
+
+  let crashIdx = channels.findIndex(c => {
+    const n = (c.name || '').toLowerCase();
+    return n.includes('crash') || n.includes('riser') || n.includes('fx');
+  });
+
+  if (crashIdx === -1) {
+    const crashCh = {
+      name: 'Crash / Riser',
+      color: '#f59e0b',
+      type: 'drum',
+      soundType: 'crash',
+      volume: 0.75,
+      pan: 0,
+      muted: false,
+      solo: false,
+      isPaused: false,
+      steps: new Array(this.sequencer.steps).fill(false),
+      velocity: new Array(this.sequencer.steps).fill(0.85),
+      notes: []
+    };
+    crashCh.steps[0] = true;
+    channels.push(crashCh);
+    crashIdx = channels.length - 1;
+    this._buildChannelRack();
+  } else {
+    channels[crashIdx].steps[0] = true;
+  }
+
+  this.playlist.syncWithChannels();
+
+  const blocksByRole = {
+    hat: [
+      { bar: 0, length: 8 },
+      { bar: 8, length: 8 },
+      { bar: 16, length: 8 },
+      { bar: 24, length: 8 },
+      { bar: 32, length: 8 },
+      { bar: 40, length: 8 },
+    ],
+    chords: [
+      { bar: 0, length: 8 },
+      { bar: 8, length: 8 },
+      { bar: 32, length: 8 },
+      { bar: 40, length: 8 },
+    ],
+    kick: [
+      { bar: 8, length: 8 },
+      { bar: 16, length: 8 },
+      { bar: 24, length: 8 },
+      { bar: 32, length: 8 },
+    ],
+    snare: [
+      { bar: 8, length: 8 },
+      { bar: 16, length: 8 },
+      { bar: 24, length: 8 },
+      { bar: 32, length: 8 },
+    ],
+    bass: [
+      { bar: 8, length: 8 },
+      { bar: 16, length: 8 },
+      { bar: 24, length: 8 },
+      { bar: 32, length: 8 },
+      { bar: 40, length: 8 },
+    ],
+    lead: [
+      { bar: 8, length: 8 },
+      { bar: 32, length: 8 },
+    ],
+    crash: [
+      { bar: 0, length: 1 },
+      { bar: 8, length: 1 },
+      { bar: 16, length: 1 },
+      { bar: 32, length: 1 },
+      { bar: 40, length: 1 },
+    ]
+  };
+
+  this.playlist.tracks.forEach(t => t.blocks = []);
+
+  const assignBlocks = (chIdx, blocks) => {
+    if (chIdx >= 0 && this.playlist.tracks[chIdx]) {
+      this.playlist.tracks[chIdx].blocks = JSON.parse(JSON.stringify(blocks));
+    }
+  };
+
+  assignBlocks(hatIdx >= 0 ? hatIdx : 2, blocksByRole.hat);
+  assignBlocks(chordsIdx >= 0 ? chordsIdx : 4, blocksByRole.chords);
+  assignBlocks(kickIdx >= 0 ? kickIdx : 0, blocksByRole.kick);
+  assignBlocks(snareIdx >= 0 ? snareIdx : 1, blocksByRole.snare);
+  assignBlocks(bassIdx >= 0 ? bassIdx : 3, blocksByRole.bass);
+  if (leadIdx >= 0) assignBlocks(leadIdx, blocksByRole.lead);
+  assignBlocks(crashIdx, blocksByRole.crash);
+
+  this.playlist.sectionMarkers = [
+    { bar: 0, length: 8, name: 'INTRO (Bars 1-8)', color: 'rgba(59, 130, 246, 0.15)', borderColor: 'rgba(59, 130, 246, 0.5)' },
+    { bar: 8, length: 8, name: 'HOOK 1 (Bars 9-16)', color: 'rgba(239, 68, 68, 0.15)', borderColor: 'rgba(239, 68, 68, 0.5)' },
+    { bar: 16, length: 16, name: 'VERSE (Bars 17-32)', color: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.5)' },
+    { bar: 32, length: 8, name: 'HOOK 2 (Bars 33-40)', color: 'rgba(239, 68, 68, 0.15)', borderColor: 'rgba(239, 68, 68, 0.5)' },
+    { bar: 40, length: 8, name: 'OUTRO (Bars 41-48)', color: 'rgba(168, 85, 247, 0.15)', borderColor: 'rgba(168, 85, 247, 0.5)' }
+  ];
+
+  this.sequencer.setPlaybackMode('song');
+  const songModeBtn = document.getElementById('play-mode-song');
+  const patModeBtn = document.getElementById('play-mode-pat');
+  if (songModeBtn) songModeBtn.classList.add('active');
+  if (patModeBtn) patModeBtn.classList.remove('active');
+
+  this._switchTab('playlist');
+  this.playlist.render();
+  showToast('Auto-Arranged 48-Bar Song Structure (Intro • Hook • Verse • Hook 2 • Outro)');
+};
+
+FLStudioApp.prototype.generateAIDrums = function(genre) {
+  if (!genre) {
+    const activeGenreCard = document.querySelector('.quick-genre-card.active');
+    genre = activeGenreCard ? activeGenreCard.dataset.genre : 'trap';
+  }
+  const kickIdx = this.sequencer.channels.findIndex(c => (c.name || '').toLowerCase().includes('kick'));
+  const snareIdx = this.sequencer.channels.findIndex(c => {
+    const n = (c.name || '').toLowerCase();
+    return n.includes('snare') || n.includes('clap') || n.includes('rim');
+  });
+  const hatIdx = this.sequencer.channels.findIndex(c => {
+    const n = (c.name || '').toLowerCase();
+    return n.includes('hat') || n.includes('hh') || n.includes('shaker');
+  });
+
+  const totalSteps = this.sequencer.steps || 16;
+  const g = (genre || 'trap').toLowerCase();
+
+  [kickIdx, snareIdx, hatIdx].forEach(idx => {
+    if (idx >= 0 && this.sequencer.channels[idx]) {
+      this.sequencer.channels[idx].steps.fill(false);
+    }
+  });
+
+  const setSteps = (chIdx, stepList) => {
+    if (chIdx >= 0 && this.sequencer.channels[chIdx]) {
+      stepList.forEach(s => {
+        for (let offset = 0; offset < totalSteps; offset += 16) {
+          if (s + offset < totalSteps) this.sequencer.channels[chIdx].steps[s + offset] = true;
+        }
+      });
+    }
+  };
+
+  if (g.includes('boombap')) {
+    setSteps(kickIdx >= 0 ? kickIdx : 0, [0, 10]);
+    setSteps(snareIdx >= 0 ? snareIdx : 1, [4, 12]);
+    setSteps(hatIdx >= 0 ? hatIdx : 2, [0, 2, 4, 6, 8, 10, 12, 14]);
+  } else if (g.includes('drill')) {
+    setSteps(kickIdx >= 0 ? kickIdx : 0, [0, 6, 10]);
+    setSteps(snareIdx >= 0 ? snareIdx : 1, [6, 12]);
+    setSteps(hatIdx >= 0 ? hatIdx : 2, [0, 3, 6, 9, 12, 14]);
+  } else if (g.includes('house')) {
+    setSteps(kickIdx >= 0 ? kickIdx : 0, [0, 4, 8, 12]);
+    setSteps(snareIdx >= 0 ? snareIdx : 1, [4, 12]);
+    setSteps(hatIdx >= 0 ? hatIdx : 2, [2, 6, 10, 14]);
+  } else {
+    // Trap
+    setSteps(kickIdx >= 0 ? kickIdx : 0, [0, 7, 10]);
+    setSteps(snareIdx >= 0 ? snareIdx : 1, [8]);
+    setSteps(hatIdx >= 0 ? hatIdx : 2, [0, 2, 4, 6, 8, 10, 12, 14]);
+  }
+
+  this._refreshChannelRack();
+  showToast(`AI generated ${genre.toUpperCase()} drum groove`);
+};
+
+FLStudioApp.prototype.generateCounterMelody = function() {
+  if (!this.pianoRoll) return;
+  const chIdx = this.pianoRoll.channelIdx;
+  const ch = this.sequencer.channels[chIdx];
+  if (!ch) return;
+
+  const extras = window.flPianoExtras || {};
+  const rootName = extras.scaleRoot || 'C';
+  const scaleType = extras.scaleType || 'Minor';
+  const noteNames = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const rootPitchClass = Math.max(0, noteNames.indexOf(rootName));
+  const isMajor = (scaleType || '').toLowerCase().includes('major');
+  const scaleIntervals = isMajor ? [0, 2, 4, 5, 7, 9, 11] : [0, 2, 3, 5, 7, 8, 10];
+
+  const baseMidi = 60 + rootPitchClass;
+  ch.notes = [];
+  const totalSteps = this.sequencer.steps || 16;
+
+  const motifDegrees = [0, 2, 4, 6, 4, 2, 3, 1];
+  motifDegrees.forEach((deg, i) => {
+    const step = i * 2;
+    if (step < totalSteps) {
+      const midi = baseMidi + scaleIntervals[deg % 7] + Math.floor(deg / 7) * 12;
+      ch.notes.push({
+        step,
+        midi: Math.max(24, Math.min(84, midi)),
+        length: (i % 2 === 0) ? 1.5 : 1,
+        velocity: 0.8 + (i % 3) * 0.05
+      });
+    }
+  });
+
+  this.sequencer.syncChannelStepsFromNotes(chIdx);
+  this.pianoRoll.render();
+  showToast(`AI Counter-Melody generated in ${rootName} ${scaleType}`);
+};
+
 // ── Global App Bootstrap (safe readyState execution) ───────────
 function bootstrapFLStudioApp() {
   if (!window.app || window.app instanceof HTMLElement) {
     try {
       window.app = new FLStudioApp();
+      const hasVisited = (typeof sessionStorage !== 'undefined') ? sessionStorage.getItem('beyou_visited') : '1';
+      if (!hasVisited && !window.__HEADLESS_TEST__) {
+        try { sessionStorage.setItem('beyou_visited', '1'); } catch (_) {}
+        setTimeout(() => {
+          if (window.app && typeof window.app.openQuickStartModal === 'function') {
+            window.app.openQuickStartModal();
+          }
+        }, 350);
+      }
     } catch (err) {
       console.error('Failed to initialize FLStudioApp:', err);
     }
