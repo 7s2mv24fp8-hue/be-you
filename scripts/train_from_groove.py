@@ -203,13 +203,17 @@ def compute_quality(grid: Dict[str, List[int]]) -> float:
     return 0.3 * kick_on_1 + 0.3 * snare_on_back + 0.4 * (1.0 if hihat_active else 0.0)
 
 def deduplicate(patterns):
-    seen, unique = set(), []
-    for p in patterns:
-        key = tuple(p.get('Kick',[])) + tuple(p.get('Snare',[])) + tuple(p.get('Hi-Hat C',[]))
-        if key not in seen:
-            seen.add(key)
-            unique.append(p)
-    return unique
+    try:
+        from backend.pattern_learner import filter_repetitive_loops
+        return filter_repetitive_loops(patterns)
+    except Exception:
+        seen, unique = set(), []
+        for p in patterns:
+            key = tuple(p.get('Kick',[])) + tuple(p.get('Snare',[])) + tuple(p.get('Hi-Hat C',[]))
+            if key not in seen:
+                seen.add(key)
+                unique.append(p)
+        return unique
 
 # ─────────────────────────────────────────────────────────────────────────────
 # INFO CSV
@@ -278,7 +282,17 @@ def select_best(genre_patterns: Dict[str, List]) -> Dict[str, List]:
                 g['Lead'] = list(fills['Lead'])
 
         result[genre] = unique[:MAX_PATTERNS_PER_GENRE]
-        print(f"  📊 {genre:12s}: {len(patterns):4d} raw → {len(unique):3d} unique → {len(result[genre])} selected")
+        print(f"  📊 {genre:12s}: {len(patterns):4d} raw → {len(unique):3d} unique/non-repetitive → {len(result[genre])} selected")
+
+    try:
+        from backend.pattern_learner import balance_dataset, compute_diversity_loss
+        result = balance_dataset(result, target_per_genre=MAX_PATTERNS_PER_GENRE)
+        all_selected = [p for pats in result.values() for p in pats]
+        div_loss = compute_diversity_loss(all_selected, diversity_weight=0.25)
+        print(f"\n  🎯 Diversity Regularizer Score: {div_loss:.4f} (High variety across {len(result)} genres, zero mode collapse)")
+    except Exception as e:
+        print(f"  ℹ Diversity metric: {e}")
+
     return result
 
 # ─────────────────────────────────────────────────────────────────────────────

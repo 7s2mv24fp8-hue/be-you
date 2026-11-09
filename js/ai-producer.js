@@ -241,14 +241,20 @@ class BeYouClient {
     // Extract last user message and enrich with genre/mood context
     const lastUser = [...messages].reverse().find(m => m.role === 'user');
     let prompt = lastUser?.text || 'make a beat';
+    let density = 0.50;
     if (systemPrompt) {
       const genreM = systemPrompt.match(/selected genre\(s\):\s*([^\n]+)/i);
       const moodM  = systemPrompt.match(/selected mood\(s\):\s*([^\n]+)/i);
       const bpmM   = systemPrompt.match(/BPM:\s*(\d+)/i);
       const parts = [];
       if (genreM) parts.push(genreM[1].trim().toLowerCase());
-      if (moodM)  parts.push(moodM[1].trim().toLowerCase());
-      if (bpmM)   parts.push(`${bpmM[1]} bpm`);
+      if (moodM) {
+        const mStr = moodM[1].trim().toLowerCase();
+        parts.push(mStr);
+        if (mStr.includes('chill') || mStr.includes('minimal') || mStr.includes('dreamy')) density = 0.25;
+        else if (mStr.includes('aggressive') || mStr.includes('energetic') || mStr.includes('epic')) density = 0.85;
+      }
+      if (bpmM) parts.push(`${bpmM[1]} bpm`);
       if (parts.length > 0 && !prompt.includes('bpm') && prompt.length < 80) {
         prompt = `${parts.join(' ')} ${prompt}`.trim();
       }
@@ -259,7 +265,13 @@ class BeYouClient {
       const r = await fetch('/api/ai/produce', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({
+          prompt,
+          temperature: 1.15,
+          top_p: 0.90,
+          repetition_penalty: 1.35,
+          rhythmic_density: density
+        }),
         signal: this._ctrl.signal,
       });
       if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.detail || `Server error HTTP ${r.status}`); }
@@ -413,6 +425,12 @@ class AIProducer {
 
     const stored = localStorage.getItem('beyou-llm-provider');
     this.provider = (['beyou','gemini','ollama','local-openai'].includes(stored)) ? stored : 'beyou';
+
+    // Generational settings
+    this.temperature       = 1.15;
+    this.topP              = 0.90;
+    this.repetitionPenalty = 1.35;
+    this.rhythmicDensity   = 0.50;
 
     this.conversation   = [];
     this.isProcessing   = false;

@@ -15,6 +15,7 @@ A comprehensive music production AI with deep knowledge of:
 No external LLM or API keys required. Runs entirely on-server.
 """
 
+import math
 import random
 import re
 from typing import Dict, List, Any, Optional, Tuple
@@ -966,7 +967,15 @@ def apply_variation(base_pattern: List[int], intensity: float = 0.12) -> List[in
     return result
 
 
-def generate_melodic_notes(ch_name: str, steps: List[int], genre: str, mood: Optional[str] = None) -> List[Dict[str, Any]]:
+def generate_melodic_notes(
+    ch_name: str,
+    steps: List[int],
+    genre: str,
+    mood: Optional[str] = None,
+    temperature: float = 1.15,
+    top_p: float = 0.90,
+    repetition_penalty: float = 1.35
+) -> List[Dict[str, Any]]:
     """Generate expressive, non-repetitive musical MIDI notes matching the chord progression & scale."""
     notes = []
     if ch_name not in ('Bass', 'Lead'):
@@ -997,6 +1006,7 @@ def generate_melodic_notes(ch_name: str, steps: List[int], genre: str, mood: Opt
         'phonk': [0, 1, 0, -3],
     }
     offsets = prog_offsets.get(genre, [0, -3, 5, 7])
+    recent_pitches: List[int] = []
 
     if ch_name == 'Bass':
         for step, active in enumerate(steps):
@@ -1004,18 +1014,42 @@ def generate_melodic_notes(ch_name: str, steps: List[int], genre: str, mood: Opt
                 continue
             bar_idx = min(3, step // 4)
             chord_root = base_root + offsets[bar_idx]
-            # Offbeat 808 octave glide and passing fifths
+            # Candidate pitches for this step: root, octave glide, fifth, minor 7th
+            candidates = [chord_root, chord_root + 12, chord_root + 7, chord_root + 10]
+            scores = [3.5, 2.0, 1.8, 1.2]
+
+            # Bias offbeats toward 808 glides in modern trap/drill/phonk
             if step in (6, 10, 14) and genre in ('trap', 'drill', 'phonk'):
-                pitch = chord_root + 12
+                scores[1] += 2.5
             elif step in (7, 15):
-                pitch = chord_root + 7
-            else:
-                pitch = chord_root
+                scores[2] += 2.0
+
+            # Repetition penalty on consecutive identical bass notes
+            for idx, cand in enumerate(candidates):
+                if cand in recent_pitches[-2:]:
+                    scores[idx] /= repetition_penalty
+
+            # Temperature scaling & stochastic choice
+            exp_scores = [math.exp(s / max(0.1, temperature)) for s in scores]
+            sum_exp = sum(exp_scores)
+            probs = [e / sum_exp for e in exp_scores]
+
+            # Top-p threshold
+            cum_p = 0.0
+            valid_cands = []
+            for c_val, p_val in sorted(zip(candidates, probs), key=lambda x: x[1], reverse=True):
+                valid_cands.append(c_val)
+                cum_p += p_val
+                if cum_p >= top_p:
+                    break
+            chosen_pitch = random.choice(valid_cands) if valid_cands else candidates[0]
+            recent_pitches.append(chosen_pitch)
+
             notes.append({
                 'step': step,
-                'midi': max(24, min(60, pitch)),
+                'midi': max(24, min(60, chosen_pitch)),
                 'length': 2 if step % 2 == 0 else 1,
-                'velocity': 0.92 if step % 4 == 0 else 0.80
+                'velocity': round(min(1.0, (0.92 if step % 4 == 0 else 0.80) * (0.9 + random.random() * 0.2)), 2)
             })
     elif ch_name == 'Lead':
         lead_root = base_root + 24
@@ -1024,39 +1058,86 @@ def generate_melodic_notes(ch_name: str, steps: List[int], genre: str, mood: Opt
         scale_notes = [lead_root + interval for interval in scale_intervals]
         scale_notes += [n + 12 for n in scale_notes]
 
-        # Call-and-response melodic motif
         melodic_degrees = [0, 2, 4, 2, 3, 5, 4, 1, 2, 4, 6, 5, 3, 2, 1, 0]
         for step, active in enumerate(steps):
             if not active:
                 continue
-            deg = melodic_degrees[step % len(melodic_degrees)]
-            pitch = scale_notes[deg % len(scale_notes)]
+            base_deg_idx = melodic_degrees[step % len(melodic_degrees)]
+            # 3 neighboring scale notes around the contour
+            candidates = [
+                scale_notes[base_deg_idx % len(scale_notes)],
+                scale_notes[(base_deg_idx + 1) % len(scale_notes)],
+                scale_notes[(base_deg_idx - 1) % len(scale_notes)],
+                scale_notes[(base_deg_idx + 2) % len(scale_notes)],
+            ]
+            scores = [3.0, 2.0, 1.8, 1.2]
+            for idx, cand in enumerate(candidates):
+                if cand in recent_pitches[-2:]:
+                    scores[idx] /= repetition_penalty
+
+            exp_scores = [math.exp(s / max(0.1, temperature)) for s in scores]
+            sum_exp = sum(exp_scores)
+            probs = [e / sum_exp for e in exp_scores]
+
+            cum_p = 0.0
+            valid_cands = []
+            for c_val, p_val in sorted(zip(candidates, probs), key=lambda x: x[1], reverse=True):
+                valid_cands.append(c_val)
+                cum_p += p_val
+                if cum_p >= top_p:
+                    break
+            chosen_pitch = random.choice(valid_cands) if valid_cands else candidates[0]
+            recent_pitches.append(chosen_pitch)
+
             notes.append({
                 'step': step,
-                'midi': max(48, min(84, pitch)),
+                'midi': max(48, min(84, chosen_pitch)),
                 'length': 2 if (step % 4 == 0) else 1,
-                'velocity': 0.85 if (step % 2 == 0) else 0.72
+                'velocity': round(min(1.0, (0.85 if (step % 2 == 0) else 0.72) * (0.9 + random.random() * 0.2)), 2)
             })
     return notes
 
 
-def generate_beat_response(prompt: str, current_state: Optional[Dict] = None) -> Dict:
+def generate_beat_response(
+    prompt: str,
+    current_state: Optional[Dict] = None,
+    temperature: float = 1.15,
+    top_p: float = 0.90,
+    repetition_penalty: float = 1.35,
+    rhythmic_density: Optional[float] = None,
+    bpm_override: Optional[int] = None,
+    genre_override: Optional[str] = None,
+) -> Dict:
     """
-    Main entry point: Generate a complete AI music production response.
-
-    Returns a dict with:
-      - message: Conversational response text
-      - beat: {bpm, channels: [{name, steps, velocity}]}
-      - mix: {master_volume, channels: [{name, volume, pan, muted}]}
-      - suggestions: List of follow-up producer tips
+    Main entry point: Generate an expressive, non-repetitive AI music production response.
+    Explicit Conditioning:
+      - genre: Selected genre (or classified from prompt)
+      - bpm: Desired tempo (or detected from prompt/genre range)
+      - rhythmic_density: 0.0 (sparse) to 1.0 (dense)
+    Generational Settings:
+      - temperature: Logit scaling (T=1.15 default for high musical variety)
+      - top_p: Nucleus cutoff (0.90)
+      - repetition_penalty: Repetition suppression (1.35)
     """
-    genre = classify_genre(prompt)
+    genre = genre_override if genre_override else classify_genre(prompt)
     genre_data = GENRE_DB.get(genre, GENRE_DB['hip-hop'])
     mood = detect_mood(prompt)
     mood_mod = MOOD_MODIFIERS.get(mood) if mood else None
-    bpm = detect_bpm(prompt, genre_data['bpm_range'])
+    bpm = bpm_override if (bpm_override and 40 <= bpm_override <= 240) else detect_bpm(prompt, genre_data['bpm_range'])
     action = detect_action(prompt)
     swing = genre_data.get('swing', 0.05)
+
+    # Rhythmic density detection if not passed
+    if rhythmic_density is None:
+        p_lower = prompt.lower()
+        if any(w in p_lower for w in ['sparse', 'minimal', 'chill', 'slow', 'space', 'simple']):
+            rhythmic_density = 0.25
+        elif any(w in p_lower for w in ['dense', 'busy', 'fast', 'intense', 'complex', 'rolls', 'chops', 'crazy']):
+            rhythmic_density = 0.85
+        elif any(w in p_lower for w in ['moderate', 'medium', 'groove', 'bounce']):
+            rhythmic_density = 0.55
+        else:
+            rhythmic_density = 0.50
 
     result: Dict[str, Any] = {}
 
@@ -1064,20 +1145,42 @@ def generate_beat_response(prompt: str, current_state: Optional[Dict] = None) ->
     if action in ('full', 'beat'):
         pattern_sets = genre_data['pattern_sets']
 
-        # Pick a random pattern set for variety
-        base_pattern = dict(random.choice(pattern_sets))
+        # Score candidate pattern sets by proximity to target density
+        target_hits = int(round(10 + rhythmic_density * 22))
+        pat_scores = []
+        for p in pattern_sets:
+            h = sum(sum(p.get(c, [0]*16)) for c in CHANNELS if c not in ('Bass', 'Lead'))
+            pat_scores.append(10.0 / (1.0 + abs(h - target_hits)))
+
+        # Nucleus sampling with temperature & repetition penalty
+        try:
+            from backend.pattern_learner import sample_with_temperature_top_p_penalty as _sample_top_p
+        except ImportError:
+            try:
+                from pattern_learner import sample_with_temperature_top_p_penalty as _sample_top_p
+            except ImportError:
+                _sample_top_p = None
+
+        if _sample_top_p is not None:
+            selected_idx = _sample_top_p(pat_scores, temperature=temperature, top_p=top_p, repetition_penalty=repetition_penalty)
+            base_pattern = dict(pattern_sets[selected_idx])
+        else:
+            base_pattern = dict(random.choice(pattern_sets))
 
         # Apply mood density modifiers
         base_pattern = apply_mood_to_pattern(base_pattern, mood_mod, CHANNELS)
 
-        # ── Blend with real Groove MIDI data if training has been run ─────────
+        # ── Blend with real Groove MIDI data with explicit conditioning ────────
         if _get_real_pattern is not None and _is_trained():
-            # 60% real drummer data, 40% rule-based (keeps musical intent)
             base_pattern = _get_real_pattern(
                 genre=genre,
                 rule_based_pattern=base_pattern,
                 use_real=True,
                 blend=0.60,
+                temperature=temperature,
+                top_p=top_p,
+                repetition_penalty=repetition_penalty,
+                rhythmic_density=rhythmic_density,
             )
         # ─────────────────────────────────────────────────────────────────────
 
@@ -1085,14 +1188,15 @@ def generate_beat_response(prompt: str, current_state: Optional[Dict] = None) ->
         for ch_name in CHANNELS:
             base_steps = list(base_pattern.get(ch_name, [0] * 16))
 
-            # Apply subtle variation for uniqueness (less variation on key channels)
-            if ch_name in ('Kick', 'Snare', 'Clap'):
-                steps = apply_variation(base_steps, intensity=0.05)
-            else:
-                steps = apply_variation(base_steps, intensity=0.10)
+            # Apply subtle variation for uniqueness
+            intensity = 0.05 if ch_name in ('Kick', 'Snare', 'Clap') else 0.12
+            steps = apply_variation(base_steps, intensity=intensity)
 
             velocities = humanize_velocities(steps, genre, ch_name, mood_mod, swing)
-            ch_notes = generate_melodic_notes(ch_name, steps, genre, mood)
+            ch_notes = generate_melodic_notes(
+                ch_name, steps, genre, mood,
+                temperature=temperature, top_p=top_p, repetition_penalty=repetition_penalty
+            )
 
             channels.append({
                 'name': ch_name,
@@ -1103,6 +1207,13 @@ def generate_beat_response(prompt: str, current_state: Optional[Dict] = None) ->
 
         result['beat'] = {
             'bpm': bpm,
+            'genre': genre,
+            'rhythmic_density': rhythmic_density,
+            'generational_settings': {
+                'temperature': temperature,
+                'top_p': top_p,
+                'repetition_penalty': repetition_penalty,
+            },
             'channels': channels,
         }
 

@@ -140,6 +140,12 @@ class AIProduceRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     prompt: str = Field(..., min_length=1, max_length=1000)
     current_state: Optional[dict] = None
+    temperature: Optional[float] = Field(default=1.15, ge=0.01, le=3.0)
+    top_p: Optional[float] = Field(default=0.90, ge=0.05, le=1.0)
+    repetition_penalty: Optional[float] = Field(default=1.35, ge=1.0, le=4.0)
+    rhythmic_density: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    bpm: Optional[int] = Field(default=None, ge=30, le=300)
+    genre: Optional[str] = None
 
 
 class GenerateMusicRequest(BaseModel):
@@ -695,11 +701,20 @@ def ai_produce(req: AIProduceRequest):
     """
     BeYou Built-in Music AI — generates beat patterns, mix settings, and
     producer-style responses from natural language prompts.
-    No external LLM or API keys required.
+    Conditioned on genre, bpm, and rhythmic density with temperature, top-p, and repetition penalty.
     """
-    print(f"[*] AI Produce request: '{req.prompt[:80]}'")
+    print(f"[*] AI Produce request: '{req.prompt[:80]}' (T={req.temperature}, top_p={req.top_p}, rep_pen={req.repetition_penalty})")
     try:
-        result = generate_beat_response(req.prompt, current_state=req.current_state)
+        result = generate_beat_response(
+            req.prompt,
+            current_state=req.current_state,
+            temperature=req.temperature if req.temperature is not None else 1.15,
+            top_p=req.top_p if req.top_p is not None else 0.90,
+            repetition_penalty=req.repetition_penalty if req.repetition_penalty is not None else 1.35,
+            rhythmic_density=req.rhythmic_density,
+            bpm_override=req.bpm,
+            genre_override=req.genre,
+        )
         return result
     except Exception as err:
         print(f"[!] AI Produce error: {err}")

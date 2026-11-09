@@ -95,7 +95,15 @@ class BrowserMusicGenerator {
     else if (/(lo-fi|lofi|chill|study|mellow|jazz)/.test(p)) genre = 'lofi';
     else if (/(hip hop|hip-hop|boom bap|rap)/.test(p)) genre = 'lofi';
 
-    // Instrument detection
+    // Rhythmic density conditioning
+    let rhythmicDensity = 0.50;
+    if (/(sparse|minimal|slow|space|chill|ambient|peaceful)/.test(p)) rhythmicDensity = 0.25;
+    else if (/(dense|busy|fast|intense|complex|rolls|crazy|heavy)/.test(p)) rhythmicDensity = 0.85;
+
+    // Generational settings: increased temperature, nucleus top-p, repetition penalty
+    const temperature = 1.15;
+    const topP = 0.90;
+    const repetitionPenalty = 1.35;
     let instrument = 'synth';
     if (/(flute|pipe|whistle|wind)/.test(p)) instrument = 'flute';
     else if (/(guitar|acoustic|pluck|fingerstyle|folk)/.test(p)) instrument = 'guitar';
@@ -389,6 +397,10 @@ class BrowserMusicGenerator {
     cfg.instrument = instrument;
     cfg.leadStyle = leadStyle;
     cfg.promptHash = promptHash;
+    cfg.rhythmicDensity = rhythmicDensity;
+    cfg.temperature = temperature;
+    cfg.topP = topP;
+    cfg.repetitionPenalty = repetitionPenalty;
 
     const bpm = (explicitBpm && explicitBpm >= 50 && explicitBpm <= 220) ? explicitBpm : (cfg.bpm || currentBpm || 120);
 
@@ -506,6 +518,7 @@ class BrowserMusicGenerator {
       const t = i / sr;
       const stepIdx = Math.floor(i / samplesPerStep);
       const stepMod16 = stepIdx % 16;
+      const barIdx = Math.floor(stepIdx / 16);
       const timeInStep = (i % Math.floor(samplesPerStep)) / sr;
 
       const chordIdx = Math.floor(stepIdx / stepsPerChord) % numChords;
@@ -514,9 +527,13 @@ class BrowserMusicGenerator {
 
       // ── 1. DRUMS ──
       let drumL = 0, drumR = 0;
+      const rDensity = cfg.rhythmicDensity !== undefined ? cfg.rhythmicDensity : 0.50;
+      const isHighDensity = rDensity > 0.70;
+      const isLowDensity = rDensity < 0.35;
 
       // Realistic 3-layer Kick (Transient Click + Pitch Drop + Sub Weight + Saturation)
-      if (cfg.kick[stepMod16] && timeInStep < 0.35) {
+      const playKick = cfg.kick[stepMod16] || (isHighDensity && (stepMod16 === 10 || (barIdx % 2 === 1 && stepMod16 === 14)));
+      if (playKick && timeInStep < 0.35) {
         // Layer 1: Transient click (0-6ms spike for punch through any speaker)
         const clickEnv = Math.exp(-timeInStep * 700.0);
         const click = (rng() * 2.0 - 1.0) * clickEnv * 0.45;
@@ -553,7 +570,6 @@ class BrowserMusicGenerator {
       }
 
       // Dynamic drum variations across bars
-      const barIdx = Math.floor(stepIdx / 16);
       const isTurnaroundBar = (barIdx % 4 === 3);
 
       // Drum fill snare rolls on steps 12-15 of turnaround bar
@@ -570,7 +586,10 @@ class BrowserMusicGenerator {
 
       // Realistic Hi-Hat (Metallic 6-Oscillator Cluster + Highpass Noise Burst)
       const hihatRollStep = isTurnaroundBar && (stepMod16 === 7 || stepMod16 === 15);
-      if ((cfg.hihat[stepMod16] || hihatRollStep) && timeInStep < 0.09) {
+      let playHihat = cfg.hihat[stepMod16] || hihatRollStep;
+      if (isLowDensity && stepMod16 % 2 !== 0) playHihat = false; // Thin out hihats in sparse mode
+      if (isHighDensity && (stepMod16 % 4 === 1 || stepMod16 % 4 === 3)) playHihat = true; // Extra 16th hats
+      if (playHihat && timeInStep < 0.09) {
         const hEnv = Math.exp(-timeInStep * 65.0);
         // Inharmonic metallic square clusters
         const m1 = Math.sign(Math.sin(2 * Math.PI * 3420.0 * t));
@@ -876,7 +895,16 @@ class BrowserMusicGenerator {
     return {
       view,
       arrayBuffer,
-      metadata: { genre, bpm, duration, sampleRate: sr }
+      metadata: {
+        genre,
+        bpm,
+        duration,
+        sampleRate: sr,
+        temperature: cfg.temperature,
+        topP: cfg.topP,
+        repetitionPenalty: cfg.repetitionPenalty,
+        rhythmicDensity: cfg.rhythmicDensity
+      }
     };
   }
 }
