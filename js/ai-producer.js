@@ -304,20 +304,29 @@ class BeatGenerator {
     const minorScale = [0, 2, 3, 5, 7, 8, 10, 12, 14, 15, 17, 19];
 
     beatData.channels.forEach(chData => {
-      const idx = AI_PRODUCER_CHANNELS.findIndex(n => n.toLowerCase() === (chData.name || '').toLowerCase());
-      if (idx === -1 || !sequencer.channels[idx]) return;
-      const ch = sequencer.channels[idx];
+      const targetName = (chData.name || '').toLowerCase();
+      let ch = sequencer.channels.find(c => (c.name || '').toLowerCase() === targetName);
+      if (!ch) {
+        const idx = AI_PRODUCER_CHANNELS.findIndex(n => n.toLowerCase() === targetName);
+        if (idx !== -1 && sequencer.channels[idx]) ch = sequencer.channels[idx];
+      }
+      if (!ch) {
+        ch = sequencer.channels.find(c => (c.name || '').toLowerCase().includes(targetName));
+      }
+      if (!ch) return;
+
       if (Array.isArray(chData.steps)) {
-        for (let i = 0; i < Math.min(16, chData.steps.length); i++) ch.steps[i] = chData.steps[i] ? 1 : 0;
+        for (let i = 0; i < Math.min(16, chData.steps.length); i++) ch.steps[i] = chData.steps[i] ? true : false;
       }
       if (Array.isArray(chData.velocity)) {
         for (let i = 0; i < Math.min(16, chData.velocity.length); i++) ch.velocity[i] = Math.max(0, Math.min(1, chData.velocity[i] || 0.8));
       }
 
       // ── Apply or Synthesize Musical Notes for Bass & Lead ──
+      const chNameLower = (ch.name || '').toLowerCase();
       if (Array.isArray(chData.notes) && chData.notes.length > 0) {
         ch.notes = [...chData.notes];
-      } else if (ch.name === 'Bass') {
+      } else if (chNameLower.includes('bass') || chNameLower.includes('808')) {
         ch.notes = [];
         ch.steps.forEach((active, s) => {
           if (!active) return;
@@ -331,7 +340,7 @@ class BeatGenerator {
             velocity: ch.velocity[s] || 0.85
           });
         });
-      } else if (ch.name === 'Lead') {
+      } else if (chNameLower.includes('lead') || chNameLower.includes('synth') || chNameLower.includes('key') || chNameLower.includes('piano')) {
         ch.notes = [];
         const leadRoot = baseRoot + 24;
         const contour = [0, 2, 4, 2, 3, 5, 4, 1, 2, 4, 6, 5, 3, 2, 1, 0];
@@ -352,12 +361,12 @@ class BeatGenerator {
     if (typeof sequencer.onPatternChange === 'function') {
       sequencer.onPatternChange();
     }
-    if (typeof window !== 'undefined' && window.flStudioApp) {
-      if (typeof window.flStudioApp._refreshChannelRack === 'function') {
-        window.flStudioApp._refreshChannelRack();
-      }
-      if (window.flStudioApp.pianoRoll && typeof window.flStudioApp.pianoRoll.render === 'function') {
-        window.flStudioApp.pianoRoll.render();
+    if (typeof window !== 'undefined') {
+      const targetApp = window.app || window.flStudioApp || window.flApp;
+      if (targetApp) {
+        if (typeof targetApp._refreshChannelRack === 'function') targetApp._refreshChannelRack();
+        if (targetApp.pianoRoll && typeof targetApp.pianoRoll.render === 'function') targetApp.pianoRoll.render();
+        if (targetApp.playlist && typeof targetApp.playlist.syncWithChannels === 'function') targetApp.playlist.syncWithChannels();
       }
     }
   }

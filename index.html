@@ -14,7 +14,7 @@
 <body>
 <!-- iOS / Safari: AudioContext requires user gesture — shown on touch devices -->
 <div id="ios-audio-banner" role="button" tabindex="0" aria-label="Tap to activate audio">
-  🔊 Tap anywhere to activate audio engine
+  Tap anywhere to activate audio engine
 </div>
 <!-- Mobile sidebar dim overlay -->
 <div id="sidebar-overlay" aria-hidden="true"></div>
@@ -39,7 +39,7 @@
  <!-- ── Transport / Toolbar ───────────────────────────── -->
  <div id="toolbar">
   <!-- Mobile sidebar toggle (hidden on desktop, shown via CSS on ≤1024px) -->
-  <button id="mobile-sidebar-toggle" style="display:none" aria-label="Toggle instrument rack" title="Instrument Rack">☰</button>
+  <button id="mobile-sidebar-toggle" style="display:none" aria-label="Toggle instrument rack" title="Instrument Rack"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><rect y="2" width="16" height="2" rx="1"/><rect y="7" width="16" height="2" rx="1"/><rect y="12" width="16" height="2" rx="1"/></svg></button>
 
   <!-- Top-left File Menu -->
   <div class="file-dropdown-wrap" style="position:relative;">
@@ -190,6 +190,14 @@
   </div>
   </div>
 
+  <!-- AI Beats Quick Button -->
+  <div style="flex-shrink:0;">
+  <button id="tb-btn-ai-beats" class="tb-ai-beats-btn" title="AI Beats — Produce Beats with Max AI">
+  <span class="ai-btn-dot" style="background:#ff7700;"></span>
+  AI Beats
+  </button>
+  </div>
+
   <!-- AI Co-Pilot Toggle -->
   <div style="flex-shrink:0;">
   <button id="btn-ai-copilot-toggle" class="tb-ai-copilot-btn" title="Toggle Max AI Co-Pilot Drawer">
@@ -308,7 +316,7 @@
           <div style="height:1px;background:rgba(255,255,255,0.1);margin:2px 0;"></div>
           <button type="button" class="rack-extend-menu-item" data-action="custom">
             <span>Custom Steps / Modal...</span>
-            <span class="menu-hint">⚙</span>
+            <span class="menu-hint">Ctrl+,</span>
           </button>
         </div>
       </div>
@@ -683,7 +691,7 @@
 				<div id="ai-music-key-panel" class="ai-music-key-panel hidden">
 					<div class="ai-key-panel-inner">
 						<div class="ai-provider-nav">
-							<button type="button" class="ai-audio-tab active" data-audio-provider="beyou">⚡ BeYou Built-in (Instant Offline)</button>
+							<button type="button" class="ai-audio-tab active" data-audio-provider="beyou">BeYou Built-in (Instant Offline)</button>
 							<button type="button" class="ai-audio-tab" data-audio-provider="local"> Local Audio Server (MusicGen / Python)</button>
 							<button type="button" class="ai-audio-tab" data-audio-provider="hf"> Hugging Face Cloud</button>
 						</div>
@@ -691,7 +699,7 @@
 						<!-- BeYou Built-in Tab -->
 						<div class="ai-audio-content active" id="ai-audio-tab-beyou">
 							<div class="aip-ready-badge" style="display:inline-flex;align-items:center;gap:6px;color:#4ade80;font-weight:600;margin-bottom:8px;">
-								<span>✓</span> Ready — Built-in Procedural AI Music Engine
+								Ready: Built-in Procedural AI Music Engine
 							</div>
 							<p style="color:#a1a1aa;font-size:12px;margin:0 0 12px 0;line-height:1.5;">
 								Generates rich multi-track grooves (drums, 808 bass, chord harmony, leads, vinyl atmosphere) directly in your browser via math & Web Audio. Zero setup, works 100% offline, zero API keys needed.
@@ -815,7 +823,7 @@
  Download
  </button>
  <button id="ai-result-extend" class="ai-ctrl-btn extend" title="Extend Track Pattern & Concatenate">
- ➕ Extend
+ Extend
  </button>
  <button id="ai-result-import" class="ai-ctrl-btn import" title="Import to Playlist">
  Import
@@ -1106,6 +1114,7 @@
      <button type="button" class="ai-quick-chip" data-prompt="Lofi chill beat with vinyl warmth and Rhodes chords">Lo-Fi Chill</button>
      <button type="button" class="ai-quick-chip" data-prompt="Drill beat with sliding bass and syncopated snare">Drill Bounce</button>
      <button type="button" class="ai-quick-chip" data-prompt="Boom-Bap 90s hip hop punchy drums">Boom-Bap</button>
+     <button type="button" class="ai-quick-chip" data-prompt="Counter-Melody">AI Melody</button>
    </div>
    <div class="ai-drawer-tabs">
      <button type="button" class="ai-drawer-tab active" data-view="producer">Beat Producer</button>
@@ -1365,7 +1374,7 @@
    </svg>
    Extend Pattern Length
  </div>
- <button class="fl-modal-close" data-close="modal-extend-pattern">✕</button>
+ <button class="fl-modal-close" data-close="modal-extend-pattern">&times;</button>
  </div>
  <div class="fl-modal-body">
  <!-- Current pattern info -->
@@ -1435,7 +1444,7 @@
  <div class="fl-modal-box">
  <div class="fl-modal-header">
  <div class="fl-modal-title"> Save Project to Database</div>
- <button class="fl-modal-close" data-close="modal-save-project">✕</button>
+ <button class="fl-modal-close" data-close="modal-save-project">&times;</button>
  </div>
  <div class="fl-modal-body">
  <div class="fl-form-group">
@@ -1462,7 +1471,7 @@
  <div class="fl-modal-box large">
  <div class="fl-modal-header">
  <div class="fl-modal-title"> Cloud Projects Database</div>
- <button class="fl-modal-close" data-close="modal-cloud-projects">✕</button>
+ <button class="fl-modal-close" data-close="modal-cloud-projects">&times;</button>
  </div>
  <div class="fl-modal-body">
  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
@@ -1487,7 +1496,7 @@
  <span style="color:#ffffff;"></span> BeYou Admin Dashboard
  <span class="role-badge admin" style="margin-left:6px;">SUPER ADMIN: Rahul Sharma</span>
  </div>
- <button class="fl-modal-close" data-close="modal-admin-dashboard">✕</button>
+ <button class="fl-modal-close" data-close="modal-admin-dashboard">&times;</button>
  </div>
  <div class="admin-tabs">
  <button class="admin-tab-btn active" data-admin-tab="overview"> System Overview</button>
@@ -1621,7 +1630,7 @@
  <div class="fl-modal-box">
  <div class="fl-modal-header">
  <div class="fl-modal-title"> Account & Authentication</div>
- <button class="fl-modal-close" data-close="modal-auth">✕</button>
+ <button class="fl-modal-close" data-close="modal-auth">&times;</button>
  </div>
  <div class="admin-tabs" style="padding:0 14px;">
  <button class="admin-tab-btn active" id="auth-tab-btn-login">Sign In</button>
@@ -1793,7 +1802,7 @@
  <span>Explore Beats</span>
  <span class="plat-modal-sub">Discover what the community is making</span>
  </div>
- <button class="plat-modal-close" onclick="window.platform.closeAll()">✕</button>
+ <button class="plat-modal-close" onclick="window.platform.closeAll()">&times;</button>
  </div>
  <div class="plat-modal-toolbar">
  <div id="explore-sort-tabs" class="plat-tabs">
@@ -1815,7 +1824,7 @@
  <span class="plat-modal-icon"></span>
  <span>Producer Profile</span>
  </div>
- <button class="plat-modal-close" onclick="window.platform.closeAll()">✕</button>
+ <button class="plat-modal-close" onclick="window.platform.closeAll()">&times;</button>
  </div>
  <div id="profile-modal-body" class="plat-modal-body-scroll"></div>
  </div>
@@ -1828,7 +1837,7 @@
  <span>Train Max AI Producer</span>
  <span class="plat-modal-sub">Teach Max real songs, audio files & custom grooves</span>
  </div>
- <button class="plat-modal-close" onclick="window.platform.closeAll()">✕</button>
+ <button class="plat-modal-close" onclick="window.platform.closeAll()">&times;</button>
  </div>
 
  <!-- Train Max Navigation Tabs -->

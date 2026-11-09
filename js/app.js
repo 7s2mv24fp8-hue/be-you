@@ -384,7 +384,7 @@ class FLStudioApp {
       }
     }
 
-    showToast(ch.isPaused ? `❚❚ Paused ${ch.name} rack` : `▶ Resumed ${ch.name} rack`, 1800);
+    showToast(ch.isPaused ? `Paused ${ch.name} rack` : `Resumed ${ch.name} rack`, 1800);
   }
 
   pauseAllChannels() {
@@ -404,7 +404,7 @@ class FLStudioApp {
         }
       }
     });
-    showToast('❚❚ Paused all individual racks', 2000);
+    showToast('Paused all individual racks', 2000);
   }
 
   resumeAllChannels() {
@@ -543,7 +543,7 @@ class FLStudioApp {
     });
     row.appendChild(auditionBtn);
 
-    // Dedicated Pause Button for this specific rack (❚❚ / ▶)
+    // Dedicated Pause Button for this specific rack
     const pauseBtn = document.createElement('button');
     pauseBtn.className = 'ch-pause-btn' + (ch.isPaused ? ' paused' : '');
     pauseBtn.title = ch.isPaused ? `Resume ${ch.name} (Rack is Paused)` : `Pause ${ch.name} Rack`;
@@ -714,7 +714,7 @@ class FLStudioApp {
       if (e.target === row || e.target === label) {
         e.preventDefault();
         showContextMenu([
-          { label: ch.isPaused ? `▶ Resume ${ch.name} Rack` : `❚❚ Pause ${ch.name} Rack`, action: () => this.toggleChannelPause(ci) },
+          { label: ch.isPaused ? `Resume ${ch.name} Rack` : `Pause ${ch.name} Rack`, action: () => this.toggleChannelPause(ci) },
           'separator',
           { label: ' Send Rack Pattern to Piano Roll', action: () => this.sendRackPatternToPianoRoll(ci) },
           { label: ' Send Pattern to Audio Editor (Bounce)', action: () => this.sendRackPatternToAudioEditor(ci) },
@@ -745,8 +745,8 @@ class FLStudioApp {
           { label: ' Set Pattern: 48 Steps (3 Bars)', action: () => this.setPatternLength(48) },
           { label: ' Set Pattern: 64 Steps (4 Bars)', action: () => this.setPatternLength(64) },
           'separator',
-          { label: '❚❚ Pause All Racks', action: () => this.pauseAllChannels() },
-          { label: '▶ Resume All Racks', action: () => this.resumeAllChannels() },
+          { label: 'Pause All Racks', action: () => this.pauseAllChannels() },
+          { label: 'Resume All Racks', action: () => this.resumeAllChannels() },
           { label: ' Unmute All Channels & Reset Master', action: () => this.unmuteAll() },
           'separator',
           { label: ' Import Sound to this slot', action: () => {
@@ -855,6 +855,18 @@ class FLStudioApp {
     });
     document.getElementById('pr-zoom-out')?.addEventListener('click', () => {
       this.pianoRoll.zoom(0.8);
+    });
+
+    // Fold-to-Scale, Progression Builder & AI Melody in Piano Roll Toolbar
+    document.getElementById('pr-btn-fold-scale')?.addEventListener('click', () => {
+      this.pianoRoll.toggleFoldScale();
+    });
+    document.getElementById('pr-btn-stamp-prog')?.addEventListener('click', () => {
+      const sel = document.getElementById('pr-progression-select');
+      this.pianoRoll.stampProgression(sel ? sel.value : 'i-VI-III-VII');
+    });
+    document.getElementById('pr-btn-ai-melody')?.addEventListener('click', () => {
+      this.generateCounterMelody();
     });
 
     this._updatePianoRollChannelSelect();
@@ -979,11 +991,11 @@ class FLStudioApp {
     if (this.sequencer.isPlaying) {
       this.sequencer.pause();
       this._updateTransportUI('paused');
-      showToast('Paused ❚❚');
+      showToast('Paused');
     } else if (this.sequencer.isPaused) {
       this.sequencer.resume();
       this._updateTransportUI('playing');
-      showToast('Resuming ▶');
+      showToast('Resuming');
     } else {
       showToast('Playback stopped');
     }
@@ -1868,7 +1880,7 @@ class FLStudioApp {
           <button class="clip-btn play-btn" data-clip-id="${clip.id}" data-raw="1">▶ Raw</button>
           <button class="clip-btn add-to-rack-btn" data-clip-id="${clip.id}" style="color:#ffffff;font-weight:600;">+ Add to Rack</button>
           <button class="clip-btn add-to-pl-btn" data-clip-id="${clip.id}" style="color:#ffffff;font-weight:600;">+ Playlist</button>
-          <button class="clip-btn delete-btn" data-clip-id="${clip.id}" data-delete="1" title="Delete Clip">✕</button>
+          <button class="clip-btn delete-btn" data-clip-id="${clip.id}" data-delete="1" title="Delete Clip">&times;</button>
         </div>
       `;
 
@@ -2228,10 +2240,10 @@ class FLStudioApp {
         this._renderAIHistory();
 
         if (currentResult.fallbackUsed) {
-          showStatus(`🎵 Music generated with BeYou Built-in Engine (${currentResult.fallbackReason || 'Server fallback'})`, 'success');
+          showStatus(`Music generated with BeYou Built-in Engine (${currentResult.fallbackReason || 'Server fallback'})`, 'success');
           showToast('Generated using BeYou Studio Built-in Engine!', 3000);
         } else {
-          showStatus(`🎵 Music generated successfully! (${currentResult.engine || 'BeYou AI'})`, 'success');
+          showStatus(`Music generated successfully! (${currentResult.engine || 'BeYou AI'})`, 'success');
         }
 
       } catch (err) {
@@ -2397,8 +2409,8 @@ class FLStudioApp {
         el.innerHTML = `
           <div class="ai-history-item-prompt" title="${item.prompt}">${item.prompt}</div>
           <div class="ai-history-item-time">${timeStr}</div>
-          ${url ? '<button class="ai-history-item-play" data-play title="Play">▶</button>' : ''}
-          <button class="ai-history-item-extend" data-extend title="Extend this pattern">➕</button>
+          ${url ? '<button class="ai-history-item-play" data-play title="Play">Play</button>' : ''}
+          <button class="ai-history-item-extend" data-extend title="Extend this pattern">Extend</button>
           <button class="ai-history-item-delete" data-delete title="Remove">&times;</button>
         `;
         // Play from history
@@ -3840,7 +3852,7 @@ FLStudioApp.prototype._updateInlineLayerList = function() {
       <div style="font-size:9px;color:rgba(255,255,255,0.35);font-family:monospace;">${dur}s</div>
       <button style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);border-radius:4px;
                      color:#ffffff;font-size:10px;padding:2px 7px;cursor:pointer;font-family:inherit;"
-              data-id="${layer.id}" title="Delete layer">✕</button>
+              data-id="${layer.id}" title="Delete layer">&times;</button>
     `;
     card.querySelector('button').addEventListener('click', (e) => {
       e.stopPropagation();
@@ -4520,65 +4532,246 @@ FLStudioApp.prototype._bindFileMenu = function() {
 
 // ── AI Co-Pilot Drawer ──────────────────────────────────────────
 FLStudioApp.prototype._bindAICopilotDrawer = function() {
-  const toggleBtn = document.getElementById('btn-ai-copilot-toggle');
-  const drawer = document.getElementById('ai-copilot-drawer');
-  const closeBtn = document.getElementById('ai-drawer-close-btn');
+  const toggleBtn  = document.getElementById('btn-ai-copilot-toggle');
+  const aiBeatsBtn = document.getElementById('tb-btn-ai-beats');
+  const drawer     = document.getElementById('ai-copilot-drawer');
+  const closeBtn   = document.getElementById('ai-drawer-close-btn');
 
-  if (toggleBtn && drawer) {
-    toggleBtn.addEventListener('click', () => {
-      drawer.classList.toggle('open');
-    });
-  }
+  if (!drawer) return;
 
-  if (closeBtn && drawer) {
-    closeBtn.addEventListener('click', () => {
-      drawer.classList.remove('open');
-    });
-  }
+  const safeEscape = (str) => String(str || '').replace(/[&<>"']/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[m]);
 
-  document.querySelectorAll('.ai-copilot-tab-btn').forEach(tabBtn => {
+  const openDrawer = (tabView) => {
+    drawer.classList.remove('hidden');
+    drawer.classList.add('open');
+    toggleBtn?.classList.add('active');
+    if (tabView) {
+      document.querySelectorAll('.ai-drawer-tab').forEach(b => {
+        b.classList.toggle('active', b.dataset.view === tabView);
+      });
+      document.querySelectorAll('.ai-drawer-pane').forEach(p => {
+        p.classList.toggle('active', p.id === `ai-drawer-${tabView}-pane`);
+      });
+    }
+  };
+
+  const closeDrawer = () => {
+    drawer.classList.remove('open');
+    drawer.classList.add('hidden');
+    toggleBtn?.classList.remove('active');
+  };
+
+  const toggleDrawer = () => {
+    if (drawer.classList.contains('hidden') || !drawer.classList.contains('open')) {
+      openDrawer();
+    } else {
+      closeDrawer();
+    }
+  };
+
+  toggleBtn?.addEventListener('click', toggleDrawer);
+  closeBtn?.addEventListener('click', closeDrawer);
+
+  aiBeatsBtn?.addEventListener('click', () => {
+    openDrawer('producer');
+    const input = document.getElementById('ai-drawer-prompt-input');
+    if (input) {
+      input.focus();
+      if (!input.value) input.value = 'Trap beat with rolling 808s and punchy drums';
+    }
+  });
+
+  // Drawer tab switching (Beat Producer vs Audio Generator)
+  document.querySelectorAll('.ai-drawer-tab').forEach(tabBtn => {
     tabBtn.addEventListener('click', () => {
-      document.querySelectorAll('.ai-copilot-tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.ai-drawer-tab').forEach(b => b.classList.remove('active'));
       tabBtn.classList.add('active');
-      const target = tabBtn.dataset.drawerTab;
-      document.querySelectorAll('.ai-copilot-tab-content').forEach(c => {
-        c.classList.toggle('active', c.id === target);
+      const view = tabBtn.dataset.view || 'producer';
+      document.querySelectorAll('.ai-drawer-pane').forEach(p => {
+        p.classList.toggle('active', p.id === `ai-drawer-${view}-pane`);
       });
     });
   });
 
-  document.querySelectorAll('.ai-prompt-chip').forEach(chip => {
+  // Quick prompt chips
+  document.querySelectorAll('.ai-quick-chip').forEach(chip => {
     chip.addEventListener('click', () => {
       const promptText = chip.dataset.prompt || chip.textContent.trim();
-      const activeTabContent = document.querySelector('.ai-copilot-tab-content.active');
-      if (activeTabContent && activeTabContent.id === 'copilot-music') {
-        const input = document.getElementById('ai-music-prompt-input');
-        if (input) input.value = promptText;
+      if (promptText === 'Counter-Melody') {
+        this.generateCounterMelody();
+        return;
+      }
+      const activePane = document.querySelector('.ai-drawer-pane.active');
+      if (activePane && activePane.id === 'ai-drawer-music-pane') {
+        const input = document.getElementById('ai-drawer-music-prompt-input');
+        if (input) {
+          input.value = promptText;
+          document.getElementById('ai-drawer-music-gen-btn')?.click();
+        }
       } else {
-        const promptInput = document.getElementById('ai-producer-prompt-input');
-        if (promptInput) promptInput.value = promptText;
+        const input = document.getElementById('ai-drawer-prompt-input');
+        if (input) {
+          input.value = promptText;
+          document.getElementById('ai-drawer-send-btn')?.click();
+        }
       }
     });
   });
 
-  document.getElementById('drawer-btn-gen-beat')?.addEventListener('click', () => {
-    const promptInput = document.getElementById('ai-producer-prompt-input');
-    const text = promptInput ? promptInput.value : '';
-    if (this.aiProducer && typeof this.aiProducer.generateGroove === 'function') {
-      this.aiProducer.generateGroove(text);
-    } else {
-      this.generateAIDrums();
+  // Beat Producer Produce action
+  const handleProduceBeat = async () => {
+    const input = document.getElementById('ai-drawer-prompt-input');
+    const sendBtn = document.getElementById('ai-drawer-send-btn');
+    const chatHistory = document.getElementById('ai-drawer-chat-history');
+    if (!input || !chatHistory) return;
+
+    const userPrompt = input.value.trim() || 'Trap beat with rolling 808s and punchy drums';
+    input.value = '';
+
+    // Append user message
+    const userMsg = document.createElement('div');
+    userMsg.className = 'ai-chat-msg user';
+    userMsg.innerHTML = `<div class="ai-msg-sender">You</div><div class="ai-msg-text">${safeEscape(userPrompt)}</div>`;
+    chatHistory.appendChild(userMsg);
+
+    // Append AI loading message
+    const aiMsg = document.createElement('div');
+    aiMsg.className = 'ai-chat-msg ai loading';
+    aiMsg.innerHTML = `<div class="ai-msg-sender">Max AI Producer</div><div class="ai-msg-text">Cooking up "${safeEscape(userPrompt)}"...</div>`;
+    chatHistory.appendChild(aiMsg);
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+
+    if (sendBtn) {
+      sendBtn.disabled = true;
+      sendBtn.textContent = '...';
+    }
+
+    try {
+      if (this.aiProducer && typeof this.aiProducer.produce === 'function') {
+        const res = await this.aiProducer.produce(userPrompt, this.sequencer, this.audioEngine, {
+          onStatus: (st) => {
+            const textEl = aiMsg.querySelector('.ai-msg-text');
+            if (textEl) textEl.textContent = `Status: ${st}...`;
+          }
+        });
+        const textEl = aiMsg.querySelector('.ai-msg-text');
+        if (textEl) {
+          textEl.textContent = res.message || `Produced ${userPrompt}! Check the Channel Rack and Piano Roll.`;
+        }
+      } else {
+        await this.generateAIDrums(userPrompt);
+        const textEl = aiMsg.querySelector('.ai-msg-text');
+        if (textEl) textEl.textContent = `Generated drum groove and 808s for ${userPrompt}!`;
+      }
+
+      this._refreshChannelRack();
+      if (this.pianoRoll) this.pianoRoll.render();
+      if (this.playlist) this.playlist.syncWithChannels();
+      if (!this.sequencer.isPlaying && typeof this.sequencer.play === 'function') this.sequencer.play();
+      showToast('AI Beat generated and playing!');
+    } catch (err) {
+      console.error('[AI Producer Drawer] Error:', err);
+      const textEl = aiMsg.querySelector('.ai-msg-text');
+      if (textEl) textEl.textContent = `Could not produce: ${err.message}. Applying fallback groove.`;
+      this.generateAIDrums('trap');
+    } finally {
+      if (sendBtn) {
+        sendBtn.disabled = false;
+        sendBtn.textContent = 'Produce';
+      }
+      chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+  };
+
+  document.getElementById('ai-drawer-send-btn')?.addEventListener('click', handleProduceBeat);
+  document.getElementById('ai-drawer-prompt-input')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleProduceBeat();
     }
   });
 
-  document.getElementById('drawer-btn-gen-audio')?.addEventListener('click', () => {
-    const promptInput = document.getElementById('ai-music-prompt-input');
-    const text = promptInput ? promptInput.value : '';
-    if (this.musicAI && typeof this.musicAI.generateAudio === 'function') {
-      this.musicAI.generateAudio(text);
-    } else {
-      showToast('AI Audio Generator processing prompt...');
+  // Audio Generator Synthesize action
+  let lastSynthesizedBuffer = null;
+  const handleSynthesizeAudio = async () => {
+    const input = document.getElementById('ai-drawer-music-prompt-input');
+    const genBtn = document.getElementById('ai-drawer-music-gen-btn');
+    const statusEl = document.getElementById('ai-drawer-music-status');
+    const player = document.getElementById('ai-drawer-audio-player');
+    const insertBtn = document.getElementById('ai-drawer-insert-audio-btn');
+
+    const promptText = input?.value.trim() || 'chill lofi piano chords with vinyl warmth';
+    if (statusEl) statusEl.textContent = `Synthesizing neural audio: "${promptText}"...`;
+    if (genBtn) {
+      genBtn.disabled = true;
+      genBtn.textContent = '...';
     }
+
+    try {
+      if (this.musicAI && typeof this.musicAI.generate === 'function') {
+        const res = await this.musicAI.generate(promptText, {
+          duration: 8,
+          onStatus: (st) => {
+            if (statusEl) statusEl.textContent = `Synthesizing: ${st}...`;
+          }
+        });
+        lastSynthesizedBuffer = res.buffer || null;
+        if (statusEl) statusEl.textContent = 'Generated 8s audio preview!';
+        if (player && res.url) {
+          player.src = res.url;
+          player.style.display = 'block';
+          try { player.play(); } catch (_) {}
+        }
+        if (insertBtn) insertBtn.style.display = 'block';
+      } else {
+        if (statusEl) statusEl.textContent = 'Music AI engine ready.';
+      }
+    } catch (err) {
+      console.error('[AI Audio Drawer] Error:', err);
+      if (statusEl) statusEl.textContent = `Synthesis error: ${err.message}`;
+    } finally {
+      if (genBtn) {
+        genBtn.disabled = false;
+        genBtn.textContent = 'Synthesize';
+      }
+    }
+  };
+
+  document.getElementById('ai-drawer-music-gen-btn')?.addEventListener('click', handleSynthesizeAudio);
+  document.getElementById('ai-drawer-music-prompt-input')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSynthesizeAudio();
+    }
+  });
+
+  document.getElementById('ai-drawer-insert-audio-btn')?.addEventListener('click', () => {
+    if (!lastSynthesizedBuffer) {
+      showToast('No audio buffer to insert');
+      return;
+    }
+    const input = document.getElementById('ai-drawer-music-prompt-input');
+    const name = input?.value.trim() ? input.value.trim().slice(0, 16) : 'AI Audio Stem';
+    const newCh = {
+      name: name,
+      color: '#ec4899',
+      type: 'audio',
+      sampleFileName: `${name}.wav`,
+      audioBuffer: lastSynthesizedBuffer,
+      volume: 0.85,
+      pan: 0,
+      muted: false,
+      solo: false,
+      isPaused: false,
+      steps: new Array(this.sequencer.steps || 16).fill(false),
+      velocity: new Array(this.sequencer.steps || 16).fill(0.85),
+      notes: []
+    };
+    newCh.steps[0] = true;
+    this.sequencer.channels.push(newCh);
+    this._buildChannelRack();
+    if (this.playlist) this.playlist.syncWithChannels();
+    showToast(`Inserted "${name}" into Channel Rack!`);
   });
 };
 
@@ -4655,8 +4848,8 @@ FLStudioApp.prototype.autoArrangeSong = function() {
       muted: false,
       solo: false,
       isPaused: false,
-      steps: new Array(this.sequencer.steps).fill(false),
-      velocity: new Array(this.sequencer.steps).fill(0.85),
+      steps: new Array(this.sequencer.steps || 16).fill(false),
+      velocity: new Array(this.sequencer.steps || 16).fill(0.85),
       notes: []
     };
     crashCh.steps[0] = true;
@@ -4751,11 +4944,31 @@ FLStudioApp.prototype.autoArrangeSong = function() {
   showToast('Auto-Arranged 48-Bar Song Structure (Intro • Hook • Verse • Hook 2 • Outro)');
 };
 
-FLStudioApp.prototype.generateAIDrums = function(genre) {
+FLStudioApp.prototype.generateAIDrums = async function(genre) {
   if (!genre) {
     const activeGenreCard = document.querySelector('.quick-genre-card.active');
-    genre = activeGenreCard ? activeGenreCard.dataset.genre : 'trap';
+    genre = activeGenreCard ? (activeGenreCard.dataset.genre || 'trap') : 'trap';
   }
+  const g = String(genre).toLowerCase().replace('-', '');
+
+  showToast(`Generating ${genre.toUpperCase()} beat with AI Producer...`);
+
+  // If AI Producer is active, use full intelligent generation
+  if (this.aiProducer && typeof this.aiProducer.produce === 'function') {
+    try {
+      await this.aiProducer.produce(`${genre} beat with punchy drums and 808 bass`, this.sequencer, this.audioEngine);
+      this._refreshChannelRack();
+      if (this.pianoRoll) this.pianoRoll.render();
+      if (this.playlist) this.playlist.syncWithChannels();
+      if (!this.sequencer.isPlaying && typeof this.sequencer.play === 'function') this.sequencer.play();
+      showToast(`AI generated ${genre.toUpperCase()} beat!`);
+      return;
+    } catch (e) {
+      console.warn('AI Producer produce failed, using procedural fallback:', e);
+    }
+  }
+
+  // Robust procedural groove generator across Kick, Snare, Hi-Hat, and 808
   const kickIdx = this.sequencer.channels.findIndex(c => (c.name || '').toLowerCase().includes('kick'));
   const snareIdx = this.sequencer.channels.findIndex(c => {
     const n = (c.name || '').toLowerCase();
@@ -4765,9 +4978,12 @@ FLStudioApp.prototype.generateAIDrums = function(genre) {
     const n = (c.name || '').toLowerCase();
     return n.includes('hat') || n.includes('hh') || n.includes('shaker');
   });
+  const bassIdx = this.sequencer.channels.findIndex(c => {
+    const n = (c.name || '').toLowerCase();
+    return n.includes('808') || n.includes('bass') || n.includes('sub');
+  });
 
   const totalSteps = this.sequencer.steps || 16;
-  const g = (genre || 'trap').toLowerCase();
 
   [kickIdx, snareIdx, hatIdx].forEach(idx => {
     if (idx >= 0 && this.sequencer.channels[idx]) {
@@ -4798,51 +5014,168 @@ FLStudioApp.prototype.generateAIDrums = function(genre) {
     setSteps(snareIdx >= 0 ? snareIdx : 1, [4, 12]);
     setSteps(hatIdx >= 0 ? hatIdx : 2, [2, 6, 10, 14]);
   } else {
-    // Trap
+    // Trap default
     setSteps(kickIdx >= 0 ? kickIdx : 0, [0, 7, 10]);
     setSteps(snareIdx >= 0 ? snareIdx : 1, [8]);
     setSteps(hatIdx >= 0 ? hatIdx : 2, [0, 2, 4, 6, 8, 10, 12, 14]);
   }
 
+  if (bassIdx >= 0 && this.sequencer.channels[bassIdx]) {
+    const bassCh = this.sequencer.channels[bassIdx];
+    bassCh.steps.fill(false);
+    [0, 6, 10].forEach(s => { if (s < totalSteps) bassCh.steps[s] = true; });
+  }
+
   this._refreshChannelRack();
+  if (this.pianoRoll) this.pianoRoll.render();
+  if (!this.sequencer.isPlaying && typeof this.sequencer.play === 'function') this.sequencer.play();
   showToast(`AI generated ${genre.toUpperCase()} drum groove`);
 };
 
 FLStudioApp.prototype.generateCounterMelody = function() {
   if (!this.pianoRoll) return;
-  const chIdx = this.pianoRoll.channelIdx;
-  const ch = this.sequencer.channels[chIdx];
-  if (!ch) return;
 
+  // Determine active channel in Piano Roll
+  let chIdx = this.pianoRoll.channelIdx;
+  let ch = this.sequencer.channels[chIdx];
+
+  // If the active channel is a drum (Kick, Snare, Hat, Perc, Clap) or has type 'drum',
+  // automatically find or switch to a melodic channel (Lead, Keys, Piano, Synth, Bass)
+  const isDrumChannel = (channel) => {
+    if (!channel) return true;
+    if (channel.type === 'drum') return true;
+    const n = (channel.name || '').toLowerCase();
+    return n.includes('kick') || n.includes('snare') || n.includes('clap') ||
+           n.includes('hat') || n.includes('hh') || n.includes('tom') ||
+           n.includes('perc') || n.includes('rim') || n.includes('cymbal') || n.includes('shaker');
+  };
+
+  if (isDrumChannel(ch)) {
+    let melodicIdx = this.sequencer.channels.findIndex(c => {
+      const n = (c.name || '').toLowerCase();
+      return n.includes('lead') || n.includes('key') || n.includes('piano') ||
+             n.includes('synth') || n.includes('rhodes') || n.includes('pluck') ||
+             n.includes('bell') || n.includes('flute') || n.includes('strings');
+    });
+
+    if (melodicIdx === -1) {
+      melodicIdx = this.sequencer.channels.findIndex(c => {
+        const n = (c.name || '').toLowerCase();
+        return n.includes('bass') || n.includes('808') || n.includes('sub');
+      });
+    }
+
+    if (melodicIdx === -1) {
+      const newCh = {
+        name: 'Lead Synth',
+        color: '#a3e635',
+        type: 'synth',
+        volume: 0.85,
+        pan: 0,
+        muted: false,
+        solo: false,
+        isPaused: false,
+        steps: new Array(this.sequencer.steps || 16).fill(false),
+        velocity: new Array(this.sequencer.steps || 16).fill(0.85),
+        notes: []
+      };
+      this.sequencer.channels.push(newCh);
+      melodicIdx = this.sequencer.channels.length - 1;
+      this._buildChannelRack();
+    }
+
+    chIdx = melodicIdx;
+    ch = this.sequencer.channels[chIdx];
+    this.pianoRoll.setChannel(chIdx);
+    const channelSelect = document.getElementById('pr-channel-select');
+    if (channelSelect) channelSelect.value = String(chIdx);
+  }
+
+  // Determine Key and Scale
   const extras = window.flPianoExtras || {};
-  const rootName = extras.scaleRoot || 'C';
-  const scaleType = extras.scaleType || 'Minor';
+  const rootSelect = document.getElementById('pr-scale-root');
+  const typeSelect = document.getElementById('pr-scale-type');
+  const rootName = (rootSelect ? rootSelect.value : null) || extras.scaleRoot || 'C';
+  const scaleType = (typeSelect ? typeSelect.value : null) || extras.scaleType || 'Minor';
+
   const noteNames = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
   const rootPitchClass = Math.max(0, noteNames.indexOf(rootName));
   const isMajor = (scaleType || '').toLowerCase().includes('major');
-  const scaleIntervals = isMajor ? [0, 2, 4, 5, 7, 9, 11] : [0, 2, 3, 5, 7, 8, 10];
+  const scaleIntervals = isMajor
+    ? [0, 2, 4, 5, 7, 9, 11]
+    : [0, 2, 3, 5, 7, 8, 10];
 
-  const baseMidi = 60 + rootPitchClass;
-  ch.notes = [];
   const totalSteps = this.sequencer.steps || 16;
+  const isBass = (ch.name || '').toLowerCase().includes('bass');
+  const baseOctave = isBass ? 2 : 4;
+  const baseMidi = baseOctave * 12 + rootPitchClass;
 
-  const motifDegrees = [0, 2, 4, 6, 4, 2, 3, 1];
-  motifDegrees.forEach((deg, i) => {
-    const step = i * 2;
-    if (step < totalSteps) {
-      const midi = baseMidi + scaleIntervals[deg % 7] + Math.floor(deg / 7) * 12;
-      ch.notes.push({
-        step,
-        midi: Math.max(24, Math.min(84, midi)),
-        length: (i % 2 === 0) ? 1.5 : 1,
-        velocity: 0.8 + (i % 3) * 0.05
-      });
-    }
-  });
+  // Generate expressive counter-melody motifs
+  ch.notes = [];
+
+  const bars = Math.max(1, Math.floor(totalSteps / 16));
+  const stepsPerBar = 16;
+
+  const motifProfiles = [
+    // Phrase 1 (Statement): root -> 3rd -> 5th -> 7th
+    [ { step: 0, deg: 0, len: 1.5, vel: 0.9 },
+      { step: 3, deg: 2, len: 1.0, vel: 0.8 },
+      { step: 6, deg: 4, len: 1.5, vel: 0.85 },
+      { step: 10, deg: 6, len: 1.0, vel: 0.75 },
+      { step: 12, deg: 4, len: 2.0, vel: 0.8 } ],
+
+    // Phrase 2 (Response / Tension): 4th -> 5th -> octave leap
+    [ { step: 0, deg: 3, len: 1.5, vel: 0.85 },
+      { step: 3, deg: 4, len: 1.0, vel: 0.8 },
+      { step: 6, deg: 7, len: 1.5, vel: 0.9 },
+      { step: 10, deg: 5, len: 1.0, vel: 0.75 },
+      { step: 12, deg: 2, len: 2.0, vel: 0.8 } ],
+
+    // Phrase 3 (Variation): fast syncopated run
+    [ { step: 0, deg: 4, len: 1.0, vel: 0.85 },
+      { step: 2, deg: 5, len: 1.0, vel: 0.8 },
+      { step: 4, deg: 6, len: 1.5, vel: 0.9 },
+      { step: 8, deg: 4, len: 1.0, vel: 0.8 },
+      { step: 11, deg: 2, len: 1.0, vel: 0.75 },
+      { step: 14, deg: 1, len: 1.5, vel: 0.8 } ],
+
+    // Phrase 4 (Resolution): resolving to tonic root
+    [ { step: 0, deg: 2, len: 1.5, vel: 0.85 },
+      { step: 4, deg: 1, len: 1.0, vel: 0.8 },
+      { step: 6, deg: 0, len: 2.5, vel: 0.95 },
+      { step: 12, deg: 0, len: 3.0, vel: 0.9 } ]
+  ];
+
+  for (let b = 0; b < bars; b++) {
+    const profile = motifProfiles[b % motifProfiles.length];
+    const barOffset = b * stepsPerBar;
+
+    profile.forEach(noteEvt => {
+      const noteStep = barOffset + noteEvt.step;
+      if (noteStep < totalSteps) {
+        const deg = noteEvt.deg;
+        const octOffset = Math.floor(deg / 7);
+        const pitchInScale = scaleIntervals[deg % 7];
+        const midi = baseMidi + pitchInScale + octOffset * 12;
+
+        ch.notes.push({
+          step: noteStep,
+          midi: Math.max(12, Math.min(84, midi)),
+          length: Math.min(totalSteps - noteStep, noteEvt.len),
+          velocity: noteEvt.vel
+        });
+      }
+    });
+  }
 
   this.sequencer.syncChannelStepsFromNotes(chIdx);
   this.pianoRoll.render();
-  showToast(`AI Counter-Melody generated in ${rootName} ${scaleType}`);
+
+  if (ch.notes.length > 0) {
+    this.pianoRoll._previewNote(ch.notes[0].midi, 0.4, 0.9);
+  }
+
+  showToast(`AI Counter-Melody generated on ${ch.name} in ${rootName} ${scaleType}`);
 };
 
 // ── Global App Bootstrap (safe readyState execution) ───────────

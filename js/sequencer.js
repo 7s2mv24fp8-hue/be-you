@@ -210,6 +210,10 @@ class Sequencer {
   }
 
   // ── Playback control ───────────────────────────────────────────
+  start() {
+    return this.play();
+  }
+
   play() {
     if (!this.engine.initialized) this.engine.init();
     this.engine.resume();
