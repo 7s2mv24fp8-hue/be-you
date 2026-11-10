@@ -4793,6 +4793,13 @@ FLStudioApp.prototype._bindRackQuickBarToggles = function() {
       this.generateAIDrums();
     });
   }
+
+  const clearPatternBtn = document.getElementById('rack-btn-clear-pattern');
+  if (clearPatternBtn) {
+    clearPatternBtn.addEventListener('click', () => {
+      this.clearCurrentPattern();
+    });
+  }
 };
 
 // ── Playlist Auto-Arrange Song (48 Bars) ────────────────────────
@@ -4968,7 +4975,10 @@ FLStudioApp.prototype.generateAIDrums = async function(genre) {
     }
   }
 
-  // Robust procedural groove generator across Kick, Snare, Hi-Hat, and 808
+  // Robust non-repetitive procedural groove generator across Kick, Snare, Hi-Hat, and 808
+  this._drumVarIdx = (this._drumVarIdx || 0) + 1;
+  const v = this._drumVarIdx % 4;
+
   const kickIdx = this.sequencer.channels.findIndex(c => (c.name || '').toLowerCase().includes('kick'));
   const snareIdx = this.sequencer.channels.findIndex(c => {
     const n = (c.name || '').toLowerCase();
@@ -5002,34 +5012,87 @@ FLStudioApp.prototype.generateAIDrums = async function(genre) {
   };
 
   if (g.includes('boombap')) {
-    setSteps(kickIdx >= 0 ? kickIdx : 0, [0, 10]);
-    setSteps(snareIdx >= 0 ? snareIdx : 1, [4, 12]);
-    setSteps(hatIdx >= 0 ? hatIdx : 2, [0, 2, 4, 6, 8, 10, 12, 14]);
+    const kPatterns = [[0, 10], [0, 6, 10], [0, 8, 11], [0, 3, 10]];
+    const sPatterns = [[4, 12], [4, 12, 15], [4, 12], [4, 11, 12]];
+    const hPatterns = [
+      [0, 2, 4, 6, 8, 10, 12, 14],
+      [0, 2, 4, 6, 7, 8, 10, 12, 14, 15],
+      [0, 2, 4, 6, 8, 10, 12, 14],
+      [0, 1, 2, 4, 6, 8, 9, 10, 12, 14]
+    ];
+    setSteps(kickIdx >= 0 ? kickIdx : 0, kPatterns[v % kPatterns.length]);
+    setSteps(snareIdx >= 0 ? snareIdx : 1, sPatterns[v % sPatterns.length]);
+    setSteps(hatIdx >= 0 ? hatIdx : 2, hPatterns[v % hPatterns.length]);
   } else if (g.includes('drill')) {
-    setSteps(kickIdx >= 0 ? kickIdx : 0, [0, 6, 10]);
-    setSteps(snareIdx >= 0 ? snareIdx : 1, [6, 12]);
-    setSteps(hatIdx >= 0 ? hatIdx : 2, [0, 3, 6, 9, 12, 14]);
+    const kPatterns = [[0, 6, 10], [0, 7, 10, 14], [0, 10, 13], [0, 6, 11]];
+    const sPatterns = [[6, 12], [6, 12, 15], [6, 12], [5, 12]];
+    const hPatterns = [
+      [0, 3, 6, 9, 12, 14],
+      [0, 2, 3, 6, 8, 9, 12, 14, 15],
+      [0, 3, 5, 6, 9, 11, 12, 14],
+      [0, 1, 3, 6, 7, 9, 12, 13, 14]
+    ];
+    setSteps(kickIdx >= 0 ? kickIdx : 0, kPatterns[v % kPatterns.length]);
+    setSteps(snareIdx >= 0 ? snareIdx : 1, sPatterns[v % sPatterns.length]);
+    setSteps(hatIdx >= 0 ? hatIdx : 2, hPatterns[v % hPatterns.length]);
   } else if (g.includes('house')) {
-    setSteps(kickIdx >= 0 ? kickIdx : 0, [0, 4, 8, 12]);
-    setSteps(snareIdx >= 0 ? snareIdx : 1, [4, 12]);
-    setSteps(hatIdx >= 0 ? hatIdx : 2, [2, 6, 10, 14]);
+    const kPatterns = [[0, 4, 8, 12], [0, 4, 8, 12], [0, 4, 8, 12, 14], [0, 4, 8, 12]];
+    const sPatterns = [[4, 12], [4, 12], [4, 12, 15], [4, 11, 12]];
+    const hPatterns = [
+      [2, 6, 10, 14],
+      [0, 2, 4, 6, 8, 10, 12, 14],
+      [2, 6, 10, 14],
+      [2, 4, 6, 10, 12, 14]
+    ];
+    setSteps(kickIdx >= 0 ? kickIdx : 0, kPatterns[v % kPatterns.length]);
+    setSteps(snareIdx >= 0 ? snareIdx : 1, sPatterns[v % sPatterns.length]);
+    setSteps(hatIdx >= 0 ? hatIdx : 2, hPatterns[v % hPatterns.length]);
   } else {
-    // Trap default
-    setSteps(kickIdx >= 0 ? kickIdx : 0, [0, 7, 10]);
-    setSteps(snareIdx >= 0 ? snareIdx : 1, [8]);
-    setSteps(hatIdx >= 0 ? hatIdx : 2, [0, 2, 4, 6, 8, 10, 12, 14]);
+    // Trap variations
+    const kPatterns = [
+      [0, 7, 10],
+      [0, 6, 11, 14],
+      [0, 8, 10, 13],
+      [0, 3, 7, 10]
+    ];
+    const sPatterns = [
+      [8],
+      [8, 15],
+      [4, 12],
+      [8, 14]
+    ];
+    const hPatterns = [
+      [0, 2, 4, 6, 8, 10, 12, 14],
+      [0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, 15],
+      [0, 2, 4, 6, 8, 10, 11, 12, 14],
+      [0, 2, 3, 4, 6, 7, 8, 10, 11, 12, 14, 15]
+    ];
+    setSteps(kickIdx >= 0 ? kickIdx : 0, kPatterns[v % kPatterns.length]);
+    setSteps(snareIdx >= 0 ? snareIdx : 1, sPatterns[v % sPatterns.length]);
+    setSteps(hatIdx >= 0 ? hatIdx : 2, hPatterns[v % hPatterns.length]);
   }
 
   if (bassIdx >= 0 && this.sequencer.channels[bassIdx]) {
     const bassCh = this.sequencer.channels[bassIdx];
     bassCh.steps.fill(false);
-    [0, 6, 10].forEach(s => { if (s < totalSteps) bassCh.steps[s] = true; });
+    const bPatterns = [[0, 6, 10], [0, 7, 11], [0, 6, 12, 14], [0, 4, 8, 10]];
+    const bHits = bPatterns[v % bPatterns.length];
+    bHits.forEach(s => { if (s < totalSteps) bassCh.steps[s] = true; });
   }
 
   this._refreshChannelRack();
   if (this.pianoRoll) this.pianoRoll.render();
   if (!this.sequencer.isPlaying && typeof this.sequencer.play === 'function') this.sequencer.play();
-  showToast(`AI generated ${genre.toUpperCase()} drum groove`);
+  showToast(`AI generated ${genre.toUpperCase()} drum groove (Variation ${v + 1})`);
+};
+
+FLStudioApp.prototype.clearCurrentPattern = function() {
+  if (!this.sequencer) return;
+  this.sequencer.clearPattern();
+  this._refreshChannelRack();
+  if (this.pianoRoll) this.pianoRoll.render();
+  if (this.playlist) this.playlist.syncWithChannels();
+  showToast('Pattern cleared: all steps and notes erased');
 };
 
 FLStudioApp.prototype.generateCounterMelody = function() {
@@ -5110,28 +5173,31 @@ FLStudioApp.prototype.generateCounterMelody = function() {
   const baseOctave = isBass ? 2 : 4;
   const baseMidi = baseOctave * 12 + rootPitchClass;
 
-  // Generate expressive counter-melody motifs
+  // Generate expressive, non-repetitive counter-melody motifs
   ch.notes = [];
 
   const bars = Math.max(1, Math.floor(totalSteps / 16));
   const stepsPerBar = 16;
 
+  this._melodyVarIdx = (this._melodyVarIdx || 0) + 1;
+  const mVar = this._melodyVarIdx;
+
   const motifProfiles = [
-    // Phrase 1 (Statement): root -> 3rd -> 5th -> 7th
+    // 0: Ascending Statement: root -> 3rd -> 5th -> 7th
     [ { step: 0, deg: 0, len: 1.5, vel: 0.9 },
       { step: 3, deg: 2, len: 1.0, vel: 0.8 },
       { step: 6, deg: 4, len: 1.5, vel: 0.85 },
       { step: 10, deg: 6, len: 1.0, vel: 0.75 },
       { step: 12, deg: 4, len: 2.0, vel: 0.8 } ],
 
-    // Phrase 2 (Response / Tension): 4th -> 5th -> octave leap
+    // 1: Tension & Leap: 4th -> 5th -> octave leap -> 5th
     [ { step: 0, deg: 3, len: 1.5, vel: 0.85 },
       { step: 3, deg: 4, len: 1.0, vel: 0.8 },
       { step: 6, deg: 7, len: 1.5, vel: 0.9 },
       { step: 10, deg: 5, len: 1.0, vel: 0.75 },
       { step: 12, deg: 2, len: 2.0, vel: 0.8 } ],
 
-    // Phrase 3 (Variation): fast syncopated run
+    // 2: Fast Syncopated Run: 5th -> 6th -> 7th -> 5th -> 3rd -> 2nd
     [ { step: 0, deg: 4, len: 1.0, vel: 0.85 },
       { step: 2, deg: 5, len: 1.0, vel: 0.8 },
       { step: 4, deg: 6, len: 1.5, vel: 0.9 },
@@ -5139,15 +5205,44 @@ FLStudioApp.prototype.generateCounterMelody = function() {
       { step: 11, deg: 2, len: 1.0, vel: 0.75 },
       { step: 14, deg: 1, len: 1.5, vel: 0.8 } ],
 
-    // Phrase 4 (Resolution): resolving to tonic root
+    // 3: Warm Resolution: resolving to tonic root
     [ { step: 0, deg: 2, len: 1.5, vel: 0.85 },
       { step: 4, deg: 1, len: 1.0, vel: 0.8 },
       { step: 6, deg: 0, len: 2.5, vel: 0.95 },
-      { step: 12, deg: 0, len: 3.0, vel: 0.9 } ]
+      { step: 12, deg: 0, len: 3.0, vel: 0.9 } ],
+
+    // 4: Call Hook: high 7th/8th octave descent to 3rd
+    [ { step: 0, deg: 7, len: 2.0, vel: 0.95 },
+      { step: 4, deg: 6, len: 1.0, vel: 0.8 },
+      { step: 6, deg: 4, len: 1.5, vel: 0.85 },
+      { step: 10, deg: 2, len: 1.0, vel: 0.75 },
+      { step: 12, deg: 0, len: 2.5, vel: 0.9 } ],
+
+    // 5: Rhythmic Bounce: syncopated stabs on offbeats
+    [ { step: 2, deg: 2, len: 0.75, vel: 0.85 },
+      { step: 5, deg: 4, len: 0.75, vel: 0.8 },
+      { step: 8, deg: 5, len: 1.0, vel: 0.9 },
+      { step: 11, deg: 4, len: 0.75, vel: 0.75 },
+      { step: 14, deg: 2, len: 1.5, vel: 0.85 } ],
+
+    // 6: Arpeggiated Waves: 1st -> 3rd -> 5th -> 8th rolling
+    [ { step: 0, deg: 0, len: 1.0, vel: 0.85 },
+      { step: 2, deg: 2, len: 1.0, vel: 0.8 },
+      { step: 4, deg: 4, len: 1.0, vel: 0.85 },
+      { step: 6, deg: 7, len: 1.5, vel: 0.9 },
+      { step: 10, deg: 4, len: 1.0, vel: 0.75 },
+      { step: 12, deg: 2, len: 2.0, vel: 0.85 } ],
+
+    // 7: Harmonic Climax: 9th / 7th suspense resolving into 5th
+    [ { step: 0, deg: 8, len: 2.0, vel: 0.95 },
+      { step: 4, deg: 7, len: 1.5, vel: 0.85 },
+      { step: 8, deg: 5, len: 1.5, vel: 0.9 },
+      { step: 12, deg: 4, len: 2.5, vel: 0.85 } ]
   ];
 
   for (let b = 0; b < bars; b++) {
-    const profile = motifProfiles[b % motifProfiles.length];
+    const profileIdx = (mVar * 2 + b) % motifProfiles.length;
+    const profile = motifProfiles[profileIdx];
     const barOffset = b * stepsPerBar;
 
     profile.forEach(noteEvt => {

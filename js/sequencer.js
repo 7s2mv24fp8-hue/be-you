@@ -216,7 +216,8 @@ class Sequencer {
 
   play() {
     if (!this.engine.initialized) this.engine.init();
-    this.engine.resume();
+    if (this.engine.ensureActive) this.engine.ensureActive();
+    if (this.engine.resume) this.engine.resume();
 
     if (this.isPlaying) return;
 
@@ -613,7 +614,25 @@ class Sequencer {
   // ── Clear channel ──────────────────────────────────────────────
   clearChannel(idx) {
     const ch = this.channels[idx];
-    ch.steps.fill(false);
+    if (ch) {
+      ch.steps.fill(false);
+      ch.notes = [];
+      if (ch.stepPitch) ch.stepPitch.fill(0);
+      if (ch.stepPan) ch.stepPan.fill(0);
+      if (ch.stepCutoff) ch.stepCutoff.fill(2000);
+    }
+    if (this.onPatternChange) this.onPatternChange();
+  }
+
+  // ── Clear entire pattern ─────────────────────────────────────────
+  clearPattern() {
+    this.channels.forEach(ch => {
+      ch.steps.fill(false);
+      ch.notes = [];
+      if (ch.stepPitch) ch.stepPitch.fill(0);
+      if (ch.stepPan) ch.stepPan.fill(0);
+      if (ch.stepCutoff) ch.stepCutoff.fill(2000);
+    });
     if (this.onPatternChange) this.onPatternChange();
   }
 

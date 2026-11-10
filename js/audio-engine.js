@@ -322,13 +322,32 @@ class AudioEngine {
     this._activeNodes.add(node);
     const onEnded = () => {
       if (this._activeNodes) this._activeNodes.delete(node);
+      try {
+        if (typeof node.disconnect === 'function') node.disconnect();
+      } catch (_) {}
     };
     try {
       node.addEventListener('ended', onEnded, { once: true });
     } catch (_) {
       node.onended = onEnded;
     }
+    // Safety cap: prune oldest nodes if set grows too large to prevent leaks
+    if (this._activeNodes.size > 150) {
+      let count = 0;
+      for (const n of this._activeNodes) {
+        if (count++ > 50) break;
+        try { if (typeof n.disconnect === 'function') n.disconnect(); } catch (_) {}
+        this._activeNodes.delete(n);
+      }
+    }
     return node;
+  }
+
+  ensureActive() {
+    if (!this.initialized) this.init();
+    if (this._ctx && this._ctx.state === 'suspended') {
+      try { this._ctx.resume(); } catch (_) {}
+    }
   }
 
   stopChannel(channelName, channelIdx) {
@@ -384,9 +403,10 @@ class AudioEngine {
 
     let lastNode = gain;
     const panVal = typeof options === 'number' ? options : (options && options.pan !== undefined ? options.pan : 0);
+    let panner = null;
     if (panVal !== 0 && this.ctx.createStereoPanner) {
       try {
-        const panner = this.ctx.createStereoPanner();
+        panner = this.ctx.createStereoPanner();
         panner.pan.setValueAtTime(Math.max(-1, Math.min(1, panVal)), this.ctx.currentTime);
         gain.connect(panner);
         lastNode = panner;
@@ -394,6 +414,18 @@ class AudioEngine {
     }
 
     lastNode.connect(this.masterCompressor || this.masterGain || this.ctx.destination);
+
+    // Auto-disconnect ephemeral nodes after sound ends to prevent Web Audio memory leak and audio crashes
+    const durSec = (options && typeof options.duration === 'number') ? options.duration : 0.6;
+    const cleanupDelay = Math.max(120, Math.floor((durSec + 0.35) * 1000));
+    setTimeout(() => {
+      try {
+        gain.disconnect();
+        if (panner) panner.disconnect();
+        if (typeof node.disconnect === 'function') node.disconnect();
+      } catch (_) {}
+    }, cleanupDelay);
+
     return gain;
   }
 
@@ -635,10 +667,17 @@ class AudioEngine {
 
     osc.connect(dist);
     dist.connect(gainNode);
-    this._connectToMaster(gainNode, 2, options);
+    this._connectToMaster(gainNode, 2, { ...options, duration: 0.6 });
 
     osc.start(t);
     osc.stop(t + 0.55);
+    setTimeout(() => {
+      try {
+        osc.disconnect();
+        dist.disconnect();
+        gainNode.disconnect();
+      } catch (_) {}
+    }, 650);
   }
 
   // ── Snare ────────────────────────────────────────────────────
@@ -678,13 +717,23 @@ class AudioEngine {
     noiseFilter.connect(noiseGain);
     osc.connect(toneGain);
 
-    this._connectToMaster(noiseGain, 0, options);
-    this._connectToMaster(toneGain, 0, options);
+    this._connectToMaster(noiseGain, 0, { ...options, duration: 0.3 });
+    this._connectToMaster(toneGain, 0, { ...options, duration: 0.2 });
 
     noise.start(t);
     noise.stop(t + 0.25);
     osc.start(t);
     osc.stop(t + 0.15);
+
+    setTimeout(() => {
+      try {
+        noise.disconnect();
+        noiseFilter.disconnect();
+        noiseGain.disconnect();
+        osc.disconnect();
+        toneGain.disconnect();
+      } catch (_) {}
+    }, 350);
   }
 
   // ── Hi-Hat ───────────────────────────────────────────────────
@@ -716,7 +765,13 @@ class AudioEngine {
     });
 
     filter.connect(gainNode);
-    this._connectToMaster(gainNode, -3, options);
+    this._connectToMaster(gainNode, -3, { ...options, duration: duration + 0.05 });
+    setTimeout(() => {
+      try {
+        filter.disconnect();
+        gainNode.disconnect();
+      } catch (_) {}
+    }, Math.floor((duration + 0.15) * 1000));
   }
 
   // ── Clap ─────────────────────────────────────────────────────
@@ -746,10 +801,17 @@ class AudioEngine {
 
       noise.connect(filter);
       filter.connect(g);
-      this._connectToMaster(g, 0, options);
+      this._connectToMaster(g, 0, { ...options, duration: 0.25 });
 
       noise.start(t + offset);
       noise.stop(t + offset + fadeTime + 0.01);
+
+      setTimeout(() => {
+        try {
+          filter.disconnect();
+          g.disconnect();
+        } catch (_) {}
+      }, 300);
     });
   }
 
@@ -769,10 +831,17 @@ class AudioEngine {
     gainNode.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
 
     osc.connect(gainNode);
-    this._connectToMaster(gainNode, 0, options);
+    this._connectToMaster(gainNode, 0, { ...options, duration: 0.4 });
 
     osc.start(t);
     osc.stop(t + 0.35);
+
+    setTimeout(() => {
+      try {
+        osc.disconnect();
+        gainNode.disconnect();
+      } catch (_) {}
+    }, 450);
   }
 
   // ── Synth Note ───────────────────────────────────────────────
@@ -832,12 +901,24 @@ class AudioEngine {
     oscGain1.connect(filter);
     oscGain2.connect(filter);
     filter.connect(gainNode);
-    this._connectToMaster(gainNode, 0, options);
+    this._connectToMaster(gainNode, 0, { ...options, duration: duration + release });
 
     osc1.start(t);
     osc2.start(t);
     osc1.stop(noteEnd + release + 0.05);
     osc2.stop(noteEnd + release + 0.05);
+
+    const totalMs = Math.floor((duration + release + 0.2) * 1000);
+    setTimeout(() => {
+      try {
+        osc1.disconnect();
+        osc2.disconnect();
+        oscGain1.disconnect();
+        oscGain2.disconnect();
+        filter.disconnect();
+        gainNode.disconnect();
+      } catch (_) {}
+    }, totalMs);
 
     return { osc1, osc2, gainNode };
   }
