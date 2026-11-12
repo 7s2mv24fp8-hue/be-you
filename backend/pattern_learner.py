@@ -140,6 +140,7 @@ class SymbolicMIDITokenizer:
 
 # Global Tokenizer Instance
 tokenizer = SymbolicMIDITokenizer()
+PatternTokenizer = SymbolicMIDITokenizer
 
 # ── 3. Loop Repetition Filter & Dataset Balancing ───────────────────────────
 
@@ -401,6 +402,50 @@ def _load_patterns() -> Dict[str, List[Dict]]:
 def is_trained() -> bool:
     _load_patterns()
     return _TRAINED
+
+
+def inject_pattern(entry: Dict[str, Any]) -> bool:
+    """
+    Injects a newly trained pattern into learned_patterns.json and internal cache.
+    Normalizes stem channels, deduplicates, and caps per genre.
+    """
+    global _LEARNED_PATTERNS, _TRAINED
+    genre = str(entry.get("genre", "trap")).lower()
+    raw_pat = entry.get("pattern_json", entry.get("pattern", {}))
+    if not isinstance(raw_pat, dict):
+        return False
+
+    norm_pat = {str(k).lower(): list(v)[:16] for k, v in raw_pat.items()}
+
+    try:
+        data = {}
+        if _PATTERNS_JSON.exists():
+            with open(_PATTERNS_JSON, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        if genre not in data:
+            data[genre] = []
+
+        k_sn = tuple(norm_pat.get('kick', [0]*16)) + tuple(norm_pat.get('snare', [0]*16))
+        existing_signatures = {
+            tuple(p.get('kick', [0]*16)) + tuple(p.get('snare', [0]*16))
+            for p in data[genre] if isinstance(p, dict)
+        }
+        if k_sn not in existing_signatures:
+            data[genre].append(norm_pat)
+            if len(data[genre]) > 150:
+                data[genre] = data[genre][-150:]
+            with open(_PATTERNS_JSON, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2)
+            if _LEARNED_PATTERNS is not None:
+                if genre not in _LEARNED_PATTERNS:
+                    _LEARNED_PATTERNS[genre] = []
+                _LEARNED_PATTERNS[genre].append(norm_pat)
+            _TRAINED = True
+            return True
+        return False
+    except Exception as e:
+        print(f"[PatternLearner] inject_pattern error: {e}")
+        return False
 
 
 def get_best_pattern(

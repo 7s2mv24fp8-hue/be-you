@@ -139,7 +139,7 @@ GENRE_DB: Dict[str, Dict[str, Any]] = {
             'Use rapid hi-hat rolls at 1/32nd note speed on beat 4',
             'Stack multiple hi-hat patterns at different velocities for texture',
         ],
-        'emoji': '🔥',
+        'emoji': '',
         'description': 'Hard-hitting southern trap with heavy 808 sub bass',
     },
     'drill': {
@@ -175,7 +175,7 @@ GENRE_DB: Dict[str, Dict[str, Any]] = {
             'Drill snares hit hardest slightly off-grid — add 2ms of swing',
             'Minor key melodies under the bass line create the drill atmosphere',
         ],
-        'emoji': '⚡',
+        'emoji': '',
         'description': 'Dark UK/NY drill with sliding 808s and aggressive hi-hats',
     },
     'hip-hop': {
@@ -222,7 +222,7 @@ GENRE_DB: Dict[str, Dict[str, Any]] = {
             'Try a sampled Rhodes or dusty piano chop on the Lead channel',
             'Ghost notes on the snare with velocity 0.25-0.35 add professional depth',
         ],
-        'emoji': '🎤',
+        'emoji': '',
         'description': 'Classic boom bap to modern hip-hop grooves',
     },
     'lo-fi': {
@@ -259,7 +259,7 @@ GENRE_DB: Dict[str, Dict[str, Any]] = {
             'Layer soft jazz piano chords under the bass line for depth',
             'Reduce high frequencies with a gentle low-pass filter on the master',
         ],
-        'emoji': '🌧️',
+        'emoji': '',
         'description': 'Warm, hazy lo-fi with jazzy swing and vinyl texture',
     },
     'house': {
@@ -306,7 +306,7 @@ GENRE_DB: Dict[str, Dict[str, Any]] = {
             'Sidechain compress the Lead to the kick for that pumping effect',
             'Layer a vocal chop on the Lead for uplifting diva house vibes',
         ],
-        'emoji': '🏠',
+        'emoji': '',
         'description': 'Soulful to tech house with four-on-the-floor energy',
     },
     'techno': {
@@ -342,7 +342,7 @@ GENRE_DB: Dict[str, Dict[str, Any]] = {
             'Minimal variations — techno is about subtle evolution over 8+ bars',
             'Add long reverb tails on the clap for Berlin-warehouse depth',
         ],
-        'emoji': '🔊',
+        'emoji': '',
         'description': 'Hard industrial techno from Detroit to Berlin',
     },
     'dnb': {
@@ -378,7 +378,7 @@ GENRE_DB: Dict[str, Dict[str, Any]] = {
             'At 174 BPM, keep patterns tight — the speed does the work',
             'Add a fast break fill every 4 bars using the Tom channel',
         ],
-        'emoji': '🥁',
+        'emoji': '',
         'description': 'Fast-paced drum and bass from liquid to neurofunk',
     },
     'reggaeton': {
@@ -404,7 +404,7 @@ GENRE_DB: Dict[str, Dict[str, Any]] = {
             'Short punchy bass with space for vocal tracks to breathe',
             'Layer a percussion loop on the Tom for authentic texture',
         ],
-        'emoji': '🌴',
+        'emoji': '',
         'description': 'Latin dembow with infectious rhythmic bounce',
     },
     'afrobeats': {
@@ -440,7 +440,7 @@ GENRE_DB: Dict[str, Dict[str, Any]] = {
             'Keep the bass melodic and bouncy — not just sub frequencies',
             'Use a marimba or kalimba sound on the Lead for authenticity',
         ],
-        'emoji': '🌍',
+        'emoji': '',
         'description': 'Polyrhythmic afrobeats from afropop to amapiano',
     },
     'synthwave': {
@@ -476,7 +476,7 @@ GENRE_DB: Dict[str, Dict[str, Any]] = {
             'Wide, detuned saw pads work great on the Lead channel',
             'Add chorus and delay to everything for that retro sheen',
         ],
-        'emoji': '🌆',
+        'emoji': '',
         'description': 'Neon-soaked 80s retrowave and outrun sounds',
     },
     'phonk': {
@@ -512,7 +512,7 @@ GENRE_DB: Dict[str, Dict[str, Any]] = {
             'Add vinyl crackle and tape hiss for vintage texture',
             'Use triplet hi-hat patterns for extra bounce and energy',
         ],
-        'emoji': '💀',
+        'emoji': '',
         'description': 'Dark Memphis phonk from drift to aggressive styles',
     },
     'ambient': {
@@ -538,7 +538,7 @@ GENRE_DB: Dict[str, Dict[str, Any]] = {
             'Slow filter sweeps on the Lead create evolving textures',
             'Try switching the Bass to a gentle pad sound for warmth',
         ],
-        'emoji': '🌌',
+        'emoji': '',
         'description': 'Sparse, atmospheric textures with long reverb tails',
     },
     'r&b': {
@@ -564,7 +564,7 @@ GENRE_DB: Dict[str, Dict[str, Any]] = {
             'Layer a Rhodes or Wurlitzer on the Lead channel',
             'Keep the bass melodic and walking between chord roots',
         ],
-        'emoji': '💜',
+        'emoji': '',
         'description': 'Smooth neo-soul and modern R&B grooves',
     },
     'pop': {
@@ -600,7 +600,7 @@ GENRE_DB: Dict[str, Dict[str, Any]] = {
             'Catchy melodic hooks on the Lead channel sell the track',
             'Layer claps with snare for a wide, punchy backbeat',
         ],
-        'emoji': '🌟',
+        'emoji': '',
         'description': 'Radio-ready pop from classic to modern hyper-pop',
     },
     'rock': {
@@ -626,7 +626,7 @@ GENRE_DB: Dict[str, Dict[str, Any]] = {
             'Toms work great for fills — add them at the end of 4-bar phrases',
             'Open hi-hat on beat 4 adds push and energy to the groove',
         ],
-        'emoji': '🎸',
+        'emoji': '',
         'description': 'Hard-driving rock from indie to punk and alternative',
     },
     'jazz': {
@@ -652,7 +652,7 @@ GENRE_DB: Dict[str, Dict[str, Any]] = {
             'Ghost notes on snare and kick give jazz its conversational feel',
             'Less quantization = more authentic jazz — embrace imperfection',
         ],
-        'emoji': '🎷',
+        'emoji': '',
         'description': 'Swinging jazz from bebop to smooth and fusion',
     },
     'uk garage': {
@@ -678,7 +678,7 @@ GENRE_DB: Dict[str, Dict[str, Any]] = {
             'Chopped vocal samples on the Lead channel are classic UK garage',
             'Use a wobbly sub bass with pitch bends for maximum impact',
         ],
-        'emoji': '🇬🇧',
+        'emoji': '',
         'description': 'Skippy 2-step UK garage with chopped vocals',
     },
     'electronic': {
@@ -704,7 +704,7 @@ GENRE_DB: Dict[str, Dict[str, Any]] = {
             'Sidechain the bass to the kick for that pumping EDM effect',
             'Layer multiple synth sounds for huge, wide drops',
         ],
-        'emoji': '⚡',
+        'emoji': '',
         'description': 'High-energy electronic from EDM to electro',
     },
     'latin': {
@@ -730,7 +730,7 @@ GENRE_DB: Dict[str, Dict[str, Any]] = {
             'Keep the bass walking and melodic, not just root notes',
             'Use brass stabs on the Lead channel for a Latin jazz feel',
         ],
-        'emoji': '💃',
+        'emoji': '',
         'description': 'Spicy Latin rhythms from salsa to bachata',
     },
     'gospel': {
@@ -756,7 +756,7 @@ GENRE_DB: Dict[str, Dict[str, Any]] = {
             'Use 7th and 9th chord voicings for authentic gospel harmony',
             'Add a shaker or tambourine on the Clap channel for texture',
         ],
-        'emoji': '🙏',
+        'emoji': '',
         'description': 'Soulful gospel with uplifting rhythms and harmonies',
     },
 }
@@ -1294,18 +1294,18 @@ def generate_beat_response(
 
     # Mood-specific opener phrases
     mood_openers = {
-        'dark':        ["Went dark on this one 🖤", "Kept it sinister and heavy", "Dark energy locked in"],
-        'aggressive':  ["Hit hard with this one 🔥", "Turned up the aggression", "Maximum energy activated"],
-        'energetic':   ["Full energy! Let's go 🚀", "High-octane vibes loaded", "This one's got serious drive"],
-        'chill':       ["Kept it smooth and easy 😌", "Laid-back vibes, exactly how you wanted", "Nice and chill"],
+        'dark':        ["Went dark on this one ", "Kept it sinister and heavy", "Dark energy locked in"],
+        'aggressive':  ["Hit hard with this one ", "Turned up the aggression", "Maximum energy activated"],
+        'energetic':   ["Full energy! Let's go ", "High-octane vibes loaded", "This one's got serious drive"],
+        'chill':       ["Kept it smooth and easy ", "Laid-back vibes, exactly how you wanted", "Nice and chill"],
         'dreamy':      ["Floaty and ethereal ✨", "Dreamy atmosphere locked in", "Soft and hazy, just right"],
-        'groovy':      ["Got the groove locked in 🕺", "Funky and bouncy — this slaps", "That groove is infectious"],
-        'melancholic': ["Emotional and introspective 💙", "Something about this feels real", "Melancholic but beautiful"],
-        'uplifting':   ["Uplifting and positive ☀️", "This one's going to make people smile", "Pure positive energy"],
+        'groovy':      ["Got the groove locked in ", "Funky and bouncy — this slaps", "That groove is infectious"],
+        'melancholic': ["Emotional and introspective ", "Something about this feels real", "Melancholic but beautiful"],
+        'uplifting':   ["Uplifting and positive ", "This one's going to make people smile", "Pure positive energy"],
         'minimal':     ["Less is more — kept it stripped back", "Minimal but effective ✦", "Space is the groove here"],
-        'epic':        ["EPIC. Full cinematic energy 🎬", "This hits different — massive", "Went full cinematic on this"],
-        'funky':       ["Oh this is FUNKY 🎸", "Funky groove secured", "That bass line is everything"],
-        'atmospheric': ["Wide and atmospheric 🌌", "Beautiful atmosphere created", "Feels like a whole world"],
+        'epic':        ["EPIC. Full cinematic energy ", "This hits different — massive", "Went full cinematic on this"],
+        'funky':       ["Oh this is FUNKY ", "Funky groove secured", "That bass line is everything"],
+        'atmospheric': ["Wide and atmospheric ", "Beautiful atmosphere created", "Feels like a whole world"],
     }
 
     # Genre-specific flavor phrases
@@ -1319,7 +1319,7 @@ def generate_beat_response(
         'drum & bass':["Fast and rolling — that's the DnB feel.", "Those breaks are going to tear it up.", "Liquid or neuro — this works both ways."],
         'reggaeton':  ["That dembow rhythm is infectious.", "Pure Latin energy in the pattern.", "The hips don't lie with this groove."],
         'afrobeats':  ["Polyrhythmic and alive — pure afrobeats DNA.", "That high-life energy is in the groove.", "This pattern wants to make you move."],
-        'synthwave':  ["Neon-soaked and retro-futuristic 🌆", "Kavinsky would nod at this.", "80s nostalgia dialed in perfectly."],
+        'synthwave':  ["Neon-soaked and retro-futuristic ", "Kavinsky would nod at this.", "80s nostalgia dialed in perfectly."],
         'phonk':      ["Memphis DNA in every hit.", "That cowbell energy is pure phonk.", "Dark, gritty, and hard — exactly right."],
         'ambient':    ["Spacious and breathing — let the sound live.", "Perfect for focus or meditation.", "Atmosphere over density — beautiful."],
         'r&b':        ["Smooth and soulful — the groove has feeling.", "Neo-soul textures built in.", "This wants to slow dance."],

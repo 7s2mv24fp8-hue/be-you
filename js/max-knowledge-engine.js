@@ -119,7 +119,7 @@ class MaxKnowledgeEngine {
 
     // Format the best answer
     response += `<div class="max-kb-answer">`;
-    response += `<div class="max-kb-topic">📚 ${this._escapeHtml(best.topic)}</div>`;
+    response += `<div class="max-kb-topic">[TOPIC] ${this._escapeHtml(best.topic)}</div>`;
     response += `<div class="max-kb-text">${this._formatAnswer(best.answer)}</div>`;
 
     // If there are other good matches, mention them

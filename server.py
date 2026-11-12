@@ -1120,7 +1120,7 @@ def train_song(req: SongTrainRequest, req_obj: Request):
         "ok": True,
         "submission_id": sid,
         "injected": injected,
-        "message": f"🧠 Max successfully trained on '{req.song_name}' ({req.genre} @ {req.bpm} BPM)!"
+        "message": f"Max successfully trained on '{req.song_name}' ({req.genre} @ {req.bpm} BPM)!"
     }
 
 

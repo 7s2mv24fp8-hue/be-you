@@ -104,7 +104,7 @@ class MaxStudioBuddy {
             <button class="max-portal-chip" data-action="chords">Strum Piano Chords</button>
             <button class="max-portal-chip" data-action="automix">Auto-Mix Session</button>
             <button class="max-portal-chip" data-action="humanize">Humanize Groove</button>
-            <button class="max-portal-chip max-chip-knowledge" data-action="knowledge">📚 Ask Max (3,700+ Tips)</button>
+            <button class="max-portal-chip max-chip-knowledge" data-action="knowledge">Ask Max (3,700+ Tips)</button>
           </div>
 
           <!-- Writing Console Input Area -->
@@ -342,12 +342,12 @@ class MaxStudioBuddy {
           const bpmInfo = recs.recommendedBpm ? `${recs.recommendedBpm.medium} BPM (range: ${recs.recommendedBpm.slow}–${recs.recommendedBpm.fast} BPM)` : '120 BPM';
           const card = `
             <div class="max-kb-answer">
-              <div class="max-kb-topic">🎵 Trained Music Tag Guide: ${recs.genre.toUpperCase()}</div>
+              <div class="max-kb-topic">[GUIDE] Trained Music Tag Guide: ${recs.genre.toUpperCase()}</div>
               <div class="max-kb-text">
                 Based on <strong>53,000+ musical compositions</strong> from Qwen-Audio 2.0:<br><br>
-                <strong>🥁 Key Instruments:</strong> ${instList}<br>
-                <strong>✨ Common Moods:</strong> ${moodList}<br>
-                <strong>⏱ Recommended Tempo:</strong> ${bpmInfo}<br><br>
+                <strong>Key Instruments:</strong> ${instList}<br>
+                <strong>Common Moods:</strong> ${moodList}<br>
+                <strong>Recommended Tempo:</strong> ${bpmInfo}<br><br>
                 <em>Sample Prompt:</em> "${recs.exemplars[0] || tagEngine.synthesizePrompt({ genre: recs.genre, bpm: recs.recommendedBpm?.medium || 120 })}"
               </div>
             </div>`;
@@ -549,8 +549,8 @@ class MaxStudioBuddy {
         textarea.focus();
       }
       const statsMsg = this.kb && this.kb.loaded
-        ? `📚 Knowledge Base Online! ${this.kb.getStats().entries} production tips loaded from the CoT Music Production dataset. Ask me anything about FL Studio, mixing, sound design, synthesis, MIDI, automation, and more!`
-        : '📚 Knowledge Base is loading... Try asking a question in a moment!';
+        ? `Knowledge Base Online: ${this.kb.getStats().entries} production tips loaded from the CoT Music Production dataset. Ask me anything about FL Studio, mixing, sound design, synthesis, MIDI, automation, and more!`
+        : 'Knowledge Base is loading... Try asking a question in a moment!';
       this.logPortalMessage('Max', statsMsg);
       this.speak('Ask me any production question!', 4500);
     }
