@@ -16,8 +16,7 @@
 
 class PresetSampleLibrary {
   constructor(audioEngine, sequencer, onChannelAdded) {
-    this.ctx          = audioEngine.ctx;
-    this.masterComp   = audioEngine.masterCompressor || this.ctx.destination;
+    this.audioEngine  = audioEngine;
     this.sequencer    = sequencer;
     this.onChannelAdded = onChannelAdded;
 
@@ -30,13 +29,32 @@ class PresetSampleLibrary {
     this._injectStyles();
   }
 
+  get ctx() {
+    if (this.audioEngine && !this.audioEngine.initialized && typeof this.audioEngine.init === 'function') {
+      try { this.audioEngine.init(); } catch (_) {}
+    }
+    return this.audioEngine ? this.audioEngine.ctx : null;
+  }
+
+  get masterComp() {
+    return (this.audioEngine && this.audioEngine.masterCompressor) || (this.ctx && this.ctx.destination);
+  }
+
   /* ── Public ─────────────────────────────────────────────────── */
   open() {
-    this._modal.classList.remove('psl-hidden');
-    this._renderList(null); // show all on open
+    if (this.audioEngine && !this.audioEngine.initialized && typeof this.audioEngine.init === 'function') {
+      try { this.audioEngine.init(); } catch (_) {}
+    }
+    if (this.ctx && this.ctx.state === 'suspended') {
+      try { this.ctx.resume(); } catch (_) {}
+    }
+    if (this._modal) {
+      this._modal.classList.remove('psl-hidden');
+      this._renderList(null); // show all on open
+    }
   }
   close() {
-    this._modal.classList.add('psl-hidden');
+    if (this._modal) this._modal.classList.add('psl-hidden');
     this._stopPreview();
   }
 
@@ -381,7 +399,7 @@ class PresetSampleLibrary {
   /* ── Add to rack ────────────────────────────────────────────── */
   async _addToRack(sample) {
     const buf = await this._getBuffer(sample);
-    if (!buf) { if (window.showToast) showToast('Could not synthesize sample'); return; }
+    if (!buf) { if (typeof window !== 'undefined' && typeof window.showToast === 'function') window.showToast('Could not synthesize sample'); return; }
 
     const COLORS = ['#ffffff','#a1a1aa','#ffffff','#52525b','#ffffff','#a1a1aa','#f59e0b','#ffffff'];
     const newCh = {
@@ -400,7 +418,12 @@ class PresetSampleLibrary {
 
     this.sequencer.channels.push(newCh);
     if (this.onChannelAdded) this.onChannelAdded();
-    if (window.showToast) showToast(` "${sample.name}" added to rack!`);
+    if (window.app) {
+      if (typeof window.app._buildChannelRack === 'function') window.app._buildChannelRack();
+      if (window.app.mixer)    window.app.mixer.syncChannels();
+      if (window.app.playlist) window.app.playlist.syncWithChannels();
+    }
+    if (typeof window !== 'undefined' && typeof window.showToast === 'function') window.showToast(`"${sample.name}" added to rack!`);
   }
 
   /* ════════════════════════════════════════════════════════════════
@@ -1182,12 +1205,16 @@ class PresetSampleLibrary {
 /* ── Bootstrap ───────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   const waitForApp = () => {
-    if (!window.app || !window.app.audioEngine?.ctx) { setTimeout(waitForApp, 200); return; }
+    if (!window.app || !window.app.audioEngine) { setTimeout(waitForApp, 100); return; }
 
     window.presetLibrary = new PresetSampleLibrary(
       window.app.audioEngine,
       window.app.sequencer,
-      () => window.app._buildChannelRack()
+      () => {
+        if (typeof window.app._buildChannelRack === 'function') window.app._buildChannelRack();
+        if (window.app.mixer)    window.app.mixer.syncChannels();
+        if (window.app.playlist) window.app.playlist.syncWithChannels();
+      }
     );
 
     // Wire toolbar button
@@ -1198,3 +1225,11 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   waitForApp();
 });
+
+if (typeof window !== 'undefined') {
+  window.PresetSampleLibrary = PresetSampleLibrary;
+}
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { PresetSampleLibrary };
+}
+

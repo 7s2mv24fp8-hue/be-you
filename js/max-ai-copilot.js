@@ -417,7 +417,23 @@ class MaxStudioBuddy {
     }
 
     // 4. Genre Beat Generation
-    if (lower.includes('drill')) {
+    // Detect genre from command and use intelligent AI drums
+    const genreMap = {
+      'drill': 'drill', 'trap': 'trap', 'lofi': 'lofi', 'lo-fi': 'lofi', 'chill': 'lofi',
+      'house': 'house', 'techno': 'house', 'four on the floor': 'house', '4/4': 'house',
+      'afro': 'afrobeats', 'afrobeats': 'afrobeats', 'phonk': 'phonk',
+      'boom bap': 'boombap', 'boombap': 'boombap', 'boom-bap': 'boombap',
+      'hip hop': 'hip-hop', 'hip-hop': 'hip-hop',
+    };
+    let detectedGenre = null;
+    for (const [keyword, genre] of Object.entries(genreMap)) {
+      if (lower.includes(keyword)) { detectedGenre = genre; break; }
+    }
+
+    if (detectedGenre && app && typeof app.generateAIDrums === 'function') {
+      app.generateAIDrums(detectedGenre);
+      responseMsg += `Generated ${detectedGenre.toUpperCase()} beat with AI — kick, snare, hats & 808 programmed. `;
+    } else if (lower.includes('drill')) {
       seq.bpm = 142;
       seq.channels[0].steps = [true, false, false, false, false, false, true, false, true, false, false, false, false, false, true, false]; // Kick
       seq.channels[1].steps = [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false]; // Clap
@@ -455,9 +471,9 @@ class MaxStudioBuddy {
       if (window.flPianoExtras) window.flPianoExtras.openStrummerModal();
       responseMsg += `Applied Piano Roll Chord Strummer with natural humanized velocity! `;
     } else if (lower.includes('bass') || lower.includes('808')) {
-      const bassCh = seq.channels[6] || seq.channels[0];
+      const bassCh = seq.channels.find(c => (c.name || '').toLowerCase().includes('808') || (c.name || '').toLowerCase().includes('bass')) || seq.channels[0];
       bassCh.steps = [true, false, false, true, false, false, true, false, true, false, false, true, false, false, true, false];
-      responseMsg += `Programmed heavy sub bassline on Channel 7! `;
+      responseMsg += `Programmed heavy sub bassline on ${bassCh.name}! `;
     } else if (lower.includes('roll') || lower.includes('hat roll')) {
       if (window.flPianoExtras) window.flPianoExtras.openRollModal();
       responseMsg += `Generated trap 1/32 hi-hat rolls! `;
@@ -478,13 +494,17 @@ class MaxStudioBuddy {
       seq.channels.forEach(ch => { ch.steps = Array(16).fill(false); });
       responseMsg += `Cleared all channel patterns. Ready for new composition. `;
     } else {
-      // General groove generation
-      if (typeof window.sequencerRandomizeAll === 'function') {
+      // General beat generation — use AI drums with auto-detected genre
+      if (app && typeof app.generateAIDrums === 'function') {
+        app.generateAIDrums('trap');
+        responseMsg += `Generated fresh trap beat for your session. `;
+      } else if (typeof window.sequencerRandomizeAll === 'function') {
         window.sequencerRandomizeAll();
+        responseMsg += `Injected custom groove & rhythm pattern into your Channel Rack. `;
       } else {
         seq.channels.forEach((_, i) => seq.randomizeChannel(i));
+        responseMsg += `Injected custom groove & rhythm pattern into your Channel Rack. `;
       }
-      responseMsg += `Injected custom groove & rhythm pattern into your Channel Rack. `;
     }
 
     // Refresh UI
@@ -506,19 +526,24 @@ class MaxStudioBuddy {
     }
 
     if (action === 'drums') {
-      if (typeof window.sequencerRandomizeAll === 'function') {
+      // Use intelligent AI drum generation if available
+      if (app && typeof app.generateAIDrums === 'function') {
+        const activeCard = document.querySelector('.quick-genre-card.active');
+        const genre = activeCard ? (activeCard.dataset.genre || 'trap') : 'trap';
+        app.generateAIDrums(genre);
+        this.logPortalMessage('Max', `Generated fresh ${genre.toUpperCase()} drum groove — kick, snare, hi-hats & 808 programmed!`);
+        this.speak(`Fresh ${genre} beat generated!`, 4500);
+      } else if (typeof window.sequencerRandomizeAll === 'function') {
         window.sequencerRandomizeAll();
-      } else {
-        seq.channels.forEach((_, i) => seq.randomizeChannel(i));
+        if (app._refreshChannelRack) app._refreshChannelRack();
+        this.logPortalMessage('Max', 'Generated fresh drum pattern across Kick, Clap, Hi-Hats & Snare!');
+        this.speak('Fresh drum beat generated in Channel Rack!', 4500);
       }
-      if (app._refreshChannelRack) app._refreshChannelRack();
-      this.logPortalMessage('Max', 'Generated fresh drum pattern across Kick, Clap, Hi-Hats & Snare!');
-      this.speak('Fresh drum beat generated in Channel Rack!', 4500);
     } else if (action === 'bass') {
-      const bassCh = seq.channels[6] || seq.channels[0];
+      const bassCh = seq.channels.find(c => (c.name || '').toLowerCase().includes('808') || (c.name || '').toLowerCase().includes('bass')) || seq.channels[0];
       bassCh.steps = [true, false, false, true, false, false, true, false, true, false, false, true, false, false, true, false];
       if (app._refreshChannelRack) app._refreshChannelRack();
-      this.logPortalMessage('Max', 'Injected rolling 808 sub bassline on Channel 7!');
+      this.logPortalMessage('Max', `Injected rolling 808 sub bassline on ${bassCh.name}!`);
       this.speak('Sub bassline pattern added!', 4500);
     } else if (action === 'chords') {
       if (window.flPianoExtras) window.flPianoExtras.openStrummerModal();

@@ -8,7 +8,7 @@
  <link rel="preconnect" href="https://fonts.googleapis.com">
  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
- <link rel="stylesheet" href="css/main.css">
+ <link rel="stylesheet" href="css/main.css?v=20261113">
  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ff7700'><rect x='1' y='6' width='2' height='5'/><rect x='4' y='3' width='2' height='10'/><rect x='7' y='1' width='2' height='14'/><rect x='10' y='4' width='2' height='9'/><rect x='13' y='7' width='2' height='4'/></svg>">
 </head>
 <body>
@@ -63,6 +63,10 @@
       <button type="button" id="menu-btn-import" class="tb-file-menu-item">
         <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M8 12V2M4 6l4-4 4 4M2 14h12" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>
         <span>Import Sound / Audio</span>
+      </button>
+      <button type="button" id="menu-btn-preset-library" class="tb-file-menu-item">
+        <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+        <span>Sample Library / Presets</span>
       </button>
       <button type="button" id="menu-btn-export-stems" class="tb-file-menu-item">
         <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M8 2v8m-4-4l4 4 4-4M2 14h12" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>
@@ -233,10 +237,10 @@
  <span class="panel-title">Channel <span class="panel-accent">Rack</span></span>
  <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
  <select class="rack-pattern-select" id="rack-pattern-select">
- <option>Pattern 1</option>
- <option>Pattern 2</option>
- <option>Pattern 3</option>
- <option>Pattern 4</option>
+ <option>Pattern A</option>
+ <option>Pattern B</option>
+ <option>Pattern C</option>
+ <option>Pattern D</option>
  </select>
  </div>
  </div>
@@ -253,11 +257,11 @@
 
       <div class="rack-v-sep" style="width:1px;height:16px;background:var(--border);margin:0 2px;"></div>
 
-      <!-- Quick 1x / 2x / 4x Bar Expander Buttons -->
-      <div class="rack-bar-quick-toggles" title="1x (16 steps), 2x (32 steps), 4x (64 steps) Bar Expander">
-        <button type="button" class="rack-bar-toggle-btn active" data-bars="1">1x (16)</button>
-        <button type="button" class="rack-bar-toggle-btn" data-bars="2">2x (32)</button>
-        <button type="button" class="rack-bar-toggle-btn" data-bars="4">4x (64)</button>
+      <!-- Quick Bar Expander Buttons -->
+      <div class="rack-bar-quick-toggles" title="Bar Expander">
+        <button type="button" class="rack-bar-toggle-btn active" data-bars="1">1 Bar</button>
+        <button type="button" class="rack-bar-toggle-btn" data-bars="2">2 Bars</button>
+        <button type="button" class="rack-bar-toggle-btn" data-bars="4">4 Bars</button>
       </div>
 
       <div class="rack-v-sep" style="width:1px;height:16px;background:var(--border);margin:0 2px;"></div>
@@ -279,15 +283,15 @@
       <label style="font-size:10px;color:var(--text-muted);display:flex;align-items:center;gap:4px;">
         <span>Length:</span>
         <select id="rack-step-length-select" class="rack-pattern-select" style="padding:1px 4px;font-size:10px;height:20px;border-color:rgba(255,255,255,0.15);">
-          <option value="16">16 Steps (1 Bar)</option>
-          <option value="32">32 Steps (2 Bars)</option>
-          <option value="48">48 Steps (3 Bars)</option>
-          <option value="64">64 Steps (4 Bars)</option>
-          <option value="80">80 Steps (5 Bars)</option>
-          <option value="96">96 Steps (6 Bars)</option>
-          <option value="112">112 Steps (7 Bars)</option>
-          <option value="128">128 Steps (8 Bars)</option>
-          <option value="custom">Custom / Extend...</option>
+          <option value="16">1 Bar</option>
+          <option value="32">2 Bars</option>
+          <option value="48">3 Bars</option>
+          <option value="64">4 Bars</option>
+          <option value="80">5 Bars</option>
+          <option value="96">6 Bars</option>
+          <option value="112">7 Bars</option>
+          <option value="128">8 Bars</option>
+          <option value="custom">Custom Length...</option>
         </select>
       </label>
 
@@ -387,21 +391,21 @@
  <!-- Right panel: Piano Roll / Mixer / Playlist tabs -->
  <div id="right-panel">
  <div class="right-tabs">
- <button class="right-tab" data-tab="channel-rack" id="tab-btn-beat" title="1. Beat — Step Sequencer &amp; Channel Rack">
- 1. Beat
+ <button class="right-tab" data-tab="channel-rack" id="tab-btn-beat" title="Beat — Step Sequencer &amp; Channel Rack">
+ Beat
  </button>
- <button class="right-tab active" data-tab="piano-roll" id="tab-btn-melody" title="2. Melody — Piano Roll &amp; Chords">
- 2. Melody
+ <button class="right-tab active" data-tab="piano-roll" id="tab-btn-melody" title="Melody — Piano Roll &amp; Chords">
+ Melody
  </button>
- <button class="right-tab" data-tab="playlist" id="tab-btn-arrange" title="3. Arrange — Song Timeline">
- 3. Arrange
+ <button class="right-tab" data-tab="playlist" id="tab-btn-arrange" title="Arrange — Song Timeline">
+ Arrange
  </button>
- <button class="right-tab record-tab" data-tab="record" id="tab-btn-vocal" title="4. Vocal / Audio Recording">
- 4. Vocal/Record
+ <button class="right-tab record-tab" data-tab="record" id="tab-btn-vocal" title="Vocal / Audio Recording">
+ Vocal/Record
  <span class="rec-dot"></span>
  </button>
- <button class="right-tab" data-tab="mixer" id="tab-btn-mix" title="5. Mix — Multi-Track Mixer &amp; Studio Plugins">
- 5. Mix (Mixer &amp; EQ)
+ <button class="right-tab" data-tab="mixer" id="tab-btn-mix" title="Mixer — Multi-Track Mixer &amp; Studio Plugins">
+ Mixer
  </button>
  <button class="right-tab" data-tab="audio-editor" title="Audio Sample Editor">
  Audio Editor
@@ -1385,22 +1389,22 @@
  <div class="fl-modal-body">
  <!-- Current pattern info -->
  <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.03);padding:8px 12px;border-radius:6px;border:1px solid var(--border);margin-bottom:14px;">
-   <span style="font-size:11px;color:var(--text-muted);">Current Pattern: <strong id="extend-modal-pattern-name" style="color:var(--text-primary);">Pattern 1</strong></span>
-   <span id="extend-modal-current-steps-badge" class="badge" style="background:#27272a;color:#a1a1aa;padding:2px 8px;border-radius:10px;font-size:10px;font-family:var(--font-mono);">16 Steps (1 Bar)</span>
+   <span style="font-size:11px;color:var(--text-muted);">Current Pattern: <strong id="extend-modal-pattern-name" style="color:var(--text-primary);">Pattern A</strong></span>
+   <span id="extend-modal-current-steps-badge" class="badge" style="background:#27272a;color:#a1a1aa;padding:2px 8px;border-radius:10px;font-size:10px;font-family:var(--font-mono);">1 Bar</span>
  </div>
 
  <!-- Quick presets -->
  <div class="fl-form-group">
    <label class="fl-form-label" style="margin-bottom:6px;">Quick Extension Presets</label>
    <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:6px;">
-     <button type="button" class="extend-preset-btn" data-steps="32" data-bars="2">32 (2 Bars)</button>
-     <button type="button" class="extend-preset-btn" data-steps="48" data-bars="3">48 (3 Bars)</button>
-     <button type="button" class="extend-preset-btn" data-steps="64" data-bars="4">64 (4 Bars)</button>
-     <button type="button" class="extend-preset-btn" data-steps="128" data-bars="8">128 (8 Bars)</button>
+     <button type="button" class="extend-preset-btn" data-steps="32" data-bars="2">2 Bars</button>
+     <button type="button" class="extend-preset-btn" data-steps="48" data-bars="3">3 Bars</button>
+     <button type="button" class="extend-preset-btn" data-steps="64" data-bars="4">4 Bars</button>
+     <button type="button" class="extend-preset-btn" data-steps="128" data-bars="8">8 Bars</button>
    </div>
    <div style="display:flex;gap:6px;margin-top:6px;">
-     <button type="button" class="extend-preset-btn flex-1" id="extend-preset-add-bar" style="flex:1;">+1 Bar (+16 steps)</button>
-     <button type="button" class="extend-preset-btn flex-1" id="extend-preset-double" style="flex:1;color:var(--accent);">2x Double Current</button>
+     <button type="button" class="extend-preset-btn flex-1" id="extend-preset-add-bar" style="flex:1;">+1 Bar</button>
+     <button type="button" class="extend-preset-btn flex-1" id="extend-preset-double" style="flex:1;color:var(--accent);">Double Length</button>
    </div>
  </div>
 
@@ -1461,7 +1465,7 @@
  <div style="display:flex;gap:12px;font-size:11px;color:var(--text-muted);font-family:var(--font-mono);background:rgba(255,255,255,0.02);padding:10px;border-radius:6px;border:1px solid var(--border);">
  <div>BPM: <span id="save-preview-bpm" style="color:var(--accent);font-weight:700;">140</span></div>
  <div>Channels: <span id="save-preview-channels" style="color:#a1a1aa;font-weight:700;">8</span></div>
- <div>Mode: <span style="color:#ffffff;font-weight:700;">16 Steps</span></div>
+ <div>Mode: <span style="color:#ffffff;font-weight:700;">Standard</span></div>
  </div>
  </div>
  </div>
@@ -1698,35 +1702,35 @@
 
 <!-- ── Scripts ──────────────────────────────────────────── -->
 <script src="js/mpg123-decoder.min.js"></script>
-<script src="js/audio-engine.js?v=20261104"></script>
-<script src="js/sequencer.js?v=20261104"></script>
-<script src="js/piano-roll.js?v=20261104"></script>
-<script src="js/mixer.js?v=20261104"></script>
-<script src="js/playlist.js?v=20261104"></script>
-<script src="js/ui.js?v=20261104"></script>
-<script src="js/auto-tune.js?v=20261104"></script>
-<script src="js/recorder.js?v=20261104"></script>
-<script src="js/ai-suggester.js?v=20261104"></script>
-<script src="js/music-tag-engine.js?v=20261104"></script>
-<script src="js/music-ai.js?v=20261104"></script>
-<script src="js/ai-producer.js?v=20261104"></script>
-<script src="js/backend-api.js?v=20261104"></script>
-<script src="js/sound-importer.js?v=20261104"></script>
-<script src="js/preset-samples.js?v=20261104"></script>
-<script src="js/song-trainer.js?v=20261104"></script>
-<script src="js/platform.js?v=20261104"></script>
-<script src="js/fl-features.js?v=20261104"></script>
-<script src="js/fl-graph-editor.js?v=20261104"></script>
-<script src="js/fl-piano-extras.js?v=20261104"></script>
-<script src="js/fl-parametric-eq.js?v=20261104"></script>
-<script src="js/fl-soundgoodizer.js?v=20261104"></script>
-<script src="js/fl-pattern-picker.js?v=20261104"></script>
-<script src="js/max-3d-avatar.js?v=20261104"></script>
-<script src="js/max-knowledge-engine.js?v=20261104"></script>
-<script src="js/max-ai-copilot.js?v=20261104"></script>
-<script src="js/drum-machine.js?v=20261104"></script>
-<script src="js/audio-editor.js?v=20261104"></script>
-<script src="js/app.js?v=20261104"></script>
+<script src="js/audio-engine.js?v=20261113"></script>
+<script src="js/sequencer.js?v=20261113"></script>
+<script src="js/piano-roll.js?v=20261113"></script>
+<script src="js/mixer.js?v=20261113"></script>
+<script src="js/playlist.js?v=20261113"></script>
+<script src="js/ui.js?v=20261113"></script>
+<script src="js/auto-tune.js?v=20261113"></script>
+<script src="js/recorder.js?v=20261113"></script>
+<script src="js/ai-suggester.js?v=20261113"></script>
+<script src="js/music-tag-engine.js?v=20261113"></script>
+<script src="js/music-ai.js?v=20261113"></script>
+<script src="js/ai-producer.js?v=20261113"></script>
+<script src="js/backend-api.js?v=20261113"></script>
+<script src="js/sound-importer.js?v=20261113"></script>
+<script src="js/preset-samples.js?v=20261113"></script>
+<script src="js/song-trainer.js?v=20261113"></script>
+<script src="js/platform.js?v=20261113"></script>
+<script src="js/fl-features.js?v=20261113"></script>
+<script src="js/fl-graph-editor.js?v=20261113"></script>
+<script src="js/fl-piano-extras.js?v=20261113"></script>
+<script src="js/fl-parametric-eq.js?v=20261113"></script>
+<script src="js/fl-soundgoodizer.js?v=20261113"></script>
+<script src="js/fl-pattern-picker.js?v=20261113"></script>
+<script src="js/max-3d-avatar.js?v=20261113"></script>
+<script src="js/max-knowledge-engine.js?v=20261113"></script>
+<script src="js/max-ai-copilot.js?v=20261113"></script>
+<script src="js/drum-machine.js?v=20261113"></script>
+<script src="js/audio-editor.js?v=20261113"></script>
+<script src="js/app.js?v=20261113"></script>
 
 <!-- Global utility functions (called from inline HTML) -->
 <script>

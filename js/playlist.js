@@ -37,13 +37,13 @@ class Playlist {
       color: ch.color,
       blocks: [],
     }));
-    // Add some default blocks
-    this.tracks[0].blocks = [{bar: 0, length: 4}, {bar: 4, length: 4}];
-    this.tracks[1].blocks = [{bar: 0, length: 4}];
-    this.tracks[2].blocks = [{bar: 0, length: 4}, {bar: 4, length: 4}];
-    this.tracks[4].blocks = [{bar: 0, length: 4}];
-    this.tracks[6].blocks = [{bar: 2, length: 2}];
-    this.tracks[7].blocks = [{bar: 0, length: 4}];
+    // Add some default blocks safely
+    if (this.tracks[0]) this.tracks[0].blocks = [{bar: 0, length: 4}, {bar: 4, length: 4}];
+    if (this.tracks[1]) this.tracks[1].blocks = [{bar: 0, length: 4}];
+    if (this.tracks[2]) this.tracks[2].blocks = [{bar: 0, length: 4}, {bar: 4, length: 4}];
+    if (this.tracks[4]) this.tracks[4].blocks = [{bar: 0, length: 4}];
+    if (this.tracks[6]) this.tracks[6].blocks = [{bar: 2, length: 2}];
+    if (this.tracks[7]) this.tracks[7].blocks = [{bar: 0, length: 4}];
   }
 
   syncWithChannels() {
@@ -170,12 +170,10 @@ class Playlist {
       ctx.lineTo(x, h);
       ctx.stroke();
 
-      // Bar numbers
+      // Bar markers (clean visual tick marks, no numbers)
       if (b < bars && b % 4 === 0) {
-        ctx.fillStyle = '#4a4a4a';
-        ctx.font = '9px JetBrains Mono, monospace';
-        ctx.textAlign = 'left';
-        ctx.fillText(`${b + 1}`, x + 2, 10);
+        ctx.fillStyle = 'rgba(255, 119, 0, 0.6)';
+        ctx.fillRect(x, 0, 1.5, 6);
       }
     }
 
@@ -259,25 +257,47 @@ class Playlist {
 
   // ── Events ────────────────────────────────────────────────────
   _attachEvents() {
-    this.canvas.addEventListener('mousedown', e => {
-      e.preventDefault();
+    const handleDown = (clientX, clientY, isAlt) => {
       const rect = this.canvas.getBoundingClientRect();
-      const y = e.clientY - rect.top;
+      const y = clientY - rect.top;
       // Clicking on top 14px ruler or with Alt key seeks playhead directly
-      if (y <= 14 || e.altKey) {
-        const x = Math.max(0, e.clientX - rect.left);
+      if (y <= 14 || isAlt) {
+        const x = Math.max(0, clientX - rect.left);
         const bar = Math.min(this.bars, x / this.cellW);
         this.seek(bar);
         return;
       }
       this.isDragging = true;
-      this._handleCanvasClick(e);
+      this._handleCanvasClick({ clientX, clientY });
+    };
+
+    const handleMove = (clientX, clientY) => {
+      if (!this.isDragging) return;
+      this._handleCanvasClick({ clientX, clientY });
+    };
+
+    this.canvas.addEventListener('mousedown', e => {
+      e.preventDefault();
+      handleDown(e.clientX, e.clientY, e.altKey);
     });
     this.canvas.addEventListener('mousemove', e => {
-      if (!this.isDragging) return;
-      this._handleCanvasClick(e);
+      handleMove(e.clientX, e.clientY);
     });
-    this.canvas.addEventListener('mouseup', () => { this.isDragging = false; });
+    window.addEventListener('mouseup', () => { this.isDragging = false; });
+
+    // Touch events for tablet/mobile
+    this.canvas.addEventListener('touchstart', e => {
+      if (e.touches.length > 0) {
+        handleDown(e.touches[0].clientX, e.touches[0].clientY, false);
+      }
+    }, { passive: true });
+    this.canvas.addEventListener('touchmove', e => {
+      if (e.touches.length > 0) {
+        handleMove(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: true });
+    window.addEventListener('touchend', () => { this.isDragging = false; });
+
     this.canvas.addEventListener('contextmenu', e => {
       e.preventDefault();
       this._removeBlockAt(e);

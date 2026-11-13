@@ -176,6 +176,8 @@ class Mixer {
     faderValue.id = `fader-val-${idx}`;
     faderValue.textContent = `${ch.volume}%`;
 
+    this._updateFaderUI(faderFill, faderThumb, ch, idx);
+
     faderWrap.appendChild(faderTrack);
     faderWrap.appendChild(faderValue);
     strip.appendChild(faderWrap);
@@ -192,8 +194,11 @@ class Mixer {
       ch.muted = !ch.muted;
       muteBtn.classList.toggle('muted', ch.muted);
       if (ch.seqIdx >= 0) this.sequencer.setChannelMute(ch.seqIdx, ch.muted);
-      if (ch.isMaster && this.engine.masterGain) {
-        this.engine.masterGain.gain.value = ch.muted ? 0 : ch.volume / 100;
+      if (this.engine) {
+        if (!this.engine.initialized && typeof this.engine.init === 'function') this.engine.init();
+        if (ch.isMaster && this.engine.masterGain) {
+          this.engine.masterGain.gain.value = ch.muted ? 0 : (ch.volume / 100) * 0.85;
+        }
       }
     });
 
@@ -274,25 +279,40 @@ class Mixer {
 
   _attachKnobDrag(canvas, ch, prop, min, max, onChange) {
     let startY, startVal;
-    canvas.addEventListener('mousedown', e => {
-      startY = e.clientY;
+
+    const startDrag = (clientY) => {
+      startY = clientY;
       startVal = ch[prop];
+      if (this.engine && !this.engine.initialized && typeof this.engine.init === 'function') {
+        this.engine.init();
+      }
+    };
+
+    const moveDrag = (clientY) => {
+      const delta = (startY - clientY) * 0.8;
+      ch[prop] = Math.max(min, Math.min(max, Math.round(startVal + delta)));
+      if (prop === 'volume') {
+        if (ch.isMaster) {
+          if (this.engine && !this.engine.initialized && typeof this.engine.init === 'function') this.engine.init();
+          if (this.engine && this.engine.masterGain) {
+            this.engine.masterGain.gain.value = (ch.volume / 100) * 0.85;
+          }
+          const masterValEl = document.getElementById('master-vol-val');
+          if (masterValEl) masterValEl.textContent = `${ch.volume}%`;
+        } else if (ch.seqIdx >= 0) {
+          this.sequencer.setChannelVolume(ch.seqIdx, ch.volume / 100);
+        }
+      } else if (prop === 'pan' && ch.seqIdx >= 0) {
+        this.sequencer.setChannelPan(ch.seqIdx, ch.pan / 100);
+      }
+      onChange();
+    };
+
+    canvas.addEventListener('mousedown', e => {
+      startDrag(e.clientY);
       e.preventDefault();
 
-      const onMove = (me) => {
-        const delta = (startY - me.clientY) * 0.8;
-        ch[prop] = Math.max(min, Math.min(max, Math.round(startVal + delta)));
-        if (prop === 'volume') {
-          if (ch.isMaster && this.engine.masterGain) {
-            this.engine.masterGain.gain.value = (ch.volume / 100) * 0.85;
-          } else if (ch.seqIdx >= 0) {
-            this.sequencer.setChannelVolume(ch.seqIdx, ch.volume / 100);
-          }
-        } else if (prop === 'pan' && ch.seqIdx >= 0) {
-          this.sequencer.setChannelPan(ch.seqIdx, ch.pan / 100);
-        }
-        onChange();
-      };
+      const onMove = (me) => moveDrag(me.clientY);
       const onUp = () => {
         document.removeEventListener('mousemove', onMove);
         document.removeEventListener('mouseup', onUp);
@@ -300,6 +320,14 @@ class Mixer {
       document.addEventListener('mousemove', onMove);
       document.addEventListener('mouseup', onUp);
     });
+
+    canvas.addEventListener('touchstart', e => {
+      if (e.touches.length > 0) startDrag(e.touches[0].clientY);
+    }, { passive: true });
+    canvas.addEventListener('touchmove', e => {
+      if (e.touches.length > 0) moveDrag(e.touches[0].clientY);
+    }, { passive: true });
+
     canvas.addEventListener('dblclick', () => {
       ch[prop] = prop === 'pan' ? 0 : 85;
       if (prop === 'volume') {
@@ -319,29 +347,48 @@ class Mixer {
     let dragging = false;
     let startY, startVal;
 
-    thumb.addEventListener('mousedown', e => {
+    const startDrag = (clientY) => {
       dragging = true;
-      startY = e.clientY;
+      startY = clientY;
       startVal = ch.volume;
-      e.preventDefault();
+      if (this.engine && !this.engine.initialized && typeof this.engine.init === 'function') {
+        this.engine.init();
+      }
+    };
 
-      const onMove = (me) => {
-        if (!dragging) return;
-        const trackRect = track.getBoundingClientRect();
-        const trackH = trackRect.height;
-        const dy = startY - me.clientY;
-        const pctDelta = (dy / trackH) * 100;
-        ch.volume = Math.max(0, Math.min(130, Math.round(startVal + pctDelta)));
-        this._updateFaderUI(fill, thumb, ch, idx);
+    const moveDrag = (clientY) => {
+      if (!dragging) return;
+      const trackRect = track.getBoundingClientRect();
+      const trackH = trackRect.height || 80;
+      const dy = startY - clientY;
+      const pctDelta = (dy / trackH) * 100;
+      ch.volume = Math.max(0, Math.min(130, Math.round(startVal + pctDelta)));
+      this._updateFaderUI(fill, thumb, ch, idx);
 
-        if (ch.isMaster && this.engine.masterGain) {
+      if (ch.isMaster) {
+        if (this.engine && !this.engine.initialized && typeof this.engine.init === 'function') this.engine.init();
+        if (this.engine && this.engine.masterGain) {
           this.engine.masterGain.gain.value = (ch.volume / 100) * 0.85;
-        } else if (ch.seqIdx >= 0) {
-          this.sequencer.setChannelVolume(ch.seqIdx, ch.volume / 100);
         }
-      };
+        const masterValEl = document.getElementById('master-vol-val');
+        if (masterValEl) masterValEl.textContent = `${ch.volume}%`;
+      } else if (ch.seqIdx >= 0) {
+        this.sequencer.setChannelVolume(ch.seqIdx, ch.volume / 100);
+        const row = document.querySelector(`.channel-row[data-channel-idx="${ch.seqIdx}"]`);
+        const slider = row?.querySelector('.ch-vol-slider');
+        if (slider) slider.value = ch.volume / 100;
+      }
+    };
+
+    const endDrag = () => { dragging = false; };
+
+    thumb.addEventListener('mousedown', e => {
+      e.preventDefault();
+      startDrag(e.clientY);
+
+      const onMove = (me) => moveDrag(me.clientY);
       const onUp = () => {
-        dragging = false;
+        endDrag();
         document.removeEventListener('mousemove', onMove);
         document.removeEventListener('mouseup', onUp);
       };
@@ -349,19 +396,35 @@ class Mixer {
       document.addEventListener('mouseup', onUp);
     });
 
+    thumb.addEventListener('touchstart', e => {
+      if (e.touches.length > 0) startDrag(e.touches[0].clientY);
+    }, { passive: true });
+    thumb.addEventListener('touchmove', e => {
+      if (e.touches.length > 0) moveDrag(e.touches[0].clientY);
+    }, { passive: true });
+    thumb.addEventListener('touchend', endDrag);
+
     // Click on track
     track.addEventListener('click', e => {
       const rect = track.getBoundingClientRect();
       const y = e.clientY - rect.top;
-      const h = rect.height;
+      const h = rect.height || 80;
       ch.volume = Math.round((1 - y / h) * 130);
       ch.volume = Math.max(0, Math.min(130, ch.volume));
       this._updateFaderUI(fill, thumb, ch, idx);
 
-      if (ch.isMaster && this.engine.masterGain) {
-        this.engine.masterGain.gain.value = (ch.volume / 100) * 0.85;
+      if (ch.isMaster) {
+        if (this.engine && !this.engine.initialized && typeof this.engine.init === 'function') this.engine.init();
+        if (this.engine && this.engine.masterGain) {
+          this.engine.masterGain.gain.value = (ch.volume / 100) * 0.85;
+        }
+        const masterValEl = document.getElementById('master-vol-val');
+        if (masterValEl) masterValEl.textContent = `${ch.volume}%`;
       } else if (ch.seqIdx >= 0) {
         this.sequencer.setChannelVolume(ch.seqIdx, ch.volume / 100);
+        const row = document.querySelector(`.channel-row[data-channel-idx="${ch.seqIdx}"]`);
+        const slider = row?.querySelector('.ch-vol-slider');
+        if (slider) slider.value = ch.volume / 100;
       }
     });
   }

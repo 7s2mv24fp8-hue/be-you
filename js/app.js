@@ -97,9 +97,13 @@ class FLStudioApp {
       for (let i = curCount + 1; i <= numSteps; i++) {
         const d = document.createElement('div');
         const isBeatStart = (i % 4 === 1);
-        d.style.cssText = `min-width:20px;max-width:26px;width:22px;text-align:center;font-size:8px;font-family:JetBrains Mono,monospace;color:${isBeatStart ? '#ff7700' : '#555'};flex-shrink:0;${isBeatStart ? 'border-left:1px solid rgba(255,255,255,0.15);' : ''}`;
-        d.textContent = i;
+        d.style.cssText = `min-width:20px;max-width:26px;width:22px;height:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;${isBeatStart ? 'border-left:1px solid rgba(255,255,255,0.18);' : ''}`;
         d.className = 'rack-step-num-slide-in';
+        if (isBeatStart) {
+          const dot = document.createElement('span');
+          dot.style.cssText = 'width:4px;height:4px;border-radius:50%;background:#ff7700;display:inline-block;opacity:0.85;';
+          d.appendChild(dot);
+        }
         container.appendChild(d);
       }
     } else if (curCount > numSteps) {
@@ -112,8 +116,12 @@ class FLStudioApp {
       for (let i = 1; i <= numSteps; i++) {
         const d = document.createElement('div');
         const isBeatStart = (i % 4 === 1);
-        d.style.cssText = `min-width:20px;max-width:26px;width:22px;text-align:center;font-size:8px;font-family:JetBrains Mono,monospace;color:${isBeatStart ? '#ff7700' : '#555'};flex-shrink:0;${isBeatStart ? 'border-left:1px solid rgba(255,255,255,0.15);' : ''}`;
-        d.textContent = i;
+        d.style.cssText = `min-width:20px;max-width:26px;width:22px;height:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;${isBeatStart ? 'border-left:1px solid rgba(255,255,255,0.18);' : ''}`;
+        if (isBeatStart) {
+          const dot = document.createElement('span');
+          dot.style.cssText = 'width:4px;height:4px;border-radius:50%;background:#ff7700;display:inline-block;opacity:0.85;';
+          d.appendChild(dot);
+        }
         container.appendChild(d);
       }
     }
@@ -487,6 +495,8 @@ class FLStudioApp {
       list.appendChild(row);
     });
     this._updatePianoRollChannelSelect();
+    if (this.mixer)    this.mixer.syncChannels();
+    if (this.playlist) this.playlist.syncWithChannels();
   }
 
   _auditionChannel(ch) {
@@ -892,7 +902,7 @@ class FLStudioApp {
     this.sequencer.channels.forEach((ch, i) => {
       const opt = document.createElement('option');
       opt.value = i;
-      opt.textContent = `${i + 1}. ${ch.name}`;
+      opt.textContent = ch.name;
       sel.appendChild(opt);
     });
     sel.value = Math.max(0, Math.min(curVal, this.sequencer.channels.length - 1));
@@ -931,6 +941,14 @@ class FLStudioApp {
     const labels = document.getElementById('playlist-track-labels');
     this.playlist = new Playlist(canvas, labels, this.sequencer);
     this.sequencer.playlist = this.playlist;
+
+    // Sync vertical scroll between grid and track labels
+    const gridWrap = document.getElementById('playlist-grid-wrap');
+    if (gridWrap && labels) {
+      gridWrap.addEventListener('scroll', () => {
+        labels.scrollTop = gridWrap.scrollTop;
+      }, { passive: true });
+    }
 
     // Tool buttons
     document.getElementById('pl-draw-btn').addEventListener('click', () => {
@@ -1394,7 +1412,11 @@ class FLStudioApp {
 
     // Re-render active panel
     if ((tabId === 'piano-roll' || tabId === 'channel-rack') && this.pianoRoll) this.pianoRoll.render();
-    if (tabId === 'playlist'   && this.playlist)  this.playlist.render();
+    if (tabId === 'playlist'   && this.playlist) {
+      this.playlist._initCanvas();
+      this.playlist._renderLabels();
+      this.playlist.render();
+    }
     if (tabId === 'mixer') {
       if (this.mixer) this.mixer.syncChannels();
       if (window.flParametricEQ) {
@@ -4509,6 +4531,11 @@ FLStudioApp.prototype._bindFileMenu = function() {
     document.getElementById('btn-import-sound')?.click();
   });
 
+  document.getElementById('menu-btn-preset-library')?.addEventListener('click', () => {
+    fileMenu.classList.add('hidden');
+    if (window.presetLibrary) window.presetLibrary.open();
+  });
+
   document.getElementById('menu-btn-export-stems')?.addEventListener('click', () => {
     fileMenu.classList.add('hidden');
     this.exportAllStems();
@@ -4543,7 +4570,10 @@ FLStudioApp.prototype._bindAICopilotDrawer = function() {
 
   const openDrawer = (tabView) => {
     drawer.classList.remove('hidden');
-    drawer.classList.add('open');
+    // small rAF so removing display:none takes effect before transform starts
+    requestAnimationFrame(() => {
+      drawer.classList.add('open');
+    });
     toggleBtn?.classList.add('active');
     if (tabView) {
       document.querySelectorAll('.ai-drawer-tab').forEach(b => {
@@ -4557,12 +4587,15 @@ FLStudioApp.prototype._bindAICopilotDrawer = function() {
 
   const closeDrawer = () => {
     drawer.classList.remove('open');
-    drawer.classList.add('hidden');
     toggleBtn?.classList.remove('active');
+    // Add hidden after transition ends (250ms) so element doesn't stay in flow
+    setTimeout(() => {
+      if (!drawer.classList.contains('open')) drawer.classList.add('hidden');
+    }, 260);
   };
 
   const toggleDrawer = () => {
-    if (drawer.classList.contains('hidden') || !drawer.classList.contains('open')) {
+    if (!drawer.classList.contains('open')) {
       openDrawer();
     } else {
       closeDrawer();
@@ -4579,6 +4612,10 @@ FLStudioApp.prototype._bindAICopilotDrawer = function() {
       input.focus();
       if (!input.value) input.value = 'Trap beat with rolling 808s and punchy drums';
     }
+    // Auto-trigger beat generation immediately after opening
+    setTimeout(() => {
+      document.getElementById('ai-drawer-send-btn')?.click();
+    }, 80);
   });
 
   // Drawer tab switching (Beat Producer vs Audio Generator)
@@ -4867,7 +4904,7 @@ FLStudioApp.prototype.autoArrangeSong = function() {
     channels[crashIdx].steps[0] = true;
   }
 
-  this.playlist.syncWithChannels();
+  if (this.playlist) this.playlist.syncWithChannels();
 
   const blocksByRole = {
     hat: [
@@ -4933,22 +4970,22 @@ FLStudioApp.prototype.autoArrangeSong = function() {
   assignBlocks(crashIdx, blocksByRole.crash);
 
   this.playlist.sectionMarkers = [
-    { bar: 0, length: 8, name: 'INTRO (Bars 1-8)', color: 'rgba(59, 130, 246, 0.15)', borderColor: 'rgba(59, 130, 246, 0.5)' },
-    { bar: 8, length: 8, name: 'HOOK 1 (Bars 9-16)', color: 'rgba(239, 68, 68, 0.15)', borderColor: 'rgba(239, 68, 68, 0.5)' },
-    { bar: 16, length: 16, name: 'VERSE (Bars 17-32)', color: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.5)' },
-    { bar: 32, length: 8, name: 'HOOK 2 (Bars 33-40)', color: 'rgba(239, 68, 68, 0.15)', borderColor: 'rgba(239, 68, 68, 0.5)' },
-    { bar: 40, length: 8, name: 'OUTRO (Bars 41-48)', color: 'rgba(168, 85, 247, 0.15)', borderColor: 'rgba(168, 85, 247, 0.5)' }
+    { bar: 0, length: 8, name: 'INTRO', color: 'rgba(59, 130, 246, 0.15)', borderColor: 'rgba(59, 130, 246, 0.5)' },
+    { bar: 8, length: 8, name: 'HOOK', color: 'rgba(239, 68, 68, 0.15)', borderColor: 'rgba(239, 68, 68, 0.5)' },
+    { bar: 16, length: 16, name: 'VERSE', color: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.5)' },
+    { bar: 32, length: 8, name: 'CHORUS', color: 'rgba(239, 68, 68, 0.15)', borderColor: 'rgba(239, 68, 68, 0.5)' },
+    { bar: 40, length: 8, name: 'OUTRO', color: 'rgba(168, 85, 247, 0.15)', borderColor: 'rgba(168, 85, 247, 0.5)' }
   ];
 
   this.sequencer.setPlaybackMode('song');
-  const songModeBtn = document.getElementById('play-mode-song');
-  const patModeBtn = document.getElementById('play-mode-pat');
+  const songModeBtn = document.getElementById('mode-song') || document.getElementById('play-mode-song');
+  const patModeBtn = document.getElementById('mode-pattern') || document.getElementById('play-mode-pat');
   if (songModeBtn) songModeBtn.classList.add('active');
   if (patModeBtn) patModeBtn.classList.remove('active');
 
   this._switchTab('playlist');
   this.playlist.render();
-  showToast('Auto-Arranged 48-Bar Song Structure (Intro • Hook • Verse • Hook 2 • Outro)');
+  showToast('Auto-Arranged 48-Bar Song Structure (Intro • Hook • Verse • Chorus • Outro)');
 };
 
 FLStudioApp.prototype.generateAIDrums = async function(genre) {
@@ -4976,8 +5013,12 @@ FLStudioApp.prototype.generateAIDrums = async function(genre) {
   }
 
   // Robust non-repetitive procedural groove generator across Kick, Snare, Hi-Hat, and 808
+  // Use truly random variation so each press sounds different
   this._drumVarIdx = (this._drumVarIdx || 0) + 1;
-  const v = this._drumVarIdx % 4;
+  const _prev = (this._drumVarIdx - 1) % 8;
+  let _r = Math.floor(Math.random() * 7);
+  if (_r >= _prev) _r++; // skip previous to avoid instant repetition
+  const v = _r % 8;
 
   const kickIdx = this.sequencer.channels.findIndex(c => (c.name || '').toLowerCase().includes('kick'));
   const snareIdx = this.sequencer.channels.findIndex(c => {
@@ -5011,79 +5052,170 @@ FLStudioApp.prototype.generateAIDrums = async function(genre) {
     }
   };
 
-  if (g.includes('boombap')) {
-    const kPatterns = [[0, 10], [0, 6, 10], [0, 8, 11], [0, 3, 10]];
-    const sPatterns = [[4, 12], [4, 12, 15], [4, 12], [4, 11, 12]];
+  if (g.includes('boombap') || g.includes('boom')) {
+    const kPatterns = [
+      [0, 10], [0, 6, 10], [0, 8, 11], [0, 3, 10],
+      [0, 5, 10], [0, 9, 12], [0, 7, 11, 14], [0, 4, 8, 12]
+    ];
+    const sPatterns = [
+      [4, 12], [4, 12, 15], [4, 12], [4, 11, 12],
+      [4, 13], [3, 12], [4, 12, 14], [5, 12, 15]
+    ];
     const hPatterns = [
       [0, 2, 4, 6, 8, 10, 12, 14],
       [0, 2, 4, 6, 7, 8, 10, 12, 14, 15],
-      [0, 2, 4, 6, 8, 10, 12, 14],
-      [0, 1, 2, 4, 6, 8, 9, 10, 12, 14]
+      [0, 1, 2, 4, 6, 8, 9, 10, 12, 14],
+      [0, 4, 8, 12],
+      [0, 3, 6, 9, 12],
+      [0, 2, 5, 8, 10, 13],
+      [0, 2, 4, 8, 10, 12],
+      [1, 3, 5, 7, 9, 11, 13, 15]
     ];
-    setSteps(kickIdx >= 0 ? kickIdx : 0, kPatterns[v % kPatterns.length]);
+    setSteps(kickIdx  >= 0 ? kickIdx  : 0, kPatterns[v % kPatterns.length]);
     setSteps(snareIdx >= 0 ? snareIdx : 1, sPatterns[v % sPatterns.length]);
-    setSteps(hatIdx >= 0 ? hatIdx : 2, hPatterns[v % hPatterns.length]);
+    setSteps(hatIdx   >= 0 ? hatIdx   : 2, hPatterns[v % hPatterns.length]);
   } else if (g.includes('drill')) {
-    const kPatterns = [[0, 6, 10], [0, 7, 10, 14], [0, 10, 13], [0, 6, 11]];
-    const sPatterns = [[6, 12], [6, 12, 15], [6, 12], [5, 12]];
+    const kPatterns = [
+      [0, 6, 10], [0, 7, 10, 14], [0, 10, 13], [0, 6, 11],
+      [0, 5, 9, 13], [0, 8, 11, 14], [0, 6, 10, 15], [0, 7, 12]
+    ];
+    const sPatterns = [
+      [6, 12], [6, 12, 15], [6, 12], [5, 12],
+      [7, 12], [6, 11, 15], [5, 11, 14], [6, 13]
+    ];
     const hPatterns = [
       [0, 3, 6, 9, 12, 14],
       [0, 2, 3, 6, 8, 9, 12, 14, 15],
       [0, 3, 5, 6, 9, 11, 12, 14],
-      [0, 1, 3, 6, 7, 9, 12, 13, 14]
+      [0, 1, 3, 6, 7, 9, 12, 13, 14],
+      [0, 2, 4, 6, 8, 10, 12, 14],
+      [0, 3, 6, 9, 10, 12, 15],
+      [1, 3, 5, 7, 9, 11, 13],
+      [0, 2, 5, 7, 9, 12, 14]
     ];
-    setSteps(kickIdx >= 0 ? kickIdx : 0, kPatterns[v % kPatterns.length]);
+    setSteps(kickIdx  >= 0 ? kickIdx  : 0, kPatterns[v % kPatterns.length]);
     setSteps(snareIdx >= 0 ? snareIdx : 1, sPatterns[v % sPatterns.length]);
-    setSteps(hatIdx >= 0 ? hatIdx : 2, hPatterns[v % hPatterns.length]);
+    setSteps(hatIdx   >= 0 ? hatIdx   : 2, hPatterns[v % hPatterns.length]);
   } else if (g.includes('house')) {
-    const kPatterns = [[0, 4, 8, 12], [0, 4, 8, 12], [0, 4, 8, 12, 14], [0, 4, 8, 12]];
-    const sPatterns = [[4, 12], [4, 12], [4, 12, 15], [4, 11, 12]];
+    const kPatterns = [
+      [0, 4, 8, 12], [0, 4, 8, 12], [0, 4, 8, 12, 14], [0, 4, 8, 12],
+      [0, 4, 8, 11, 12], [0, 4, 7, 8, 12], [0, 4, 8, 13], [0, 4, 8, 12, 15]
+    ];
+    const sPatterns = [
+      [4, 12], [4, 12], [4, 12, 15], [4, 11, 12],
+      [2, 10], [4, 10, 12], [4, 12, 14], [3, 11]
+    ];
     const hPatterns = [
       [2, 6, 10, 14],
       [0, 2, 4, 6, 8, 10, 12, 14],
       [2, 6, 10, 14],
-      [2, 4, 6, 10, 12, 14]
+      [2, 4, 6, 10, 12, 14],
+      [0, 4, 8, 12],
+      [1, 3, 5, 7, 9, 11, 13, 15],
+      [2, 4, 6, 8, 10, 12, 14],
+      [0, 2, 6, 8, 10, 14]
     ];
-    setSteps(kickIdx >= 0 ? kickIdx : 0, kPatterns[v % kPatterns.length]);
+    setSteps(kickIdx  >= 0 ? kickIdx  : 0, kPatterns[v % kPatterns.length]);
     setSteps(snareIdx >= 0 ? snareIdx : 1, sPatterns[v % sPatterns.length]);
-    setSteps(hatIdx >= 0 ? hatIdx : 2, hPatterns[v % hPatterns.length]);
+    setSteps(hatIdx   >= 0 ? hatIdx   : 2, hPatterns[v % hPatterns.length]);
+  } else if (g.includes('lofi') || g.includes('lo-fi') || g.includes('chill')) {
+    const kPatterns = [
+      [0, 9], [0, 11], [0, 7, 11], [0, 6, 10],
+      [0, 10, 13], [0, 8, 12], [0, 5, 9], [0, 7, 14]
+    ];
+    const sPatterns = [
+      [4, 12], [4, 13], [4, 12, 15], [5, 12],
+      [4, 11], [4, 12, 14], [3, 11], [4, 13, 15]
+    ];
+    const hPatterns = [
+      [0, 3, 6, 9, 12],
+      [0, 4, 8, 12],
+      [0, 2, 6, 10, 14],
+      [0, 3, 8, 11],
+      [0, 5, 10],
+      [2, 7, 12],
+      [0, 4, 7, 11],
+      [1, 6, 11]
+    ];
+    setSteps(kickIdx  >= 0 ? kickIdx  : 0, kPatterns[v % kPatterns.length]);
+    setSteps(snareIdx >= 0 ? snareIdx : 1, sPatterns[v % sPatterns.length]);
+    setSteps(hatIdx   >= 0 ? hatIdx   : 2, hPatterns[v % hPatterns.length]);
+  } else if (g.includes('phonk')) {
+    const kPatterns = [
+      [0, 6, 10, 14], [0, 5, 10, 13], [0, 7, 10], [0, 8, 11, 14],
+      [0, 6, 9, 14], [0, 4, 10, 15], [0, 7, 11, 13], [0, 5, 12]
+    ];
+    const sPatterns = [
+      [4, 12], [4, 10, 12], [3, 12, 15], [4, 11],
+      [4, 12, 14], [5, 12], [4, 10, 15], [3, 11, 14]
+    ];
+    const hPatterns = [
+      [0, 2, 4, 6, 8, 10, 12, 14],
+      [0, 1, 3, 4, 6, 7, 9, 10, 12, 13, 15],
+      [0, 2, 4, 6, 8, 10, 11, 12, 14, 15],
+      [0, 1, 2, 4, 6, 8, 9, 10, 12, 14],
+      [0, 3, 6, 8, 11, 14],
+      [0, 2, 5, 8, 10, 13],
+      [1, 3, 5, 8, 9, 12, 14],
+      [0, 2, 4, 7, 9, 12, 14]
+    ];
+    setSteps(kickIdx  >= 0 ? kickIdx  : 0, kPatterns[v % kPatterns.length]);
+    setSteps(snareIdx >= 0 ? snareIdx : 1, sPatterns[v % sPatterns.length]);
+    setSteps(hatIdx   >= 0 ? hatIdx   : 2, hPatterns[v % hPatterns.length]);
   } else {
-    // Trap variations
+    // Trap / default variations — 8 unique grooves
     const kPatterns = [
       [0, 7, 10],
       [0, 6, 11, 14],
       [0, 8, 10, 13],
-      [0, 3, 7, 10]
+      [0, 3, 7, 10],
+      [0, 5, 9, 14],
+      [0, 6, 8, 11, 15],
+      [0, 4, 10, 13],
+      [0, 7, 9, 12]
     ];
     const sPatterns = [
       [8],
       [8, 15],
       [4, 12],
-      [8, 14]
+      [8, 14],
+      [4, 10, 15],
+      [4, 12, 14],
+      [8, 13],
+      [4, 11, 15]
     ];
     const hPatterns = [
       [0, 2, 4, 6, 8, 10, 12, 14],
       [0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, 15],
       [0, 2, 4, 6, 8, 10, 11, 12, 14],
-      [0, 2, 3, 4, 6, 7, 8, 10, 11, 12, 14, 15]
+      [0, 2, 3, 4, 6, 7, 8, 10, 11, 12, 14, 15],
+      [0, 2, 6, 8, 10, 14],
+      [0, 3, 6, 9, 12, 15],
+      [0, 2, 4, 8, 10, 12],
+      [1, 3, 5, 7, 9, 11, 13, 15]
     ];
-    setSteps(kickIdx >= 0 ? kickIdx : 0, kPatterns[v % kPatterns.length]);
+    setSteps(kickIdx  >= 0 ? kickIdx  : 0, kPatterns[v % kPatterns.length]);
     setSteps(snareIdx >= 0 ? snareIdx : 1, sPatterns[v % sPatterns.length]);
-    setSteps(hatIdx >= 0 ? hatIdx : 2, hPatterns[v % hPatterns.length]);
+    setSteps(hatIdx   >= 0 ? hatIdx   : 2, hPatterns[v % hPatterns.length]);
   }
 
   if (bassIdx >= 0 && this.sequencer.channels[bassIdx]) {
     const bassCh = this.sequencer.channels[bassIdx];
     bassCh.steps.fill(false);
-    const bPatterns = [[0, 6, 10], [0, 7, 11], [0, 6, 12, 14], [0, 4, 8, 10]];
+    const bPatterns = [
+      [0, 6, 10], [0, 7, 11], [0, 6, 12, 14], [0, 4, 8, 10],
+      [0, 5, 9, 13], [0, 8, 12], [0, 3, 7, 11, 14], [0, 6, 9, 15]
+    ];
     const bHits = bPatterns[v % bPatterns.length];
     bHits.forEach(s => { if (s < totalSteps) bassCh.steps[s] = true; });
   }
 
   this._refreshChannelRack();
   if (this.pianoRoll) this.pianoRoll.render();
+  if (this.playlist) this.playlist.syncWithChannels();
   if (!this.sequencer.isPlaying && typeof this.sequencer.play === 'function') this.sequencer.play();
-  showToast(`AI generated ${genre.toUpperCase()} drum groove (Variation ${v + 1})`);
+  const grooveNames = ['Original','Swung','Syncopated','Shuffled','Offbeat','Polyrhythmic','Ghost-Note','Triplet'];
+  showToast(`AI generated ${genre.toUpperCase()} beat — ${grooveNames[v % grooveNames.length]} groove`);
 };
 
 FLStudioApp.prototype.clearCurrentPattern = function() {

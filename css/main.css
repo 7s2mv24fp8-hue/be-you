@@ -1108,11 +1108,21 @@ canvas { display: block; }
   position: relative;
 }
 .fader-track {
-  width: 3px;
+  width: 4px;
   background: var(--bg-element);
   border-radius: 2px;
   flex: 1;
   position: relative;
+  cursor: pointer;
+  touch-action: none;
+}
+.fader-track::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -12px;
+  right: -12px;
   cursor: pointer;
 }
 .fader-fill {
@@ -1128,14 +1138,15 @@ canvas { display: block; }
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  width: 26px;
-  height: 10px;
+  width: 28px;
+  height: 12px;
   background: linear-gradient(180deg, #666 0%, #444 100%);
   border: 1px solid #777;
   border-radius: 2px;
   cursor: ns-resize;
   transition: background 0.1s;
   z-index: 2;
+  touch-action: none;
 }
 .fader-thumb:hover { background: linear-gradient(180deg, #888 0%, #555 100%); }
 .fader-value {
@@ -7656,15 +7667,17 @@ canvas { display: block; }
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 2px 8px;
-  font-size: 9px;
+  padding: 4px 10px;
+  min-height: 22px;
+  font-size: 10px;
   font-weight: 700;
   background: rgba(255, 119, 0, 0.12);
   border: 1px solid rgba(255, 119, 0, 0.4);
-  border-radius: 3px;
+  border-radius: 4px;
   color: #ff7700;
   cursor: pointer;
   transition: all 0.15s;
+  white-space: nowrap;
 }
 .rack-ai-action-btn:hover {
   background: #ff7700;
@@ -7715,17 +7728,20 @@ canvas { display: block; }
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 10px;
+  padding: 5px 12px;
+  min-height: 28px;
   background: rgba(255, 119, 0, 0.14);
   border: 1px solid rgba(255, 119, 0, 0.45);
-  border-radius: 4px;
+  border-radius: 5px;
   color: #ffffff;
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s;
+  white-space: nowrap;
 }
-.tb-ai-copilot-btn:hover {
+.tb-ai-copilot-btn:hover,
+.tb-ai-copilot-btn.active {
   background: #ff7700;
   color: #000000;
 }
@@ -7733,15 +7749,17 @@ canvas { display: block; }
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 10px;
+  padding: 5px 12px;
+  min-height: 28px;
   background: rgba(255, 119, 0, 0.12);
   border: 1px solid rgba(255, 119, 0, 0.4);
-  border-radius: 4px;
+  border-radius: 5px;
   color: #ff7700;
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s;
+  white-space: nowrap;
 }
 .tb-ai-beats-btn:hover {
   background: #ff7700;
@@ -7751,7 +7769,8 @@ canvas { display: block; }
   position: absolute;
   top: 0;
   right: 0;
-  width: 360px;
+  width: 420px;
+  max-width: 92vw;
   height: 100%;
   background: #121215;
   border-left: 1px solid #27272a;
@@ -7766,7 +7785,8 @@ canvas { display: block; }
   transform: translateX(0);
 }
 .ai-copilot-drawer.hidden {
-  display: none !important;
+  transform: translateX(100%) !important;
+  pointer-events: none;
 }
 .ai-drawer-header {
   display: flex;

@@ -178,10 +178,11 @@ class FLParametricEQ {
 
       const freqStr = b.freq >= 1000 ? `${(b.freq / 1000).toFixed(1)}k` : `${Math.round(b.freq)}`;
       const gainStr = b.gain > 0 ? `+${b.gain.toFixed(1)}` : `${b.gain.toFixed(1)}`;
+      const bandCodes = ['HP', 'LS', 'PK', 'PK', 'PK', 'HS', 'LP'];
 
       col.innerHTML = `
         <div class="fl-eq-band-num" style="color:${b.color}">
-          <button class="fl-eq-band-solo" data-idx="${i}" title="Toggle band">${i + 1}</button>
+          <button class="fl-eq-band-solo" data-idx="${i}" title="Toggle band">${bandCodes[i] || 'EQ'}</button>
           <span class="fl-eq-band-type">${b.type.slice(0, 4).toUpperCase()}</span>
         </div>
         <div class="fl-eq-band-val" id="fl-eq-fval-${i}">${freqStr}Hz</div>
@@ -438,7 +439,7 @@ class FLParametricEQ {
     const freqStr = b.freq >= 1000 ? `${(b.freq / 1000).toFixed(2)} kHz` : `${b.freq} Hz`;
     const gainStr = b.gain > 0 ? `+${b.gain.toFixed(1)} dB` : `${b.gain.toFixed(1)} dB`;
 
-    tt.innerHTML = `<strong>Band ${idx + 1} (${b.type.toUpperCase()})</strong><br>Freq: ${freqStr} | Gain: ${gainStr} | Q: ${b.q}`;
+    tt.innerHTML = `<strong>${b.type.toUpperCase()} BAND</strong><br>Freq: ${freqStr} | Gain: ${gainStr} | Q: ${b.q}`;
     tt.style.left = `${Math.min(x + 12, (this.cssWidth || 320) - 150)}px`;
     tt.style.top = `${Math.max(10, y - 45)}px`;
     tt.style.display = 'block';
@@ -702,10 +703,11 @@ class FLParametricEQ {
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Node number inside / above
+      // Inner center dot
+      ctx.beginPath();
+      ctx.arc(nx, ny, 2, 0, Math.PI * 2);
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 8px JetBrains Mono, monospace';
-      ctx.fillText(i + 1, nx - 2.5, ny - radius - 4);
+      ctx.fill();
     });
   }
 }

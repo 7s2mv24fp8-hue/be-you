@@ -406,7 +406,9 @@ class SoundImporter {
     this.close();
     this._resetState();
 
-    if (window.showToast) showToast(` "${name}" added to channel rack!`);
+    if (typeof window !== 'undefined' && typeof window.showToast === 'function') {
+      window.showToast(`"${name}" added to channel rack!`);
+    }
   }
 
   /* ── UI helpers ──────────────────────────────────────────────── */
@@ -682,8 +684,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const COLORS = ['#ffffff','#a1a1aa','#ffffff','#52525b','#ffffff','#a1a1aa','#f59e0b','#ffffff','#6366f1','#ffffff'];
         const idx  = window.app.sequencer.channels.length;
         const color = COLORS[idx % COLORS.length];
+        const synths = ['Synth Lead', 'Sub Bass', 'Analog Pad', 'Pluck', 'Bell', 'Brass'];
+        const name = synths[idx % synths.length] || 'Synth';
         window.app.sequencer.channels.push({
-          name: `Channel ${idx + 1}`,
+          name,
           color,
           steps:    new Array(window.app.sequencer.steps).fill(false),
           velocity: new Array(window.app.sequencer.steps).fill(0.8),
@@ -691,9 +695,21 @@ document.addEventListener('DOMContentLoaded', () => {
           type: 'synth', notes: [], filterFreq: 2000, filterRes: 1,
         });
         window.app._buildChannelRack();
-        if (window.showToast) showToast(` Channel ${idx + 1} added`);
+        if (window.app.mixer)    window.app.mixer.syncChannels();
+        if (window.app.playlist) window.app.playlist.syncWithChannels();
+        if (typeof window !== 'undefined' && typeof window.showToast === 'function') {
+          window.showToast(`Added ${name} to rack!`);
+        }
       });
     }
   };
   waitForApp();
 });
+
+if (typeof window !== 'undefined') {
+  window.SoundImporter = SoundImporter;
+}
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { SoundImporter };
+}
+
