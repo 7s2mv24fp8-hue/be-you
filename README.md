@@ -1,26 +1,12 @@
-# BeYou Studio — Production Web DAW
+
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/7s2mv24fp8-hue/be-you)
 
-> **BeYou Studio** is a full-featured, browser-based Digital Audio Workstation (DAW) and music production suite powered by the Web Audio API, Canvas, Python FastAPI, and AI audio synthesis.
 
----
 
-## ⚡ 1-Click Cloud Deployment to Render
 
-Click the button above or visit this direct link to deploy **BeYou Studio** immediately:
 
-👉 **[Deploy BeYou Studio on Render](https://render.com/deploy?repo=https://github.com/7s2mv24fp8-hue/be-you)**
-
-Render will automatically:
-1. Detect [`render.yaml`](render.yaml) Blueprint.
-2. Build and launch the Python 3.11 environment.
-3. Seed the Super Admin account for **Rahul Sharma**.
-4. Generate cryptographically secure keys and provision free automatic SSL/HTTPS.
-
----
-
-## 🎹 Core Features
+Features
 
 - **Multi-Track Step Sequencer**: 8+ drum and synth channels with velocity editing, swing, mute, and solo.
 - **Interactive Piano Roll**: Polyphonic piano roll with scale snapping, chord generators, and note resizing.
@@ -32,7 +18,7 @@ Render will automatically:
 
 ---
 
-## 🛡️ 20-Point Enterprise Security Controls
+## 20-Point Enterprise Security Controls
 
 1. **Hidden API Keys**: All secrets (`SECRET_KEY`, `HF_TOKEN`) stored in server environment variables.
 2. **Purged Git Secrets**: Comprehensive `.gitignore` protecting `.env`, databases, and logs.
@@ -56,25 +42,3 @@ Render will automatically:
 20. **Audited Dependencies**: Clean, conflict-free dependency tree.
 
 ---
-
-## 🛠️ Local Development Quickstart
-
-```bash
-# 1. Clone repository
-git clone https://github.com/7s2mv24fp8-hue/fl-studio-clone.git
-cd fl-studio-clone
-
-# 2. Install dependencies
-pip install -r requirements.txt
-
-# 3. Configure environment
-cp .env.example .env
-
-# 4. Start server
-python server.py
-```
-
-Access the application at [http://localhost:8000](http://localhost:8000).
-
-- **Super Admin Username**: `rahul`
-- **Default Password**: `password123`
