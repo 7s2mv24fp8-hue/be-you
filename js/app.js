@@ -60,6 +60,7 @@ class FLStudioApp {
     this._bindAICopilotDrawer();
     this._bindRackQuickBarToggles();
     this._bindPlaylistAutoArrange();
+    this._initElectronIntegration();
 
     // Sequencer callbacks
     this.sequencer.onStep = (step, songStep) => this._onStep(step, songStep);
@@ -4516,14 +4517,30 @@ FLStudioApp.prototype._bindFileMenu = function() {
     this.openQuickStartModal();
   });
 
-  document.getElementById('menu-btn-save-cloud')?.addEventListener('click', () => {
+  const saveBtn = document.getElementById('menu-btn-save') || document.getElementById('menu-btn-save-cloud');
+  saveBtn?.addEventListener('click', () => {
     fileMenu.classList.add('hidden');
-    document.getElementById('plat-cloud-save-btn')?.click();
+    if (window.electronAPI) {
+      const state = this.serializeState();
+      const fname = `${(this.currentProjectTitle || 'Project').replace(/[^a-zA-Z0-9_-]/g, '_')}.beyou`;
+      window.electronAPI.saveProject(state, fname).then((res) => {
+        if (!res.canceled && res.filePath) {
+          showToast(`Saved project: ${res.filePath.split('/').pop()}`);
+        }
+      });
+    } else {
+      document.getElementById('plat-cloud-save-btn')?.click();
+    }
   });
 
-  document.getElementById('menu-btn-open-projects')?.addEventListener('click', () => {
+  const openBtn = document.getElementById('menu-btn-projects') || document.getElementById('menu-btn-open-projects');
+  openBtn?.addEventListener('click', () => {
     fileMenu.classList.add('hidden');
-    document.getElementById('btn-cloud-open')?.click();
+    if (window.electronAPI) {
+      window.electronAPI.openProjectDialog();
+    } else {
+      document.getElementById('btn-cloud-open')?.click();
+    }
   });
 
   document.getElementById('menu-btn-import')?.addEventListener('click', () => {
@@ -5403,6 +5420,141 @@ FLStudioApp.prototype.generateCounterMelody = function() {
   }
 
   showToast(`AI Counter-Melody generated on ${ch.name} in ${rootName} ${scaleType}`);
+};
+
+// ── Native Desktop Application Integration ─────────────────────
+FLStudioApp.prototype._initElectronIntegration = function() {
+  if (typeof window === 'undefined' || !window.electronAPI) return;
+
+  console.log('[Desktop App] Initializing Electron Native DAW Bridge...');
+
+  // Auto-initialize audio engine immediately (no autoplay restriction in desktop app!)
+  if (this.audioEngine && typeof this.audioEngine.init === 'function') {
+    try {
+      this.audioEngine.init();
+      const banner = document.getElementById('ios-audio-banner');
+      if (banner) banner.style.display = 'none';
+    } catch (e) {
+      console.warn('[Desktop App] AudioEngine auto-init:', e);
+    }
+  }
+
+  // Visual status badge in titlebar
+  const titlebar = document.getElementById('titlebar');
+  if (titlebar) {
+    const badge = document.createElement('div');
+    badge.className = 'desktop-engine-badge';
+    badge.style.cssText = 'background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);color:#4ade80;font-size:9.5px;font-family:JetBrains Mono,monospace;font-weight:700;padding:2px 7px;border-radius:4px;display:inline-flex;align-items:center;gap:4px;margin-left:8px;letter-spacing:0.5px;';
+    badge.innerHTML = '<span style="width:5px;height:5px;border-radius:50%;background:#22c55e;display:inline-block;"></span>DESKTOP APP • LOW LATENCY';
+    const appTitle = titlebar.querySelector('.app-title');
+    if (appTitle) appTitle.appendChild(badge);
+  }
+
+  // Hook Project Load event from native dialog
+  window.electronAPI.onLoadProject((payload) => {
+    if (payload && payload.data) {
+      this.loadState(payload.data);
+      if (payload.fileName) {
+        showToast(`Loaded project "${payload.fileName}"`);
+      }
+    }
+  });
+
+  // Hook Audio Import event from native dialog
+  window.electronAPI.onAudioImported((payload) => {
+    if (payload && payload.buffer && window.soundImporter) {
+      window.soundImporter._decodeAndAddAudioBuffer(payload.buffer, payload.fileName || 'Sample');
+      showToast(`Imported audio "${payload.fileName}" to rack`);
+    }
+  });
+
+  // Hook Native Menu Actions
+  window.electronAPI.onMenuAction((action) => {
+    switch (action) {
+      case 'new-project':
+        this.openQuickStartModal();
+        break;
+      case 'save-project':
+      case 'save-project-as': {
+        const state = this.serializeState();
+        const fname = `${(this.currentProjectTitle || 'Project').replace(/[^a-zA-Z0-9_-]/g, '_')}.beyou`;
+        window.electronAPI.saveProject(state, fname).then((res) => {
+          if (!res.canceled && res.filePath) {
+            showToast(`Saved project: ${res.filePath.split('/').pop()}`);
+          }
+        });
+        break;
+      }
+      case 'export-wav':
+      case 'export-stems':
+        if (typeof this.exportAllStems === 'function') {
+          this.exportAllStems();
+        }
+        break;
+      case 'open-library':
+        if (window.presetLibrary) window.presetLibrary.open();
+        break;
+      case 'undo':
+        if (this.pianoRoll && typeof this.pianoRoll.undo === 'function') this.pianoRoll.undo();
+        break;
+      case 'redo':
+        if (this.pianoRoll && typeof this.pianoRoll.redo === 'function') this.pianoRoll.redo();
+        break;
+      case 'clear-pattern':
+        this.clearCurrentPattern();
+        break;
+      case 'toggle-play':
+        this.togglePlay();
+        break;
+      case 'stop-play':
+        this.sequencer.stop();
+        break;
+      case 'toggle-record':
+        document.getElementById('transport-record')?.click();
+        break;
+      case 'toggle-metronome':
+        this.sequencer.metronomeEnabled = !this.sequencer.metronomeEnabled;
+        const metBtn = document.getElementById('transport-metronome');
+        if (metBtn) metBtn.classList.toggle('active', this.sequencer.metronomeEnabled);
+        showToast(this.sequencer.metronomeEnabled ? 'Metronome Enabled' : 'Metronome Disabled');
+        break;
+      case 'mode-pattern':
+        this.sequencer.setPlaybackMode('pattern');
+        document.getElementById('mode-pattern')?.classList.add('active');
+        document.getElementById('mode-song')?.classList.remove('active');
+        break;
+      case 'mode-song':
+        this.sequencer.setPlaybackMode('song');
+        document.getElementById('mode-song')?.classList.add('active');
+        document.getElementById('mode-pattern')?.classList.remove('active');
+        break;
+      case 'open-copilot':
+        this.openAICopilot();
+        break;
+      case 'ai-beat':
+        this.generateAIDrums();
+        break;
+      case 'ai-melody':
+        this.generateAIMelody();
+        break;
+      case 'auto-arrange':
+        this.autoArrangeSong();
+        break;
+      case 'toggle-eq':
+        if (window.flParametricEQ) window.flParametricEQ.openModal();
+        break;
+      case 'toggle-soundgoodizer':
+        if (window.flSoundgoodizer) window.flSoundgoodizer.openModal();
+        break;
+      default:
+        break;
+    }
+  });
+
+  // Hook Native Menu Tab switching
+  window.electronAPI.onMenuTab((tab) => {
+    this._switchTab(tab);
+  });
 };
 
 // ── Global App Bootstrap (safe readyState execution) ───────────

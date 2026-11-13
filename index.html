@@ -9,6 +9,10 @@
  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
  <link rel="stylesheet" href="css/main.css?v=20261113">
+ <link rel="manifest" href="manifest.json">
+ <meta name="apple-mobile-web-app-capable" content="yes">
+ <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+ <meta name="theme-color" content="#121214">
  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ff7700'><rect x='1' y='6' width='2' height='5'/><rect x='4' y='3' width='2' height='10'/><rect x='7' y='1' width='2' height='14'/><rect x='10' y='4' width='2' height='9'/><rect x='13' y='7' width='2' height='4'/></svg>">
 </head>
 <body>
@@ -2331,5 +2335,14 @@
 .hidden { display: none !important; }
 </style>
 
+<script>
+  if ('serviceWorker' in navigator && !window.electronAPI) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(err => {
+        console.warn('[SW] ServiceWorker registration failed:', err);
+      });
+    });
+  }
+</script>
 </body>
 </html>
