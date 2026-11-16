@@ -1,6 +1,5 @@
 
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/7s2mv24fp8-hue/be-you)
 
 
 
